@@ -1,7 +1,21 @@
 
+export interface TransactionSource {
+  id: string;
+  name: string;
+}
+
+export interface Income {
+  id: string;
+  sourceId: string;
+  description: string;
+  amount: number;
+  date: string;
+}
+
 export interface Expense {
   id: string;
   categoryId: string;
+  sourceId: string;
   description: string;
   amount: number;
   date: string;

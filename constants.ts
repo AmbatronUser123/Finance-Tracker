@@ -1,4 +1,10 @@
-import { Category, Goal } from './types';
+import { Category, Goal, TransactionSource } from './types';
+
+export const INITIAL_SOURCES: TransactionSource[] = [
+  { id: 'src-1', name: 'Salary' },
+  { id: 'src-2', name: 'Freelance' },
+  { id: 'src-3', name: 'Other' }
+];
 
 export const CATEGORY_COLORS = ['indigo', 'sky', 'rose', 'amber', 'emerald', 'violet', 'lime', 'cyan', 'slate'];
 

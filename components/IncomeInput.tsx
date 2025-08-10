@@ -1,29 +1,64 @@
-import React from 'react';
-import { PiggyBankIcon } from './icons';
+import React, { useState } from 'react';
+import { Income, TransactionSource } from '../types';
 
 interface IncomeInputProps {
-  income: number;
-  onIncomeChange: (newIncome: number) => void;
+  onAddIncome: (income: Omit<Income, 'id'>) => void;
+  transactionSources: TransactionSource[];
 }
 
-const IncomeInput: React.FC<IncomeInputProps> = ({ income, onIncomeChange }) => {
+const IncomeInput: React.FC<IncomeInputProps> = ({ onAddIncome, transactionSources }) => {
+  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState('');
+  const [sourceId, setSourceId] = useState<string>('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!description || !amount || !sourceId) {
+      alert('Please fill all fields');
+      return;
+    }
+    onAddIncome({
+      description,
+      amount: parseFloat(amount),
+      date: new Date().toISOString(),
+      sourceId,
+    });
+    setDescription('');
+    setAmount('');
+    setSourceId('');
+  };
+
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-lg shadow-slate-200/50">
-      <h2 className="flex items-center gap-3 text-xl font-bold text-slate-800 mb-4">
-        <PiggyBankIcon className="w-7 h-7 text-indigo-500" />
-        Your Monthly Income
-      </h2>
-      <div className="relative">
-        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-indigo-500">Rp</span>
-        <input
-          type="number"
-          value={income}
-          onChange={(e) => onIncomeChange(Number(e.target.value))}
-          placeholder="e.g., 4000000"
-          className="w-full pl-9 pr-4 py-2 font-medium text-slate-900 bg-slate-100 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-        />
-      </div>
-    </div>
+    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-white rounded-lg shadow-md">
+      <h3 className="text-xl font-bold">Log Income</h3>
+      <input
+        type="text"
+        placeholder="Description"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        className="w-full p-2 border rounded"
+      />
+      <input
+        type="number"
+        placeholder="Amount"
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+        className="w-full p-2 border rounded"
+      />
+      <select
+        value={sourceId}
+        onChange={(e) => setSourceId(e.target.value)}
+        className="w-full p-2 border rounded"
+      >
+        <option value="" disabled>Select Source</option>
+        {transactionSources.map(source => (
+          <option key={source.id} value={source.id}>{source.name}</option>
+        ))}
+      </select>
+      <button type="submit" className="w-full p-2 bg-green-500 text-white rounded hover:bg-green-600">
+        Add Income
+      </button>
+    </form>
   );
 };
 

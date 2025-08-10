@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Category, Expense, Goal } from './types';
-import { INITIAL_CATEGORIES, INITIAL_GOALS } from './constants';
+import { Category, Expense, Goal, Income, TransactionSource } from './types';
+import { INITIAL_CATEGORIES, INITIAL_GOALS, INITIAL_SOURCES } from './constants';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useToast } from './contexts/ToastContext';
 import IncomeInput from './components/IncomeInput';
@@ -12,20 +12,33 @@ import GoalManager from './components/GoalManager';
 import CategoryEditor from './components/CategoryEditor';
 import MobileNav from './components/MobileNav';
 import { LogoIcon } from './components/icons';
+import SourceManager from './components/SourceManager';
+import MobileContent from './components/MobileContent';
 
 function App() {
   const [income, setIncome] = useLocalStorage<number>('monthlyIncome', 4000000);
   const [categories, setCategories] = useLocalStorage<Category[]>('budgetCategories', INITIAL_CATEGORIES);
   const [goals, setGoals] = useLocalStorage<Goal[]>('savingGoals', INITIAL_GOALS);
+  const [transactionSources, setTransactionSources] = useLocalStorage<TransactionSource[]>('transactionSources', INITIAL_SOURCES);
   const { addToast } = useToast();
   
   const [mobileView, setMobileView] = useState('dashboard');
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
-  const handleIncomeChange = useCallback((newIncome: number) => {
-    setIncome(Math.max(0, newIncome));
-  }, [setIncome]);
+  const handleAddIncome = useCallback((newIncome: Omit<Income, 'id'>) => {
+    setIncome(prev => prev + newIncome.amount);
+    addToast({ message: 'Income logged successfully!', type: 'success' });
+  }, [setIncome, addToast]);
+
+  const handleAddTransactionSource = (name: string) => {
+    const newSource: TransactionSource = {
+      id: `src-${new Date().getTime()}`,
+      name,
+    };
+    setTransactionSources(prevSources => [...prevSources, newSource]);
+    addToast({ message: 'Transaction source added!', type: 'success' });
+  };
 
   const handleAllocationChange = useCallback((categoryId: string, newAllocation: number) => {
     setCategories(prevCategories =>
@@ -79,9 +92,10 @@ function App() {
         setIncome(4000000);
         setCategories(INITIAL_CATEGORIES);
         setGoals(INITIAL_GOALS);
+        setTransactionSources(INITIAL_SOURCES);
         addToast({ message: 'All data has been reset.', type: 'info' });
     }
-  }, [setIncome, setCategories, setGoals, addToast]);
+  }, [setIncome, setCategories, setGoals, setTransactionSources, addToast]);
   
   const handleClearExpenses = useCallback((categoryId: string) => {
      setCategories((prevCategories: Category[]) =>
@@ -96,19 +110,19 @@ function App() {
 
   // Fungsi auto-adjust alokasi kategori
   const handleAutoAdjustAllocation = useCallback(() => {
-    setCategories((prevCategories: Category[]) => {
+    setCategories((prevCategories) => {
       if (prevCategories.length === 0) return prevCategories;
-      const total = prevCategories.reduce((sum: number, cat: Category) => sum + cat.allocation, 0);
+      const total = prevCategories.reduce((sum, cat) => sum + cat.allocation, 0);
       if (total === 100) return prevCategories;
       const diff = 100 - total;
-      // Sesuaikan kategori terakhir
-      return prevCategories.map((cat: Category, idx: number) =>
+      // Adjust the last category to make total 100%
+      return prevCategories.map((cat, idx) =>
         idx === prevCategories.length - 1
           ? { ...cat, allocation: Math.max(0, cat.allocation + diff) }
           : cat
       );
     });
-    addToast({ message: 'Alokasi otomatis disesuaikan agar total 100%.', type: 'info' });
+    addToast({ message: 'Budget allocations automatically adjusted to total 100%.', type: 'info' });
   }, [setCategories, addToast]);
 
   // Fungsi backup data
@@ -166,9 +180,9 @@ function App() {
     setCategoryModalOpen(false);
   };
 
-  const handleSaveCategory = (categoryData: Omit<Category, 'id' | 'expenses'> & { id?: string }) => {
+  const handleSaveCategory = useCallback((categoryData: Omit<Category, 'id' | 'expenses'> & { id?: string }) => {
     if (categoryData.id) { // Update existing
-      setCategories((prev: Category[]) => prev.map((cat: Category) => cat.id === categoryData.id ? { ...cat, ...categoryData } : cat));
+      setCategories(prev => prev.map(cat => cat.id === categoryData.id ? { ...cat, ...categoryData } : cat));
       addToast({ message: `Category "${categoryData.name}" updated.`, type: 'success' });
     } else { // Add new
       const newCategory: Category = {
@@ -176,11 +190,11 @@ function App() {
         id: `cat-${new Date().getTime()}`,
         expenses: [],
       };
-      setCategories((prev: Category[]) => [...prev, newCategory]);
+      setCategories(prev => [...prev, newCategory]);
       addToast({ message: `Category "${categoryData.name}" created.`, type: 'success' });
     }
     handleCloseCategoryModal();
-  };
+  }, [setCategories, addToast, handleCloseCategoryModal]);
   
   const handleDeleteCategory = (categoryId: string) => {
     const categoryToDelete = categories.find((c: Category) => c.id === categoryId);
@@ -216,7 +230,7 @@ function App() {
         <header className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
             <LogoIcon className="w-10 h-10 text-indigo-600" />
-            <h1 className="text-2xl sm:text-3xl text-slate-800 tracking-tight">Dawsan's Finance Tracker</h1>
+            <h1 className="text-2xl sm:text-3xl text-slate-800 tracking-tight">Finance Tracker</h1>
           </div>
           <div className="flex items-center gap-4">
             <button
@@ -249,14 +263,16 @@ function App() {
                     totalAllocatedToGoals={totalAllocatedToGoals}
                     categories={categories}
                   />
-                  <IncomeInput income={income} onIncomeChange={handleIncomeChange} />
+                  <IncomeInput onAddIncome={handleAddIncome} transactionSources={transactionSources} />
                   <ExpenseLogger
                     categories={categories}
                     onAddExpense={handleAddExpense}
                     isAddDisabled={!isBudgetValid}
+                    transactionSources={transactionSources}
                   />
               </div>
               <div className="lg:col-span-2 space-y-6">
+                <SourceManager sources={transactionSources} onAddSource={handleAddTransactionSource} />
                 <CategoryManager
                   categories={categories}
                   onAllocationChange={handleAllocationChange}
@@ -282,50 +298,30 @@ function App() {
 
             {/* Mobile View */}
             <div className="lg:hidden pb-24 space-y-6">
-                {mobileView === 'dashboard' && (
-                  <>
-                    <Summary
-                      totalBudget={totalBudget}
-                      totalSpent={totalSpent}
-                      totalRemaining={totalRemaining}
-                      totalAllocatedToGoals={totalAllocatedToGoals}
-                      categories={categories}
-                    />
-                    <Dashboard 
-                        income={income} 
-                        categories={categories} 
-                        onClearExpenses={handleClearExpenses}
-                    />
-                  </>
-                )}
-                {mobileView === 'log' && (
-                    <ExpenseLogger
-                        categories={categories}
-                        onAddExpense={handleAddExpense}
-                        isAddDisabled={!isBudgetValid}
-                    />
-                )}
-                 {mobileView === 'budgets' && (
-                    <>
-                        <IncomeInput income={income} onIncomeChange={handleIncomeChange} />
-                        <CategoryManager
-                            categories={categories}
-                            onAllocationChange={handleAllocationChange}
-                            totalAllocation={totalAllocation}
-                            onOpenModal={handleOpenCategoryModal}
-                            onDeleteCategory={handleDeleteCategory}
-                        />
-                    </>
-                 )}
-                 {mobileView === 'goals' && (
-                     <GoalManager
-                        goals={goals}
-                        onAddGoal={handleAddGoal}
-                        onAllocateToGoal={handleAllocateToGoal}
-                        onDeleteGoal={handleDeleteGoal}
-                        availableFunds={availableToSave}
-                     />
-                 )}
+                <MobileContent
+                    mobileView={mobileView}
+                    totalBudget={totalBudget}
+                    totalSpent={totalSpent}
+                    totalRemaining={totalRemaining}
+                    totalAllocatedToGoals={totalAllocatedToGoals}
+                    categories={categories}
+                    income={income}
+                    onClearExpenses={handleClearExpenses}
+                    onAddExpense={handleAddExpense}
+                    isBudgetValid={isBudgetValid}
+                    onAddIncome={handleAddIncome}
+                    transactionSources={transactionSources}
+                    onAllocationChange={handleAllocationChange}
+                    totalAllocation={totalAllocation}
+                    onOpenModal={handleOpenCategoryModal}
+                    onDeleteCategory={handleDeleteCategory}
+                    onAutoAdjustAllocation={handleAutoAdjustAllocation}
+                    goals={goals}
+                    onAddGoal={handleAddGoal}
+                    onAllocateToGoal={handleAllocateToGoal}
+                    onDeleteGoal={handleDeleteGoal}
+                    availableToSave={availableToSave}
+                />
             </div>
             
             <MobileNav activeView={mobileView} setActiveView={setMobileView} />
