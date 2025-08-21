@@ -7,9 +7,10 @@ interface DashboardProps {
   income: number;
   categories: Category[];
   onClearExpenses: (categoryId: string) => void;
+  onDeleteExpense: (categoryId: string, expenseId: string) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ income, categories, onClearExpenses }) => {
+const Dashboard: React.FC<DashboardProps> = ({ income, categories, onClearExpenses, onDeleteExpense }) => {
   return (
     <div className="space-y-6">
        <h2 className="flex items-center gap-3 text-2xl font-bold text-slate-800">
@@ -22,7 +23,8 @@ const Dashboard: React.FC<DashboardProps> = ({ income, categories, onClearExpens
             <CategoryCard 
               category={category} 
               income={income}
-              onClearExpenses={onClearExpenses} 
+              onClearExpenses={onClearExpenses}
+              onDeleteExpense={onDeleteExpense}
             />
           </div>
         ))}

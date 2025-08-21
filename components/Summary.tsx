@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Category } from '../types';
-import { CalendarDaysIcon, EmptyStateIcon } from './icons';
+import { Category, Expense } from '../types';
+import { CalendarDaysIcon, EmptyStateIcon, TrashIcon } from './icons';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 
@@ -10,10 +10,12 @@ interface SummaryProps {
   totalRemaining: number;
   totalAllocatedToGoals: number;
   categories: Category[];
+  onDeleteExpense?: (categoryId: string, expenseId: string) => void;
 }
 
-export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, totalRemaining, totalAllocatedToGoals, categories }) => {
+export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, totalRemaining, totalAllocatedToGoals, categories, onDeleteExpense }) => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [expenseToDelete, setExpenseToDelete] = useState<{ categoryId: string; expenseId: string; description: string } | null>(null);
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -23,7 +25,7 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
   
   const expensesForSelectedDate = useMemo(() => {
     const allExpenses = categories.flatMap(cat => 
-      cat.expenses.map(exp => ({ ...exp, categoryName: cat.name }))
+      cat.expenses.map(exp => ({ ...exp, categoryName: cat.name, categoryId: cat.id }))
     );
     
     return allExpenses
@@ -52,6 +54,20 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
     return data;
   }, [categories]);
 
+  const handleDeleteClick = (categoryId: string, expenseId: string, description: string) => {
+    setExpenseToDelete({ categoryId, expenseId, description });
+  };
+
+  const confirmDelete = () => {
+    if (expenseToDelete && onDeleteExpense) {
+      onDeleteExpense(expenseToDelete.categoryId, expenseToDelete.expenseId);
+      setExpenseToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setExpenseToDelete(null);
+  };
 
   return (
     <>
@@ -87,7 +103,7 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
       
       <div className="bg-white p-6 rounded-2xl shadow-lg shadow-slate-200/50">
         <h2 className="text-xl font-bold text-slate-800 mb-4">30-Day Spending Trend</h2>
-        <div className="h-40">
+        <div style={{ width: '100%', height: '160px' }}>
             <ResponsiveContainer width="100%" height="100%">
             <LineChart data={dailySpendingData} margin={{ top: 5, right: 20, left: -15, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.2} />
@@ -133,7 +149,17 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
                     <p className="font-medium truncate">{exp.description}</p>
                     <p className="text-xs text-slate-500">{exp.categoryName}</p>
                   </div>
-                  <span className="font-semibold flex-shrink-0">{formatCurrency(exp.amount)}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold flex-shrink-0">{formatCurrency(exp.amount)}</span>
+                    {onDeleteExpense && (
+                      <button 
+                        onClick={() => handleDeleteClick(exp.categoryId, exp.id, exp.description)}
+                        className="text-red-400 hover:text-red-600 transition-colors"
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -146,6 +172,32 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {expenseToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-slate-800 mb-2">Confirm Deletion</h3>
+            <p className="text-slate-600 mb-4">
+              Are you sure you want to delete the expense "<strong>{expenseToDelete.description}</strong>"? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={cancelDelete}
+                className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 focus:outline-none"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

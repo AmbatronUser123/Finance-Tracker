@@ -108,6 +108,17 @@ function App() {
     addToast({ message: 'Expenses cleared for category.', type: 'info' });
   }, [setCategories, addToast]);
 
+  const handleDeleteExpense = useCallback((categoryId: string, expenseId: string) => {
+    setCategories((prevCategories: Category[]) =>
+      prevCategories.map((cat: Category) =>
+        cat.id === categoryId
+          ? { ...cat, expenses: cat.expenses.filter(exp => exp.id !== expenseId) }
+          : cat
+      )
+    );
+    addToast({ message: 'Expense deleted successfully.', type: 'success' });
+  }, [setCategories, addToast]);
+
   // Fungsi auto-adjust alokasi kategori
   const handleAutoAdjustAllocation = useCallback(() => {
     setCategories((prevCategories) => {
@@ -262,6 +273,7 @@ function App() {
                     totalRemaining={totalRemaining}
                     totalAllocatedToGoals={totalAllocatedToGoals}
                     categories={categories}
+                    onDeleteExpense={handleDeleteExpense}
                   />
                   <IncomeInput onAddIncome={handleAddIncome} transactionSources={transactionSources} />
                   <ExpenseLogger
@@ -292,6 +304,7 @@ function App() {
                   income={income} 
                   categories={categories} 
                   onClearExpenses={handleClearExpenses}
+                  onDeleteExpense={handleDeleteExpense}
                 />
               </div>
             </div>
@@ -307,6 +320,7 @@ function App() {
                     categories={categories}
                     income={income}
                     onClearExpenses={handleClearExpenses}
+                    onDeleteExpense={handleDeleteExpense}
                     onAddExpense={handleAddExpense}
                     isBudgetValid={isBudgetValid}
                     onAddIncome={handleAddIncome}

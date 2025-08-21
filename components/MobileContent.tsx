@@ -16,6 +16,7 @@ interface MobileContentProps {
     categories: Category[];
     income: number;
     onClearExpenses: (categoryId: string) => void;
+    onDeleteExpense: (categoryId: string, expenseId: string) => void;
     onAddExpense: (expense: Omit<Expense, 'id'>) => void;
     isBudgetValid: boolean;
     onAddIncome: (income: Omit<Income, 'id'>) => void;
@@ -41,6 +42,7 @@ const MobileContent: React.FC<MobileContentProps> = ({
     categories,
     income,
     onClearExpenses,
+    onDeleteExpense,
     onAddExpense,
     isBudgetValid,
     onAddIncome,
@@ -65,11 +67,13 @@ const MobileContent: React.FC<MobileContentProps> = ({
                     totalRemaining={totalRemaining}
                     totalAllocatedToGoals={totalAllocatedToGoals}
                     categories={categories}
+                    onDeleteExpense={onDeleteExpense}
                 />
                 <Dashboard 
                     income={income} 
                     categories={categories} 
                     onClearExpenses={onClearExpenses}
+                    onDeleteExpense={onDeleteExpense}
                 />
             </>
         );

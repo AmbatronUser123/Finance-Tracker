@@ -38,9 +38,9 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, onAllocat
         </button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-         <div className="h-52 md:h-64">
+         <div style={{ width: '100%', minHeight: '300px' }}>
             {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="#8884d8" label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={12}>
                     {chartData.map((entry, index) => (

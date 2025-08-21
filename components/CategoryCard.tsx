@@ -7,7 +7,8 @@ import { InfoIcon, SparklesIcon, TrashIcon } from './icons';
 interface CategoryCardProps {
   category: Category;
   income: number;
-  onClearExpenses: (categoryId:string) => void;
+  onClearExpenses: (categoryId: string) => void;
+  onDeleteExpense: (categoryId: string, expenseId: string) => void;
 }
 
 const colorMap: { [key: string]: { border: string; text: string; progress: string } } = {
@@ -23,10 +24,11 @@ const colorMap: { [key: string]: { border: string; text: string; progress: strin
 };
 const defaultColor = colorMap.slate;
 
-const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearExpenses }) => {
+const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearExpenses, onDeleteExpense }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [tip, setTip] = useState<string | null>(null);
   const [isLoadingTip, setIsLoadingTip] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState<{ categoryId: string; expenseId: string; description: string } | null>(null);
 
   const { border, text, progress: progressColor } = colorMap[category.color] || defaultColor;
 
@@ -65,6 +67,21 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearEx
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  };
+
+  const handleDeleteExpenseClick = (categoryId: string, expenseId: string, description: string) => {
+    setExpenseToDelete({ categoryId, expenseId, description });
+  };
+
+  const confirmDeleteExpense = () => {
+    if (expenseToDelete) {
+      onDeleteExpense(expenseToDelete.categoryId, expenseToDelete.expenseId);
+      setExpenseToDelete(null);
+    }
+  };
+
+  const cancelDeleteExpense = () => {
+    setExpenseToDelete(null);
   };
 
   return (
@@ -133,15 +150,49 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearEx
           {category.expenses.length > 0 ? (
             <ul className="space-y-1 max-h-32 overflow-y-auto pr-2">
               {category.expenses.slice().reverse().map(exp => (
-                <li key={exp.id} className="flex justify-between text-sm text-slate-600 bg-white/50 p-1.5 rounded">
+                <li key={exp.id} className="flex justify-between items-center text-sm text-slate-600 bg-white/50 p-1.5 rounded group">
                   <span className="truncate pr-2">{exp.description}</span>
-                  <span className="font-medium flex-shrink-0">{formatCurrency(exp.amount)}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{formatCurrency(exp.amount)}</span>
+                    <button 
+                      onClick={() => handleDeleteExpenseClick(category.id, exp.id, exp.description)}
+                      className="text-red-400 hover:text-red-600 transition-opacity"
+                    >
+                      <TrashIcon className="w-3 h-3" />
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
           ) : (
             <p className="text-sm text-center text-slate-400 py-4">No expenses logged in this category yet.</p>
           )}
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {expenseToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-slate-800 mb-2">Confirm Deletion</h3>
+            <p className="text-slate-600 mb-4">
+              Are you sure you want to delete the expense "<strong>{expenseToDelete.description}</strong>"? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={cancelDeleteExpense}
+                className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 focus:outline-none"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteExpense}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
