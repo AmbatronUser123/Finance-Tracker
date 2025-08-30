@@ -4,9 +4,10 @@ import { TransactionSource } from '../types';
 interface SourceManagerProps {
   sources: TransactionSource[];
   onAddSource: (name: string) => void;
+  onDeleteSource: (id: string) => void;
 }
 
-const SourceManager: React.FC<SourceManagerProps> = ({ sources, onAddSource }) => {
+const SourceManager: React.FC<SourceManagerProps> = ({ sources, onAddSource, onDeleteSource }) => {
   const [newSourceName, setNewSourceName] = useState('');
 
   const handleAddSource = () => {
@@ -35,6 +36,9 @@ const SourceManager: React.FC<SourceManagerProps> = ({ sources, onAddSource }) =
         {sources.map(source => (
           <li key={source.id} className="flex justify-between items-center p-2 border-b">
             <span>{source.name}</span>
+            <button onClick={() => onDeleteSource(source.id)} className="p-1 bg-red-500 text-white rounded hover:bg-red-600">
+              Remove
+            </button>
           </li>
         ))}
       </ul>

@@ -16,7 +16,7 @@ import SourceManager from './components/SourceManager';
 import MobileContent from './components/MobileContent';
 
 function App() {
-  const [income, setIncome] = useLocalStorage<number>('monthlyIncome', 4000000);
+  const [income, setIncome] = useLocalStorage<number>('monthlyIncome', 0);
   const [categories, setCategories] = useLocalStorage<Category[]>('budgetCategories', INITIAL_CATEGORIES);
   const [goals, setGoals] = useLocalStorage<Goal[]>('savingGoals', INITIAL_GOALS);
   const [transactionSources, setTransactionSources] = useLocalStorage<TransactionSource[]>('transactionSources', INITIAL_SOURCES);
@@ -38,6 +38,11 @@ function App() {
     };
     setTransactionSources(prevSources => [...prevSources, newSource]);
     addToast({ message: 'Transaction source added!', type: 'success' });
+  };
+
+  const handleDeleteTransactionSource = (id: string) => {
+    setTransactionSources(prevSources => prevSources.filter(source => source.id !== id));
+    addToast({ message: 'Transaction source removed.', type: 'info' });
   };
 
   const handleAllocationChange = useCallback((categoryId: string, newAllocation: number) => {
@@ -89,7 +94,7 @@ function App() {
 
   const handleResetData = useCallback(() => {
     if(window.confirm('Are you sure you want to reset all your data? This cannot be undone.')) {
-        setIncome(4000000);
+        setIncome(0);
         setCategories(INITIAL_CATEGORIES);
         setGoals(INITIAL_GOALS);
         setTransactionSources(INITIAL_SOURCES);
@@ -284,7 +289,7 @@ function App() {
                   />
               </div>
               <div className="lg:col-span-2 space-y-6">
-                <SourceManager sources={transactionSources} onAddSource={handleAddTransactionSource} />
+                <SourceManager sources={transactionSources} onAddSource={handleAddTransactionSource} onDeleteSource={handleDeleteTransactionSource} />
                 <CategoryManager
                   categories={categories}
                   onAllocationChange={handleAllocationChange}
