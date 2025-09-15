@@ -1,6 +1,7 @@
 import React from 'react';
 import { Category, Goal } from '../types';
 import { FiDollarSign, FiTrendingUp, FiPieChart } from 'react-icons/fi';
+import { formatRupiah } from '../src/utils/currency';
 
 interface DashboardProps {
   income: number;
@@ -49,7 +50,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div>
               <p className="text-sm font-medium text-gray-500">Monthly Income</p>
               <p className="text-2xl font-bold text-gray-900">
-                ${income.toLocaleString()}
+                {formatRupiah(income)}
               </p>
             </div>
             <div className="p-3 rounded-full bg-blue-50 text-blue-600">
@@ -64,7 +65,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div>
               <p className="text-sm font-medium text-gray-500">Total Expenses</p>
               <p className="text-2xl font-bold text-gray-900">
-                ${totalExpenses.toLocaleString()}
+                {formatRupiah(totalExpenses)}
               </p>
             </div>
             <div className="p-3 rounded-full bg-red-50 text-red-600">
@@ -79,7 +80,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div>
               <p className="text-sm font-medium text-gray-500">Total Savings</p>
               <p className="text-2xl font-bold text-gray-900">
-                ${totalSavings.toLocaleString()}
+                {formatRupiah(totalSavings)}
               </p>
             </div>
             <div className="p-3 rounded-full bg-green-50 text-green-600">
@@ -103,7 +104,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div key={category.id}>
                 <div className="flex justify-between text-sm mb-1">
                   <span className="font-medium">{category.name}</span>
-                  <span>${category.spent} / ${category.budget}</span>
+                  <span>{formatRupiah(category.spent)} dari {formatRupiah(category.budget)}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
@@ -132,7 +133,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div key={goal.id}>
                 <div className="flex justify-between text-sm mb-1">
                   <span className="font-medium">{goal.name}</span>
-                  <span>${goal.currentAmount} / ${goal.targetAmount}</span>
+                  <span>{formatRupiah(goal.currentAmount)} dari {formatRupiah(goal.targetAmount)}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
@@ -142,6 +143,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     }}
                   />
                 </div>
+                <p className="text-xs text-gray-500">Target: {formatRupiah(goal.targetAmount)}</p>
               </div>
             ))}
             {goals.length === 0 && (

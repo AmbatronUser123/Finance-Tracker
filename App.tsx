@@ -3,7 +3,7 @@ import { Category, Goal, Expense } from './types';
 import { INITIAL_CATEGORIES, INITIAL_GOALS } from './constants';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useToast } from './contexts/ToastContext';
-import { FiHome, FiPieChart, FiDollarSign, FiTag, FiTarget, FiSettings } from 'react-icons/fi';
+import { FiHome, FiPieChart, FiDollarSign, FiTag, FiTarget } from 'react-icons/fi';
 
 // Components
 import Dashboard from './components/Dashboard';
@@ -29,7 +29,6 @@ const App: React.FC = () => {
   const { addToast } = useToast();
   
   const [activeView, setActiveView] = useState('dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -49,11 +48,6 @@ const App: React.FC = () => {
     setActiveView(view);
     if (mobileMenuOpen) setMobileMenuOpen(false);
   };
-
-  // Toggle sidebar on desktop
-  const toggleSidebar = useCallback(() => {
-    setSidebarOpen(!sidebarOpen);
-  }, [sidebarOpen]);
 
   // Handle adding a new expense
   const handleAddExpense = useCallback((expenseData: Omit<Expense, 'id' | 'date' | 'type'>) => {
@@ -160,6 +154,51 @@ const App: React.FC = () => {
     addToast({ message: 'Goal deleted.', type: 'info' });
   }, [setGoals, addToast]);
 
+  // Handle importing data
+  const handleImportData = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importedData = JSON.parse(e.target?.result as string);
+        
+        // Basic validation
+        if (!importedData || typeof importedData !== 'object') {
+          throw new Error('Invalid file format');
+        }
+
+        // Update state with imported data
+        if (importedData.categories) setCategories(importedData.categories);
+        if (importedData.goals) setGoals(importedData.goals);
+        if (importedData.transactionSources) {
+          // Update transaction sources if needed
+        }
+        
+        addToast({ message: 'Data imported successfully!', type: 'success' });
+      } catch (error) {
+        console.error('Error importing data:', error);
+        addToast({
+          message: 'Failed to import data. Please check the file format.',
+          type: 'error'
+        });
+      }
+    };
+    
+    reader.onerror = () => {
+      addToast({
+        message: 'Error reading the file.',
+        type: 'error'
+      });
+    };
+    
+    reader.readAsText(file);
+    
+    // Reset the input to allow importing the same file again
+    event.target.value = '';
+  }, [setCategories, setGoals, addToast]);
+
   // Handle exporting data
   const handleExportData = useCallback(() => {
     const data = {
@@ -246,21 +285,25 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 flex">
       {/* Mobile menu button */}
-      <button 
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="fixed top-4 left-4 z-50 p-2 rounded-md text-gray-500 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 md:hidden"
-        aria-label="Toggle menu"
-      >
-        {mobileMenuOpen ? (
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        ) : (
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        )}
-      </button>
+      <div className="fixed top-4 left-4 right-4 flex justify-between items-center z-50 md:hidden">
+        <button 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="p-2 rounded-md text-gray-500 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          aria-label="Toggle menu"
+        >
+          {mobileMenuOpen ? (
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </button>
+        <h1 className="text-xl font-bold text-primary-600">Finance Tracker</h1>
+        <div className="w-10"></div> {/* Spacer for alignment */}
+      </div>
 
       {/* Sidebar */}
       <aside className={`
@@ -268,7 +311,7 @@ const App: React.FC = () => {
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} 
         md:translate-x-0 md:static transition-transform duration-200 ease-in-out`}
       >
-        <div className="p-6 border-b border-gray-100">
+        <div className="p-6 border-b border-gray-100 hidden md:block">
           <h1 className="text-2xl font-bold text-primary-600">Finance Tracker</h1>
         </div>
         <nav className="p-4 space-y-1">
@@ -289,16 +332,6 @@ const App: React.FC = () => {
           ))}
         </nav>
         
-        {/* Sidebar Toggle */}
-        <div className="absolute bottom-0 w-full p-4 border-t border-gray-100">
-          <button 
-            onClick={toggleSidebar}
-            className="w-full flex items-center space-x-3 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-          >
-            <FiSettings size={20} />
-            <span>Settings</span>
-          </button>
-        </div>
       </aside>
 
       {/* Main Content */}
@@ -319,12 +352,27 @@ const App: React.FC = () => {
                   + Add Expense
                 </button>
               )}
-              <button
-                onClick={handleExportData}
-                className="px-4 py-2 text-sm font-medium text-indigo-600 bg-white border border-indigo-600 rounded-lg shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Export Data
-              </button>
+              <div className="flex items-center gap-2">
+                <label className="relative">
+                  <span className="sr-only">Import Data</span>
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={handleImportData}
+                    className="hidden"
+                    id="import-file"
+                  />
+                  <span className="cursor-pointer px-4 py-2 text-sm font-medium text-indigo-600 bg-white border border-indigo-600 rounded-lg shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Import Data
+                  </span>
+                </label>
+                <button
+                  onClick={handleExportData}
+                  className="px-4 py-2 text-sm font-medium text-indigo-600 bg-white border border-indigo-600 rounded-lg shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Export Data
+                </button>
+              </div>
             </div>
           </header>
 

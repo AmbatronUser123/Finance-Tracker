@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Category, Expense, TransactionSource } from '../types';
 import { ReceiptPlusIcon } from './icons';
+import { parseRupiah, formatRupiah } from '../src/utils/currency';
 
 interface ExpenseLoggerProps {
   categories: Category[];
@@ -12,6 +13,7 @@ interface ExpenseLoggerProps {
 const ExpenseLogger: React.FC<ExpenseLoggerProps> = ({ categories, onAddExpense, isAddDisabled, transactionSources }) => {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
+  const [formattedAmount, setFormattedAmount] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [sourceId, setSourceId] = useState<string>('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -26,13 +28,21 @@ const ExpenseLogger: React.FC<ExpenseLoggerProps> = ({ categories, onAddExpense,
     }
   }, [categories, categoryId, transactionSources, sourceId]);
 
+  const handleAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    const numValue = value ? parseInt(value, 10) : 0;
+    setAmount(numValue.toString());
+    setFormattedAmount(numValue > 0 ? formatRupiah(numValue) : '');
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!description.trim()) {
       setError('Deskripsi tidak boleh kosong.');
       return;
     }
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+    const amountValue = parseRupiah(amount);
+    if (isNaN(amountValue) || amountValue <= 0) {
       setError('Nominal harus lebih dari 0.');
       return;
     }
@@ -44,12 +54,13 @@ const ExpenseLogger: React.FC<ExpenseLoggerProps> = ({ categories, onAddExpense,
     onAddExpense({
       categoryId,
       description,
-      amount: Number(amount),
+      amount: amountValue,
       date,
       sourceId,
     });
     setDescription('');
     setAmount('');
+    setFormattedAmount('');
   };
 
   return (
@@ -115,14 +126,12 @@ const ExpenseLogger: React.FC<ExpenseLoggerProps> = ({ categories, onAddExpense,
           <label htmlFor="amount" className="block text-sm font-medium text-slate-700 mb-1">Amount</label>
           <input
             id="amount"
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="e.g., 25000"
+            type="text"
+            value={formattedAmount}
+            onChange={handleAmountChange}
+            placeholder="0"
             className="w-full p-2 bg-slate-100 text-slate-800 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
             required
-            min="1"
-            step="1"
           />
         </div>
         <button
