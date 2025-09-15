@@ -335,7 +335,7 @@ const App: React.FC = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 min-h-screen pt-16 pb-20 px-4 md:py-6 md:px-6 transition-all duration-200 w-full">
+      <main className="flex-1 min-h-screen pt-20 pb-20 px-4 md:pt-6 md:pb-6 md:px-6 transition-all duration-200 w-full">
         <div className="max-w-7xl mx-auto">
           <header className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-3">
