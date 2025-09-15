@@ -55,20 +55,8 @@ const App: React.FC = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  // Toggle mobile menu
-  const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
-
   // Handle adding a new expense
   const handleAddExpense = useCallback((expenseData: Omit<Expense, 'id' | 'date' | 'type'>) => {
-    const newExpense: Expense = {
-      ...expenseData,
-      id: `exp-${Date.now()}`,
-      type: 'expense',
-      date: new Date().toISOString()
-    };
-    
     // Update category spent amount
     setCategories(prev => 
       prev.map(cat => 
@@ -113,12 +101,6 @@ const App: React.FC = () => {
     );
     addToast({ message: 'Allocations equalized across active categories', type: 'success' });
   }, [categories, income, setCategories, addToast]);
-
-  // Handle editing a category
-  const handleEditCategory = useCallback((category: Category) => {
-    setEditingCategory(category);
-    setCategoryModalOpen(true);
-  }, []);
 
   // Handle saving a category
   const handleSaveCategory = useCallback((categoryData: Omit<Category, 'id' | 'expenses'> & { id?: string }) => {
