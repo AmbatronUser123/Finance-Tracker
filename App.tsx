@@ -285,24 +285,26 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 flex">
       {/* Mobile menu button */}
-      <div className="fixed top-4 left-4 right-4 flex justify-between items-center z-50 md:hidden">
-        <button 
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 rounded-md text-gray-500 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500"
-          aria-label="Toggle menu"
-        >
-          {mobileMenuOpen ? (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          ) : (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          )}
-        </button>
-        <h1 className="text-xl font-bold text-primary-600">Finance Tracker</h1>
-        <div className="w-10"></div> {/* Spacer for alignment */}
+      <div className="fixed top-0 left-0 right-0 h-16 bg-white shadow-sm z-50 md:hidden px-4">
+        <div className="h-full flex items-center justify-between">
+          <button 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 rounded-md text-gray-500 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? (
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
+          <h1 className="text-xl font-bold text-primary-600">Finance Tracker</h1>
+          <div className="w-10"></div> {/* Spacer for alignment */}
+        </div>
       </div>
 
       {/* Sidebar */}
@@ -337,9 +339,9 @@ const App: React.FC = () => {
       {/* Main Content */}
       <main className="flex-1 min-h-screen pt-20 pb-20 px-4 md:pt-6 md:pb-6 md:px-6 transition-all duration-200 w-full">
         <div className="max-w-7xl mx-auto">
-          <header className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl sm:text-3xl text-slate-800 tracking-tight">
+          <header className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="w-full sm:w-auto flex-shrink-0">
+              <h1 className="text-2xl sm:text-3xl text-slate-800 font-semibold">
                 {navItems.find(item => item.id === activeView)?.label || 'Dashboard'}
               </h1>
             </div>
