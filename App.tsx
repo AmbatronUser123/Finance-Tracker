@@ -51,9 +51,9 @@ const App: React.FC = () => {
   };
 
   // Toggle sidebar on desktop
-  const toggleSidebar = () => {
+  const toggleSidebar = useCallback(() => {
     setSidebarOpen(!sidebarOpen);
-  };
+  }, [sidebarOpen]);
 
   // Handle adding a new expense
   const handleAddExpense = useCallback((expenseData: Omit<Expense, 'id' | 'date' | 'type'>) => {
@@ -244,52 +244,30 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        <header className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold">$</div>
-            <h1 className="text-2xl sm:text-3xl text-slate-800 tracking-tight">Finance Tracker</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleExportData}
-              className="px-4 py-2 text-sm font-medium text-indigo-600 bg-white border border-indigo-600 rounded-lg shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Export Data
-            </button>
-          </div>
-        </header>
+    <div className="min-h-screen bg-slate-50 flex">
+      {/* Mobile menu button */}
+      <button 
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        className="fixed top-4 left-4 z-50 p-2 rounded-md text-gray-500 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 md:hidden"
+        aria-label="Toggle menu"
+      >
+        {mobileMenuOpen ? (
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ) : (
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        )}
+      </button>
 
-        {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-white shadow-lg z-10">
-          <nav className="p-4 space-y-1">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => handleNavigation(item.id)}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left ${
-                  activeView === item.id 
-                    ? 'bg-primary-50 text-primary-600' 
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </button>
-            ))}
-          </nav>
-        </div>
-      )}
-
-      {/* Desktop Sidebar */}
+      {/* Sidebar */}
       <aside className={`
-        bg-white shadow-sm w-64 flex-shrink-0 
-        ${sidebarOpen ? 'block' : 'hidden'} 
-        md:block fixed h-full z-10
-      `}>
+        fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg transform 
+        ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} 
+        md:translate-x-0 md:static transition-transform duration-200 ease-in-out`}
+      >
         <div className="p-6 border-b border-gray-100">
           <h1 className="text-2xl font-bold text-primary-600">Finance Tracker</h1>
         </div>
@@ -297,6 +275,7 @@ const App: React.FC = () => {
           {navItems.map((item) => (
             <button
               key={item.id}
+              type="button"
               onClick={() => handleNavigation(item.id)}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
                 activeView === item.id 
@@ -323,26 +302,31 @@ const App: React.FC = () => {
       </aside>
 
       {/* Main Content */}
-      <main className={`
-        flex-1 min-h-screen pt-4 pb-20 md:py-6 
-        ${sidebarOpen ? 'md:ml-64' : 'md:ml-0'}
-        transition-all duration-200
-      `}>
-        <div className="container mx-auto px-4">
-          {/* Page Header */}
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              {navItems.find(item => item.id === activeView)?.label || 'Dashboard'}
-            </h2>
-            {activeView === 'expenses' && (
-              <button 
-                onClick={() => {}}
-                className="btn btn-primary"
+      <main className="flex-1 min-h-screen pt-16 pb-20 px-4 md:py-6 md:px-6 transition-all duration-200 w-full">
+        <div className="max-w-7xl mx-auto">
+          <header className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl sm:text-3xl text-slate-800 tracking-tight">
+                {navItems.find(item => item.id === activeView)?.label || 'Dashboard'}
+              </h1>
+            </div>
+            <div className="flex items-center gap-4">
+              {activeView === 'expenses' && (
+                <button 
+                  onClick={() => {}}
+                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  + Add Expense
+                </button>
+              )}
+              <button
+                onClick={handleExportData}
+                className="px-4 py-2 text-sm font-medium text-indigo-600 bg-white border border-indigo-600 rounded-lg shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                + Add Expense
+                Export Data
               </button>
-            )}
-          </div>
+            </div>
+          </header>
 
           {/* View Content */}
           {renderView()}
@@ -357,7 +341,6 @@ const App: React.FC = () => {
           onClose={() => setCategoryModalOpen(false)}
         />
       )}
-      </div>
     </div>
   );
 };
