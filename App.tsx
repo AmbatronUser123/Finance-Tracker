@@ -237,12 +237,32 @@ const App: React.FC = () => {
         );
       case 'expenses':
         return (
-          <ExpenseLogger
-            categories={categories}
-            onAddExpense={handleAddExpense}
-            isAddDisabled={false}
-            transactionSources={transactionSources}
-          />
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-2xl shadow">
+              <h2 className="text-xl font-bold text-slate-800 mb-4">Add New Expense</h2>
+              <ExpenseLogger
+                categories={categories}
+                onAddExpense={handleAddExpense}
+                isAddDisabled={false}
+                transactionSources={transactionSources}
+              />
+            </div>
+            <div className="bg-white p-6 rounded-2xl shadow">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-slate-800">Recent Expenses</h2>
+                <button 
+                  onClick={() => {}}
+                  className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                >
+                  View All
+                </button>
+              </div>
+              {/* Add expense list component here */}
+              <div className="text-center text-gray-500 py-8">
+                <p>No recent expenses. Add one above!</p>
+              </div>
+            </div>
+          </div>
         );
       case 'categories':
         return (
@@ -317,6 +337,14 @@ const App: React.FC = () => {
           <h1 className="text-2xl font-bold text-primary-600">Finance Tracker</h1>
         </div>
         <nav className="p-4 space-y-1">
+          <button
+            type="button"
+            onClick={() => handleNavigation('dashboard')}
+            className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors text-gray-600 hover:bg-gray-50 mb-4"
+          >
+            <FiHome size={20} />
+            <span>Home</span>
+          </button>
           {navItems.map((item) => (
             <button
               key={item.id}
@@ -337,8 +365,19 @@ const App: React.FC = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 min-h-screen pt-20 pb-20 px-4 md:pt-6 md:pb-6 md:px-6 transition-all duration-200 w-full">
+      <main className="flex-1 min-h-screen pt-20 pb-20 px-4 md:pt-6 md:pb-6 md:px-6 transition-all duration-200 w-full overflow-auto">
         <div className="max-w-7xl mx-auto">
+          {activeView !== 'dashboard' && (
+            <button 
+              onClick={() => handleNavigation('dashboard')}
+              className="mb-4 flex items-center text-indigo-600 hover:text-indigo-800"
+            >
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to Dashboard
+            </button>
+          )}
           <header className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="w-full sm:w-auto flex-shrink-0">
               <h1 className="text-2xl sm:text-3xl text-slate-800 font-semibold">
