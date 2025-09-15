@@ -6,12 +6,12 @@ import GoalCard from './GoalCard';
 interface GoalManagerProps {
   goals: Goal[];
   onAddGoal: (goal: Omit<Goal, 'id' | 'currentAmount'>) => void;
-  onAllocateToGoal: (goalId: string, amount: number) => void;
+  onUpdateGoal: (updatedGoal: Goal) => void;
   onDeleteGoal: (goalId: string) => void;
   availableFunds: number;
 }
 
-const GoalManager: React.FC<GoalManagerProps> = ({ goals, onAddGoal, onAllocateToGoal, onDeleteGoal, availableFunds }) => {
+const GoalManager: React.FC<GoalManagerProps> = ({ goals, onAddGoal, onUpdateGoal, onDeleteGoal, availableFunds }) => {
     const [name, setName] = useState('');
     const [targetAmount, setTargetAmount] = useState('');
     const [error, setError] = useState<string | null>(null);
@@ -87,7 +87,10 @@ const GoalManager: React.FC<GoalManagerProps> = ({ goals, onAddGoal, onAllocateT
                             <GoalCard 
                                 key={goal.id} 
                                 goal={goal} 
-                                onAllocateToGoal={(amount) => onAllocateToGoal(goal.id, amount)}
+                                onAllocateToGoal={(amount) => onUpdateGoal({
+                                    ...goal,
+                                    currentAmount: (goal.currentAmount || 0) + amount
+                                })}
                                 onDeleteGoal={() => onDeleteGoal(goal.id)}
                                 availableFunds={availableFunds}
                             />

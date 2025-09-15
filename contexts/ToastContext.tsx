@@ -3,10 +3,17 @@ import { XMarkIcon } from '../components/icons';
 
 type ToastType = 'success' | 'error' | 'info';
 
+interface ToastAction {
+  text: string;
+  onClick: () => void;
+}
+
 interface ToastMessage {
   id: number;
   message: string;
   type: ToastType;
+  action?: ToastAction;
+  duration?: number;
 }
 
 interface ToastContextType {
@@ -49,15 +56,34 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
         {toasts.map(toast => (
           <div key={toast.id} className={`toast-container ${toast.type}`}>
             <div
-              className={`flex items-center justify-between w-full p-4 rounded-lg shadow-lg text-white ${
+              className={`flex flex-col w-full p-4 rounded-lg shadow-lg text-white ${
                 toast.type === 'success' ? 'bg-green-500' : 
                 toast.type === 'error' ? 'bg-red-500' : 'bg-sky-500'
               }`}
             >
-              <p className="text-sm font-medium">{toast.message}</p>
-              <button onClick={() => removeToast(toast.id)} className="ml-4 p-1 rounded-full hover:bg-white/20">
-                <XMarkIcon className="w-4 h-4" />
-              </button>
+              <div className="flex items-center justify-between w-full">
+                <p className="text-sm font-medium">{toast.message}</p>
+                <button 
+                  onClick={() => removeToast(toast.id)} 
+                  className="ml-4 p-1 rounded-full hover:bg-white/20"
+                  aria-label="Close"
+                >
+                  <XMarkIcon className="w-4 h-4" />
+                </button>
+              </div>
+              {toast.action && (
+                <div className="mt-3 flex justify-end">
+                  <button
+                    onClick={() => {
+                      toast.action?.onClick();
+                      removeToast(toast.id);
+                    }}
+                    className="px-3 py-1 text-xs font-medium bg-white/20 rounded hover:bg-white/30 transition-colors"
+                  >
+                    {toast.action.text}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ))}

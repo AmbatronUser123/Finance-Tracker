@@ -1,251 +1,272 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { Category, Expense, Goal, Income, TransactionSource } from './types';
-import { INITIAL_CATEGORIES, INITIAL_GOALS, INITIAL_SOURCES } from './constants';
+import React, { useState, useMemo, useCallback, ReactNode } from 'react';
+import { Category, Goal, Expense } from './types';
+import { INITIAL_CATEGORIES, INITIAL_GOALS } from './constants';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useToast } from './contexts/ToastContext';
-import IncomeInput from './components/IncomeInput';
-import CategoryManager from './components/CategoryManager';
-import ExpenseLogger from './components/ExpenseLogger';
+import { FiHome, FiPieChart, FiDollarSign, FiTag, FiTarget, FiSettings } from 'react-icons/fi';
+
+// Components
 import Dashboard from './components/Dashboard';
-import { Summary } from './components/Summary';
+import ExpenseLogger from './components/ExpenseLogger';
+import CategoryManager from './components/CategoryManager';
 import GoalManager from './components/GoalManager';
 import CategoryEditor from './components/CategoryEditor';
-import MobileNav from './components/MobileNav';
-import { LogoIcon } from './components/icons';
-import SourceManager from './components/SourceManager';
-import MobileContent from './components/MobileContent';
 
-function App() {
-  const [income, setIncome] = useLocalStorage<number>('monthlyIncome', 0);
+// Navigation items
+const navItems = [
+  { id: 'dashboard', label: 'Dashboard', icon: <FiHome size={20} /> },
+  { id: 'expenses', label: 'Expenses', icon: <FiDollarSign size={20} /> },
+  { id: 'categories', label: 'Categories', icon: <FiTag size={20} /> },
+  { id: 'goals', label: 'Goals', icon: <FiTarget size={20} /> },
+  { id: 'reports', label: 'Reports', icon: <FiPieChart size={20} /> },
+];
+
+const App: React.FC = () => {
+  const [income] = useLocalStorage<number>('monthlyIncome', 0);
+  const [transactionSources] = useLocalStorage<Array<{id: string; name: string}>>('transactionSources', []);
   const [categories, setCategories] = useLocalStorage<Category[]>('budgetCategories', INITIAL_CATEGORIES);
   const [goals, setGoals] = useLocalStorage<Goal[]>('savingGoals', INITIAL_GOALS);
-  const [transactionSources, setTransactionSources] = useLocalStorage<TransactionSource[]>('transactionSources', INITIAL_SOURCES);
   const { addToast } = useToast();
   
-  const [mobileView, setMobileView] = useState('dashboard');
+  const [activeView, setActiveView] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
-  const handleAddIncome = useCallback((newIncome: Omit<Income, 'id'>) => {
-    setIncome(prev => prev + newIncome.amount);
-    addToast({ message: 'Income logged successfully!', type: 'success' });
-  }, [setIncome, addToast]);
+  // Calculate total expenses
+  const totalExpenses = useMemo(() => {
+    return categories.reduce((sum, category) => sum + (category.spent || 0), 0);
+  }, [categories]);
 
-  const handleAddTransactionSource = (name: string) => {
-    const newSource: TransactionSource = {
-      id: `src-${new Date().getTime()}`,
-      name,
-    };
-    setTransactionSources(prevSources => [...prevSources, newSource]);
-    addToast({ message: 'Transaction source added!', type: 'success' });
+  // Calculate total savings
+  const totalSavings = useMemo(() => {
+    return income - totalExpenses;
+  }, [income, totalExpenses]);
+
+  // Handle navigation
+  const handleNavigation = (view: string) => {
+    setActiveView(view);
+    if (mobileMenuOpen) setMobileMenuOpen(false);
   };
 
-  const handleDeleteTransactionSource = (id: string) => {
-    setTransactionSources(prevSources => prevSources.filter(source => source.id !== id));
-    addToast({ message: 'Transaction source removed.', type: 'info' });
+  // Toggle sidebar on desktop
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
   };
 
-  const handleAllocationChange = useCallback((categoryId: string, newAllocation: number) => {
-    setCategories(prevCategories =>
-      prevCategories.map(cat =>
-        cat.id === categoryId ? { ...cat, allocation: Math.max(0, newAllocation) } : cat
-      )
-    );
-  }, [setCategories]);
+  // Toggle mobile menu
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
 
-  const handleAddExpense = useCallback((expense: Omit<Expense, 'id'>) => {
+  // Handle adding a new expense
+  const handleAddExpense = useCallback((expenseData: Omit<Expense, 'id' | 'date' | 'type'>) => {
     const newExpense: Expense = {
-      ...expense,
-      id: `exp-${new Date().getTime()}`,
+      ...expenseData,
+      id: `exp-${Date.now()}`,
+      type: 'expense',
+      date: new Date().toISOString()
     };
-    setCategories(prevCategories =>
-      prevCategories.map(cat =>
-        cat.id === expense.categoryId
-          ? { ...cat, expenses: [...cat.expenses, newExpense] }
+    
+    // Update category spent amount
+    setCategories(prev => 
+      prev.map(cat => 
+        cat.id === expenseData.categoryId
+          ? { ...cat, spent: (cat.spent || 0) + expenseData.amount }
           : cat
       )
     );
-    addToast({ message: 'Expense logged successfully!', type: 'success' });
+    
+    addToast({ message: 'Expense added successfully!', type: 'success' });
   }, [setCategories, addToast]);
-  
+
+  // Handle category allocation change
+  const handleAllocationChange = useCallback((categoryId: string, newAllocation: number) => {
+    setCategories(prev => 
+      prev.map(cat => 
+        cat.id === categoryId 
+          ? { ...cat, allocation: newAllocation, budget: income * (newAllocation / 100) }
+          : cat
+      )
+    );
+  }, [income, setCategories]);
+
+  // Handle opening the category modal
+  const handleOpenModal = useCallback((category: Category | null) => {
+    setEditingCategory(category);
+    setCategoryModalOpen(true);
+  }, []);
+
+  // Handle auto-adjusting allocations
+  const handleAutoAdjustAllocation = useCallback(() => {
+    const activeCategories = categories.filter(cat => cat.isActive);
+    if (activeCategories.length === 0) return;
+    
+    const equalAllocation = 100 / activeCategories.length;
+    setCategories(prev => 
+      prev.map(cat => 
+        cat.isActive 
+          ? { ...cat, allocation: equalAllocation, budget: income * (equalAllocation / 100) }
+          : cat
+      )
+    );
+    addToast({ message: 'Allocations equalized across active categories', type: 'success' });
+  }, [categories, income, setCategories, addToast]);
+
+  // Handle editing a category
+  const handleEditCategory = useCallback((category: Category) => {
+    setEditingCategory(category);
+    setCategoryModalOpen(true);
+  }, []);
+
+  // Handle saving a category
+  const handleSaveCategory = useCallback((categoryData: Omit<Category, 'id' | 'expenses'> & { id?: string }) => {
+    if (editingCategory) {
+      // Update existing category
+      setCategories(prev => 
+        prev.map(cat => 
+          cat.id === editingCategory.id 
+            ? { 
+                ...cat, 
+                ...categoryData, 
+                expenses: cat.expenses,
+                spent: cat.spent,
+                budget: cat.budget || 0
+              } 
+            : cat
+        )
+      );
+      addToast({ message: 'Category updated!', type: 'success' });
+    } else {
+      // Add new category
+      const newCategory: Category = {
+        ...categoryData,
+        id: `cat-${Date.now()}`,
+        expenses: [],
+        spent: 0,
+        budget: income * (categoryData.allocation / 100),
+        isActive: true
+      };
+      setCategories(prev => [...prev, newCategory]);
+      addToast({ message: 'Category added!', type: 'success' });
+    }
+    setCategoryModalOpen(false);
+    setEditingCategory(null);
+  }, [editingCategory, income, setCategories, addToast]);
+
+  // Handle deleting a category
+  const handleDeleteCategory = useCallback((categoryId: string) => {
+    setCategories(prev => prev.filter(cat => cat.id !== categoryId));
+    addToast({ message: 'Category deleted.', type: 'info' });
+  }, [setCategories, addToast]);
+
+  // Handle adding a new goal
   const handleAddGoal = useCallback((goal: Omit<Goal, 'id' | 'currentAmount'>) => {
     const newGoal: Goal = {
       ...goal,
-      id: `goal-${new Date().getTime()}`,
+      id: `goal-${Date.now()}`,
       currentAmount: 0,
     };
-    setGoals((prevGoals: Goal[]) => [...prevGoals, newGoal]);
-    addToast({ message: 'New goal created!', type: 'success' });
+    setGoals(prev => [...prev, newGoal]);
+    addToast({ message: 'Goal added!', type: 'success' });
   }, [setGoals, addToast]);
 
-  const handleAllocateToGoal = useCallback((goalId: string, amount: number) => {
-    setGoals((prevGoals: Goal[]) =>
-      prevGoals.map((g: Goal) =>
-        g.id === goalId ? { ...g, currentAmount: g.currentAmount + amount } : g
-      )
-    );
-    addToast({ message: `Funds added to goal!`, type: 'success' });
-  }, [setGoals, addToast]);
-  
+  // Handle deleting a goal
   const handleDeleteGoal = useCallback((goalId: string) => {
-     setGoals((prevGoals: Goal[]) => prevGoals.filter((g: Goal) => g.id !== goalId));
-     addToast({ message: 'Goal removed.', type: 'info' });
+    setGoals(prev => prev.filter(goal => goal.id !== goalId));
+    addToast({ message: 'Goal deleted.', type: 'info' });
   }, [setGoals, addToast]);
 
-  const handleResetData = useCallback(() => {
-    if(window.confirm('Are you sure you want to reset all your data? This cannot be undone.')) {
-        setIncome(0);
-        setCategories(INITIAL_CATEGORIES);
-        setGoals(INITIAL_GOALS);
-        setTransactionSources(INITIAL_SOURCES);
-        addToast({ message: 'All data has been reset.', type: 'info' });
-    }
-  }, [setIncome, setCategories, setGoals, setTransactionSources, addToast]);
-  
-  const handleClearExpenses = useCallback((categoryId: string) => {
-     setCategories((prevCategories: Category[]) =>
-      prevCategories.map((cat: Category) =>
-        cat.id === categoryId
-          ? { ...cat, expenses: [] }
-          : cat
-      )
-    );
-    addToast({ message: 'Expenses cleared for category.', type: 'info' });
-  }, [setCategories, addToast]);
-
-  const handleDeleteExpense = useCallback((categoryId: string, expenseId: string) => {
-    setCategories((prevCategories: Category[]) =>
-      prevCategories.map((cat: Category) =>
-        cat.id === categoryId
-          ? { ...cat, expenses: cat.expenses.filter(exp => exp.id !== expenseId) }
-          : cat
-      )
-    );
-    addToast({ message: 'Expense deleted successfully.', type: 'success' });
-  }, [setCategories, addToast]);
-
-  // Fungsi auto-adjust alokasi kategori
-  const handleAutoAdjustAllocation = useCallback(() => {
-    setCategories((prevCategories) => {
-      if (prevCategories.length === 0) return prevCategories;
-      const total = prevCategories.reduce((sum, cat) => sum + cat.allocation, 0);
-      if (total === 100) return prevCategories;
-      const diff = 100 - total;
-      // Adjust the last category to make total 100%
-      return prevCategories.map((cat, idx) =>
-        idx === prevCategories.length - 1
-          ? { ...cat, allocation: Math.max(0, cat.allocation + diff) }
-          : cat
-      );
-    });
-    addToast({ message: 'Budget allocations automatically adjusted to total 100%.', type: 'info' });
-  }, [setCategories, addToast]);
-
-  // Fungsi backup data
-  const handleExportData = () => {
+  // Handle exporting data
+  const handleExportData = useCallback(() => {
     const data = {
       income,
       categories,
       goals,
+      transactionSources,
+      lastUpdated: new Date().toISOString()
     };
-    const date = new Date();
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    const fileName = `finance-backup-${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}.json`;
+    
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = fileName;
+    a.download = `finance-tracker-export-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    addToast({ message: 'Data berhasil diekspor!', type: 'success' });
-  };
+    
+    addToast({ message: 'Data exported successfully!', type: 'success' });
+  }, [income, categories, goals, transactionSources, addToast]);
 
-  // Fungsi restore data
-  const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const imported = JSON.parse(event.target?.result as string);
-        if (typeof imported !== 'object' || !imported) throw new Error('Format file tidak valid');
-        if (!('income' in imported) || !('categories' in imported) || !('goals' in imported)) throw new Error('File tidak sesuai format aplikasi');
-        localStorage.setItem('monthlyIncome', JSON.stringify(imported.income));
-        localStorage.setItem('budgetCategories', JSON.stringify(imported.categories));
-        localStorage.setItem('savingGoals', JSON.stringify(imported.goals));
-        addToast({ message: 'Data berhasil diimpor! Aplikasi akan dimuat ulang.', type: 'success' });
-        setTimeout(() => window.location.reload(), 1200);
-      } catch (err) {
-        addToast({ message: 'Gagal mengimpor data. Pastikan file benar.', type: 'error' });
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  // --- Category CRUD ---
-  const handleOpenCategoryModal = (category: Category | null) => {
-    setEditingCategory(category);
-    setCategoryModalOpen(true);
-  };
-  
-  const handleCloseCategoryModal = () => {
-    setEditingCategory(null);
-    setCategoryModalOpen(false);
-  };
-
-  const handleSaveCategory = useCallback((categoryData: Omit<Category, 'id' | 'expenses'> & { id?: string }) => {
-    if (categoryData.id) { // Update existing
-      setCategories(prev => prev.map(cat => cat.id === categoryData.id ? { ...cat, ...categoryData } : cat));
-      addToast({ message: `Category "${categoryData.name}" updated.`, type: 'success' });
-    } else { // Add new
-      const newCategory: Category = {
-        ...categoryData,
-        id: `cat-${new Date().getTime()}`,
-        expenses: [],
-      };
-      setCategories(prev => [...prev, newCategory]);
-      addToast({ message: `Category "${categoryData.name}" created.`, type: 'success' });
-    }
-    handleCloseCategoryModal();
-  }, [setCategories, addToast, handleCloseCategoryModal]);
-  
-  const handleDeleteCategory = (categoryId: string) => {
-    const categoryToDelete = categories.find((c: Category) => c.id === categoryId);
-    if (!categoryToDelete) return;
-
-    if (categoryToDelete.expenses.length > 0) {
-        addToast({ message: 'Cannot delete category with existing expenses. Please clear them first.', type: 'error'});
-        return;
-    }
-    if (window.confirm(`Are you sure you want to delete the "${categoryToDelete.name}" category?`)) {
-        setCategories((prev: Category[]) => prev.filter((c: Category) => c.id !== categoryId));
-        addToast({ message: `Category "${categoryToDelete.name}" deleted.`, type: 'info' });
+  // Render the active view
+  const renderView = (): ReactNode => {
+    switch (activeView) {
+      case 'dashboard':
+        return (
+          <Dashboard 
+            income={income}
+            categories={categories}
+            goals={goals}
+            totalExpenses={totalExpenses}
+            totalSavings={totalSavings}
+          />
+        );
+      case 'expenses':
+        return (
+          <ExpenseLogger
+            categories={categories}
+            onAddExpense={handleAddExpense}
+            isAddDisabled={false}
+            transactionSources={transactionSources}
+          />
+        );
+      case 'categories':
+        return (
+          <CategoryManager
+            categories={categories}
+            onAllocationChange={handleAllocationChange}
+            totalAllocation={categories.reduce((sum, cat) => sum + (cat.isActive ? cat.allocation : 0), 0)}
+            onOpenModal={handleOpenModal}
+            onDeleteCategory={handleDeleteCategory}
+            onAutoAdjustAllocation={handleAutoAdjustAllocation}
+          />
+        );
+      case 'goals':
+        return (
+          <GoalManager
+            goals={goals}
+            onAddGoal={handleAddGoal}
+            onUpdateGoal={(updatedGoal) => {
+              setGoals(prev => 
+                prev.map(goal => goal.id === updatedGoal.id ? updatedGoal : goal)
+              );
+              addToast({ message: 'Goal updated!', type: 'success' });
+            }}
+            onDeleteGoal={handleDeleteGoal}
+            availableFunds={0} // You should replace 0 with the actual available funds
+          />
+        );
+      case 'reports':
+        return (
+          <div className="bg-white rounded-xl shadow p-6">
+            <h2 className="text-2xl font-bold mb-6">Reports</h2>
+            <p className="text-gray-500">Reports are coming soon!</p>
+          </div>
+        );
+      default:
+        return null;
     }
   };
-
-  const { totalSpent, totalAllocation, totalAllocatedToGoals } = useMemo(() => {
-    const spent = categories.reduce((sum, cat) => {
-      return sum + cat.expenses.reduce((catSum, exp) => catSum + exp.amount, 0);
-    }, 0);
-    const allocation = categories.reduce((sum, cat) => sum + cat.allocation, 0);
-    const allocatedToGoals = goals.reduce((sum, goal) => sum + goal.currentAmount, 0);
-    return { totalSpent: spent, totalAllocation: allocation, totalAllocatedToGoals: allocatedToGoals };
-  }, [categories, goals]);
-
-  const totalBudget = income;
-  const totalRemaining = totalBudget - totalSpent - totalAllocatedToGoals;
-  const isBudgetValid = totalAllocation === 100;
-  const availableToSave = totalBudget - totalSpent;
 
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         <header className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
-            <LogoIcon className="w-10 h-10 text-indigo-600" />
+            <div className="h-8 w-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold">$</div>
             <h1 className="text-2xl sm:text-3xl text-slate-800 tracking-tight">Finance Tracker</h1>
           </div>
           <div className="flex items-center gap-4">
@@ -253,109 +274,110 @@ function App() {
               onClick={handleExportData}
               className="px-4 py-2 text-sm font-medium text-indigo-600 bg-white border border-indigo-600 rounded-lg shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              Ekspor Data
-            </button>
-            <label className="px-4 py-2 text-sm font-medium text-indigo-600 bg-white border border-indigo-600 rounded-lg shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
-              Impor Data
-              <input type="file" accept="application/json" onChange={handleImportData} className="hidden" />
-            </label>
-            <button
-              onClick={handleResetData}
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-50 focus:ring-indigo-500"
-            >
-              Reset All Data
+              Export Data
             </button>
           </div>
         </header>
 
-        <main className="relative">
-            {/* Desktop View */}
-            <div className="hidden lg:grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-              <div className="lg:col-span-1 space-y-6">
-                  <Summary
-                    totalBudget={totalBudget}
-                    totalSpent={totalSpent}
-                    totalRemaining={totalRemaining}
-                    totalAllocatedToGoals={totalAllocatedToGoals}
-                    categories={categories}
-                    onDeleteExpense={handleDeleteExpense}
-                  />
-                  <IncomeInput onAddIncome={handleAddIncome} transactionSources={transactionSources} />
-                  <ExpenseLogger
-                    categories={categories}
-                    onAddExpense={handleAddExpense}
-                    isAddDisabled={!isBudgetValid}
-                    transactionSources={transactionSources}
-                  />
-              </div>
-              <div className="lg:col-span-2 space-y-6">
-                <SourceManager sources={transactionSources} onAddSource={handleAddTransactionSource} onDeleteSource={handleDeleteTransactionSource} />
-                <CategoryManager
-                  categories={categories}
-                  onAllocationChange={handleAllocationChange}
-                  totalAllocation={totalAllocation}
-                  onOpenModal={handleOpenCategoryModal}
-                  onDeleteCategory={handleDeleteCategory}
-                  onAutoAdjustAllocation={handleAutoAdjustAllocation}
-                />
-                <GoalManager
-                  goals={goals}
-                  onAddGoal={handleAddGoal}
-                  onAllocateToGoal={handleAllocateToGoal}
-                  onDeleteGoal={handleDeleteGoal}
-                  availableFunds={availableToSave}
-                />
-                <Dashboard 
-                  income={income} 
-                  categories={categories} 
-                  onClearExpenses={handleClearExpenses}
-                  onDeleteExpense={handleDeleteExpense}
-                />
-              </div>
-            </div>
+        {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-white shadow-lg z-10">
+          <nav className="p-4 space-y-1">
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleNavigation(item.id)}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left ${
+                  activeView === item.id 
+                    ? 'bg-primary-50 text-primary-600' 
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </nav>
+        </div>
+      )}
 
-            {/* Mobile View */}
-            <div className="lg:hidden pb-24 space-y-6">
-                <MobileContent
-                    mobileView={mobileView}
-                    totalBudget={totalBudget}
-                    totalSpent={totalSpent}
-                    totalRemaining={totalRemaining}
-                    totalAllocatedToGoals={totalAllocatedToGoals}
-                    categories={categories}
-                    income={income}
-                    onClearExpenses={handleClearExpenses}
-                    onDeleteExpense={handleDeleteExpense}
-                    onAddExpense={handleAddExpense}
-                    isBudgetValid={isBudgetValid}
-                    onAddIncome={handleAddIncome}
-                    transactionSources={transactionSources}
-                    onAllocationChange={handleAllocationChange}
-                    totalAllocation={totalAllocation}
-                    onOpenModal={handleOpenCategoryModal}
-                    onDeleteCategory={handleDeleteCategory}
-                    onAutoAdjustAllocation={handleAutoAdjustAllocation}
-                    goals={goals}
-                    onAddGoal={handleAddGoal}
-                    onAllocateToGoal={handleAllocateToGoal}
-                    onDeleteGoal={handleDeleteGoal}
-                    availableToSave={availableToSave}
-                />
-            </div>
-            
-            <MobileNav activeView={mobileView} setActiveView={setMobileView} />
-        </main>
-      </div>
-      
+      {/* Desktop Sidebar */}
+      <aside className={`
+        bg-white shadow-sm w-64 flex-shrink-0 
+        ${sidebarOpen ? 'block' : 'hidden'} 
+        md:block fixed h-full z-10
+      `}>
+        <div className="p-6 border-b border-gray-100">
+          <h1 className="text-2xl font-bold text-primary-600">Finance Tracker</h1>
+        </div>
+        <nav className="p-4 space-y-1">
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => handleNavigation(item.id)}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                activeView === item.id 
+                  ? 'bg-primary-50 text-primary-600 font-medium' 
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </nav>
+        
+        {/* Sidebar Toggle */}
+        <div className="absolute bottom-0 w-full p-4 border-t border-gray-100">
+          <button 
+            onClick={toggleSidebar}
+            className="w-full flex items-center space-x-3 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+          >
+            <FiSettings size={20} />
+            <span>Settings</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className={`
+        flex-1 min-h-screen pt-4 pb-20 md:py-6 
+        ${sidebarOpen ? 'md:ml-64' : 'md:ml-0'}
+        transition-all duration-200
+      `}>
+        <div className="container mx-auto px-4">
+          {/* Page Header */}
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">
+              {navItems.find(item => item.id === activeView)?.label || 'Dashboard'}
+            </h2>
+            {activeView === 'expenses' && (
+              <button 
+                onClick={() => {}}
+                className="btn btn-primary"
+              >
+                + Add Expense
+              </button>
+            )}
+          </div>
+
+          {/* View Content */}
+          {renderView()}
+        </div>
+      </main>
+
+      {/* Modals */}
       {isCategoryModalOpen && (
-        <CategoryEditor 
-            onClose={handleCloseCategoryModal}
-            onSave={handleSaveCategory}
-            categoryToEdit={editingCategory}
+        <CategoryEditor
+          categoryToEdit={editingCategory}
+          onSave={handleSaveCategory}
+          onClose={() => setCategoryModalOpen(false)}
         />
       )}
+      </div>
     </div>
   );
-}
+};
 
 export default App;

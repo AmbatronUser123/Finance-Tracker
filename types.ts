@@ -19,15 +19,22 @@ export interface Expense {
   description: string;
   amount: number;
   date: string;
+  type?: 'expense' | 'income';
+  categoryName?: string;
+  sourceName?: string;
 }
 
 export interface Category {
-  id:string;
+  id: string;
   name: string;
   allocation: number; // Percentage
+  budget: number;     // Monthly budget amount
+  spent: number;      // Total spent in this category
   expenses: Expense[];
   color: string;
   icon: string;
+  limit?: number;     // Optional spending limit
+  isActive?: boolean; // Whether the category is active
 }
 
 export interface Goal {
