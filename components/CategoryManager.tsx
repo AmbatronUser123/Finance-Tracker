@@ -12,6 +12,7 @@ interface CategoryManagerProps {
   onOpenModal: (category: Category | null) => void;
   onDeleteCategory: (categoryId: string) => void;
   onAutoAdjustAllocation: () => void;
+  onViewCategory: (category: Category) => void;
 }
 
 const CategoryManager: React.FC<CategoryManagerProps> = ({ 
@@ -20,7 +21,8 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
   totalAllocation, 
   onOpenModal, 
   onDeleteCategory, 
-  onAutoAdjustAllocation
+  onAutoAdjustAllocation,
+  onViewCategory
 }) => {
   // Using the onAutoAdjustAllocation prop from parent
   const isInvalid = totalAllocation !== 100;
@@ -96,7 +98,9 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
             {categories.map(cat => (
               <div key={cat.id} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-50">
                 <div className="flex-grow">
-                    <label htmlFor={`alloc-${cat.id}`} className="text-slate-600 truncate text-sm font-medium">{cat.name}</label>
+                    <button onClick={() => onViewCategory(cat)} className="text-left w-full">
+                      <span className="text-slate-600 truncate text-sm font-medium cursor-pointer hover:text-indigo-600">{cat.name}</span>
+                    </button>
                     <div className="relative w-full mt-1">
                       <input
                         id={`alloc-${cat.id}`}

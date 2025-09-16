@@ -25,6 +25,7 @@ import CategoryManager from './components/CategoryManager';
 import GoalManager from './components/GoalManager';
 import CategoryEditor from './components/CategoryEditor';
 import DataManager from './components/DataManager';
+import CategoryDetailModal from './components/CategoryDetailModal';
 
 // Navigation items
 const navItems = [
@@ -54,6 +55,7 @@ const AppContent: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryWithBudget | null>(null);
+  const [viewingCategory, setViewingCategory] = useState<CategoryWithBudget | null>(null);
 
   // Calculate totals
   const totalExpenses = useMemo(() => {
@@ -126,6 +128,10 @@ const AppContent: React.FC = () => {
     if (totalAlloc !== 100) {
       addToast({ type: 'error', message: 'Total allocation must be 100%' });
     }
+  };
+
+  const handleViewCategory = (category: Category) => {
+    setViewingCategory(category as CategoryWithBudget);
   };
 
   const handleExportData = (format: 'json' | 'pdf' | 'csv') => {
@@ -215,6 +221,7 @@ const AppContent: React.FC = () => {
             onOpenModal={handleOpenModal}
             onDeleteCategory={handleDeleteCategory}
             onAutoAdjustAllocation={handleAutoAdjustAllocation}
+            onViewCategory={handleViewCategory}
           />
         );
       case 'goals':
@@ -335,6 +342,11 @@ const AppContent: React.FC = () => {
           onClose={() => setCategoryModalOpen(false)}
         />
       )}
+
+      <CategoryDetailModal 
+        category={viewingCategory}
+        onClose={() => setViewingCategory(null)}
+      />
     </div>
   );
 };
