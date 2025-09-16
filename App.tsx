@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useCallback, ReactNode } from 'react';
+import React, { useState, useMemo, useCallback, ReactNode, useEffect } from 'react';
 import { Category, Goal, Expense } from './types';
 import { INITIAL_CATEGORIES, INITIAL_GOALS } from './constants';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useToast } from './contexts/ToastContext';
-import { FiHome, FiPieChart, FiDollarSign, FiTag, FiTarget } from 'react-icons/fi';
+import { FiHome, FiPieChart, FiDollarSign, FiTag, FiTarget, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 // Components
 import Dashboard from './components/Dashboard';
@@ -32,6 +32,10 @@ const App: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [showAllExpenses, setShowAllExpenses] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const expensesPerPage = 5;
 
   // Calculate total expenses
   const totalExpenses = useMemo(() => {
@@ -49,19 +53,47 @@ const App: React.FC = () => {
     if (mobileMenuOpen) setMobileMenuOpen(false);
   };
 
+  // Load expenses from categories on mount
+  useEffect(() => {
+    // Flatten all expenses from all categories
+    const allExpenses = categories.flatMap(cat => 
+      cat.expenses.map(expense => ({
+        ...expense,
+        categoryName: cat.name,
+        sourceName: transactionSources.find(s => s.id === expense.sourceId)?.name || 'Unknown Source'
+      }))
+    );
+    setExpenses(allExpenses);
+  }, [categories, transactionSources]);
+
   // Handle adding a new expense
   const handleAddExpense = useCallback((expenseData: Omit<Expense, 'id' | 'date' | 'type'>) => {
-    // Update category spent amount
+    const newExpense: Expense = {
+      ...expenseData,
+      id: `exp-${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      type: 'expense',
+      categoryName: categories.find(c => c.id === expenseData.categoryId)?.name || 'Uncategorized',
+      sourceName: transactionSources.find(s => s.id === expenseData.sourceId)?.name || 'Unknown Source'
+    };
+
+    // Update category spent amount and add expense
     setCategories(prev => 
       prev.map(cat => 
         cat.id === expenseData.categoryId
-          ? { ...cat, spent: (cat.spent || 0) + expenseData.amount }
+          ? { 
+              ...cat, 
+              spent: (cat.spent || 0) + expenseData.amount,
+              expenses: [...cat.expenses, newExpense]
+            }
           : cat
       )
     );
     
+    // Update expenses list
+    setExpenses(prev => [newExpense, ...prev]);
     addToast({ message: 'Expense added successfully!', type: 'success' });
-  }, [setCategories, addToast]);
+  }, [setCategories, addToast, categories, transactionSources]);
 
   // Handle category allocation change
   const handleAllocationChange = useCallback((categoryId: string, newAllocation: number) => {
@@ -236,10 +268,23 @@ const App: React.FC = () => {
           />
         );
       case 'expenses':
+        // Sort and paginate expenses
+        const sortedExpenses = [...expenses].sort((a, b) => 
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        
+        // Pagination for expenses
+        const indexOfLastExpense = currentPage * expensesPerPage;
+        const indexOfFirstExpense = indexOfLastExpense - expensesPerPage;
+        // Only show the current page's expenses
+        const currentExpenses = sortedExpenses.slice(indexOfFirstExpense, indexOfLastExpense);
+        
+        const totalPages = Math.ceil(expenses.length / expensesPerPage);
+
         return (
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-2xl shadow">
-              <h2 className="text-xl font-bold text-slate-800 mb-4">Add New Expense</h2>
+            <div className="bg-white p-4 sm:p-6 rounded-2xl shadow">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-4">Add New Expense</h2>
               <ExpenseLogger
                 categories={categories}
                 onAddExpense={handleAddExpense}
@@ -247,20 +292,68 @@ const App: React.FC = () => {
                 transactionSources={transactionSources}
               />
             </div>
-            <div className="bg-white p-6 rounded-2xl shadow">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-slate-800">Recent Expenses</h2>
-                <button 
-                  onClick={() => {}}
-                  className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
-                >
-                  View All
-                </button>
+            <div className="bg-white p-4 sm:p-6 rounded-2xl shadow">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                <h2 className="text-lg sm:text-xl font-bold text-slate-800">
+                  {showAllExpenses ? 'All Expenses' : 'Recent Expenses'}
+                </h2>
+                <div className="flex items-center gap-3">
+                  {showAllExpenses && expenses.length > expensesPerPage && (
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="p-1.5 text-gray-500 hover:text-indigo-600 disabled:opacity-50"
+                      >
+                        <FiChevronLeft size={20} />
+                      </button>
+                      <span className="text-sm text-gray-600">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <button 
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="p-1.5 text-gray-500 hover:text-indigo-600 disabled:opacity-50"
+                      >
+                        <FiChevronRight size={20} />
+                      </button>
+                    </div>
+                  )}
+                  <button 
+                    onClick={() => {
+                      setShowAllExpenses(!showAllExpenses);
+                      setCurrentPage(1);
+                    }}
+                    className="text-sm font-medium text-indigo-600 hover:text-indigo-800 whitespace-nowrap"
+                  >
+                    {showAllExpenses ? 'Show Less' : 'View All'}
+                  </button>
+                </div>
               </div>
-              {/* Add expense list component here */}
-              <div className="text-center text-gray-500 py-8">
-                <p>No recent expenses. Add one above!</p>
-              </div>
+              
+              {currentExpenses.length > 0 ? (
+                <div className="space-y-3">
+                  {currentExpenses.map(expense => (
+                    <div key={expense.id} className="p-3 sm:p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+                      <div className="flex justify-between items-start sm:items-center">
+                        <div>
+                          <p className="font-medium text-slate-800">{expense.description}</p>
+                          <p className="text-xs sm:text-sm text-slate-500">
+                            {expense.categoryName} • {expense.sourceName} • {new Date(expense.date).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <span className="font-semibold text-red-600 whitespace-nowrap ml-4">
+                          -{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(expense.amount)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No expenses found. Add one above!</p>
+                </div>
+              )}
             </div>
           </div>
         );

@@ -3,6 +3,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Category } from '../types';
 import { ChartPieIcon, PlusIcon, PencilIcon, TrashIcon } from './icons';
 import { TAILWIND_COLORS } from '../constants';
+// Toast notifications are handled by the parent component
 
 interface CategoryManagerProps {
   categories: Category[];
@@ -13,7 +14,15 @@ interface CategoryManagerProps {
   onAutoAdjustAllocation: () => void;
 }
 
-const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, onAllocationChange, totalAllocation, onOpenModal, onDeleteCategory, onAutoAdjustAllocation }) => {
+const CategoryManager: React.FC<CategoryManagerProps> = ({ 
+  categories, 
+  onAllocationChange, 
+  totalAllocation, 
+  onOpenModal, 
+  onDeleteCategory, 
+  onAutoAdjustAllocation
+}) => {
+  // Using the onAutoAdjustAllocation prop from parent
   const isInvalid = totalAllocation !== 100;
 
   const chartData = useMemo(() => {
@@ -21,6 +30,8 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, onAllocat
       .filter(cat => cat.allocation > 0)
       .map(cat => ({ name: cat.name, value: cat.allocation, color: cat.color }));
   }, [categories]);
+
+  // Auto adjust allocation is handled by the parent component
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-lg shadow-slate-200/50">
@@ -37,12 +48,25 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, onAllocat
           <span className="hidden sm:inline">Add Category</span>
         </button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Chart Container */}
+        <div className="w-full md:w-1/2">
          <div style={{ width: '100%', minHeight: '300px' }}>
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
-                  <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} fill="#8884d8" label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={12}>
+                  <Pie 
+                    data={chartData} 
+                    dataKey="value" 
+                    nameKey="name" 
+                    cx="50%" 
+                    cy="50%" 
+                    outerRadius={80} 
+                    fill="#8884d8" 
+                    label={({ percent }) => percent ? `${(percent * 100).toFixed(0)}%` : ''} 
+                    labelLine={false} 
+                    fontSize={12}
+                  >
                     {chartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={TAILWIND_COLORS[entry.color] || TAILWIND_COLORS.slate} className="focus:outline-none"/>
                     ))}
@@ -65,7 +89,10 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, onAllocat
                 </div>
             )}
          </div>
-         <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
+        </div>
+        
+        {/* Categories List */}
+        <div className="w-full md:w-1/2 space-y-3 max-h-96 overflow-y-auto pr-2">
             {categories.map(cat => (
               <div key={cat.id} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-50">
                 <div className="flex-grow">
@@ -94,27 +121,34 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ categories, onAllocat
          </div>
       </div>
       <div className="mt-6 pt-4 border-t border-slate-200">
-        <div className="flex justify-between font-bold text-lg">
-          <span className="text-slate-800">Total:</span>
-          <span className={isInvalid ? 'text-red-500' : 'text-green-600'}>
-            {totalAllocation}%
-          </span>
+        <div className="flex justify-between items-center">
+          <div>
+            <div className="font-bold text-lg">
+              <span className="text-slate-800">Total Allocation: </span>
+              <span className={isInvalid ? 'text-red-500' : 'text-green-600'}>
+                {totalAllocation}%
+              </span>
+            </div>
+            {isInvalid && (
+              <p className="text-sm text-red-500 mt-1">
+                Total allocation must be exactly 100%
+              </p>
+            )}
+          </div>
+          <button
+            onClick={onAutoAdjustAllocation}
+            disabled={categories.length === 0}
+            className={`px-4 py-2 text-sm font-semibold text-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+              isInvalid 
+                ? 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500'
+                : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
+            } ${
+              categories.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            {isInvalid ? 'Perbaiki Otomatis' : 'Equalize Allocations'}
+          </button>
         </div>
-        {isInvalid && (
-          <>
-          <p className="text-center text-sm text-red-500 mt-2">
-            Total allocation must be exactly 100% to log expenses.
-          </p>
-         <div className="flex justify-center mt-2">
-           <button
-             onClick={onAutoAdjustAllocation}
-             className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-           >
-             Perbaiki Otomatis
-           </button>
-         </div>
-          </>
-        )}
       </div>
     </div>
   );

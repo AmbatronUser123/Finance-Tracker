@@ -1,7 +1,8 @@
 import React from 'react';
 import { Category, Goal } from '../types';
-import { FiDollarSign, FiTrendingUp, FiPieChart } from 'react-icons/fi';
+import { FiDollarSign, FiTrendingUp, FiPieChart, FiArrowRight } from 'react-icons/fi';
 import { formatRupiah } from '../src/utils/currency';
+import { useNavigate } from 'react-router-dom';
 
 interface DashboardProps {
   income: number;
@@ -34,11 +35,17 @@ const Dashboard: React.FC<DashboardProps> = ({
     progress: (goal.currentAmount / goal.targetAmount) * 100,
   }));
 
+  const navigate = useNavigate();
+
   // Get top 3 categories by spending (filter out categories with no spending)
   const topCategories = [...categoryTotals]
     .filter(cat => cat.spent > 0)
     .sort((a, b) => b.spent - a.spent)
     .slice(0, 3);
+
+  const handleViewAll = (section: string) => {
+    navigate(`/${section}`);
+  };
 
   return (
     <div className="space-y-6">
@@ -90,16 +97,19 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Categories Overview */}
         <div className="bg-white rounded-xl shadow p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Top Categories</h3>
-            <span className="text-sm text-primary-600 font-medium">
-              View All
-            </span>
+            <button 
+              onClick={() => handleViewAll('categories')}
+              className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+            >
+              View All <FiArrowRight className="ml-1" size={16} />
+            </button>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {topCategories.map((category) => (
               <div key={category.id}>
                 <div className="flex justify-between text-sm mb-1">
@@ -124,11 +134,14 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div className="bg-white rounded-xl shadow p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Saving Goals</h3>
-            <span className="text-sm text-primary-600 font-medium">
-              View All
-            </span>
+            <button 
+              onClick={() => handleViewAll('goals')}
+              className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+            >
+              View All <FiArrowRight className="ml-1" size={16} />
+            </button>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {goalsProgress.slice(0, 3).map((goal) => (
               <div key={goal.id}>
                 <div className="flex justify-between text-sm mb-1">
@@ -159,9 +172,12 @@ const Dashboard: React.FC<DashboardProps> = ({
       <div className="bg-white rounded-xl shadow p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">Recent Transactions</h3>
-          <span className="text-sm text-primary-600 font-medium">
-            View All
-          </span>
+          <button 
+            onClick={() => handleViewAll('expenses')}
+            className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+          >
+            View All <FiArrowRight className="ml-1" size={16} />
+          </button>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
