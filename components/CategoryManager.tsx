@@ -103,8 +103,8 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
                     </button>
                     <div className="mt-2">
                       <div className="flex justify-between text-xs text-slate-500 mb-1">
-                        <span>{`Rp${cat.spent.toLocaleString()}`}</span>
-                        <span>{`Rp${cat.planned.toLocaleString()}`}</span>
+                        <span>{`Rp${(cat.spent || 0).toLocaleString()}`}</span>
+                        <span>{`Rp${(cat.planned || 0).toLocaleString()}`}</span>
                       </div>
                       <div className="w-full bg-slate-200 rounded-full h-2.5">
                         <div 

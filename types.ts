@@ -30,6 +30,7 @@ export interface Category {
   allocation: number; // Percentage
   budget: number;     // Monthly budget amount
   spent: number;      // Total spent in this category
+  planned: number;    // Total planned for this category
   expenses: Expense[];
   color: string;
   icon: string;

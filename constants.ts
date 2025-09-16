@@ -26,63 +26,63 @@ export const CATEGORY_ICONS = ['briefcase', 'receipt', 'heart', 'shopping-bag', 
 export const INITIAL_CATEGORIES: Category[] = [
   {
     id: 'cat-1', name: 'Transportation', allocation: 3, expenses: [],
-    color: 'indigo', icon: 'plane'
+    color: 'indigo', icon: 'plane', spent: 0, planned: 0, budget: 0
   },
   {
     id: 'cat-2', name: 'Phone/Internet', allocation: 1, expenses: [],
-    color: 'sky', icon: 'receipt'
+    color: 'sky', icon: 'receipt', spent: 0, planned: 0, budget: 0
   },
   {
     id: 'cat-3', name: 'Personal Care', allocation: 1, expenses: [],
-    color: 'emerald', icon: 'heart'
+    color: 'emerald', icon: 'heart', spent: 0, planned: 0, budget: 0
   },
   {
     id: 'cat-4', name: 'Medical', allocation: 1, expenses: [],
-    color: 'rose', icon: 'bolt'
+    color: 'rose', icon: 'bolt', spent: 0, planned: 0, budget: 0
   },
   {
     id: 'cat-5', name: 'Small Purchases', allocation: 1, expenses: [],
-    color: 'amber', icon: 'shopping-bag'
+    color: 'amber', icon: 'shopping-bag', spent: 0, planned: 0, budget: 0
   },
   {
     id: 'cat-6', name: 'Emergency Fund', allocation: 1, expenses: [],
-    color: 'slate', icon: 'briefcase'
+    color: 'slate', icon: 'briefcase', spent: 0, planned: 0, budget: 0
   },
   {
     id: 'cat-7', name: 'Food & Drinks', allocation: 10, expenses: [],
-    color: 'lime', icon: 'gift'
+    color: 'lime', icon: 'gift', spent: 0, planned: 0, budget: 0
   },
   {
     id: 'cat-8', name: 'Entertainment/Leisure', allocation: 5, expenses: [],
-    color: 'violet', icon: 'film'
+    color: 'violet', icon: 'film', spent: 0, planned: 0, budget: 0
   },
   {
     id: 'cat-9', name: 'Shopping', allocation: 6, expenses: [],
-    color: 'cyan', icon: 'shopping-bag'
+    color: 'cyan', icon: 'shopping-bag', spent: 0, planned: 0, budget: 0
   },
   {
     id: 'cat-10', name: 'Dating', allocation: 15, expenses: [],
-    color: 'rose', icon: 'heart'
+    color: 'rose', icon: 'heart', spent: 0, planned: 0, budget: 0
   },
   {
     id: 'cat-11', name: 'Home Allowance', allocation: 18, expenses: [],
-    color: 'amber', icon: 'home'
+    color: 'amber', icon: 'home', spent: 0, planned: 0, budget: 0
   },
   {
     id: 'cat-12', name: "Sister's Snacks", allocation: 8, expenses: [],
-    color: 'emerald', icon: 'users'
+    color: 'emerald', icon: 'users', spent: 0, planned: 0, budget: 0
   },
   {
     id: 'cat-13', name: 'Monthly Bills', allocation: 11, expenses: [],
-    color: 'sky', icon: 'receipt'
+    color: 'sky', icon: 'receipt', spent: 0, planned: 0, budget: 0
   },
   {
     id: 'cat-14', name: 'Long-term Savings', allocation: 10, expenses: [],
-    color: 'indigo', icon: 'banknotes'
+    color: 'indigo', icon: 'banknotes', spent: 0, planned: 0, budget: 0
   },
   {
     id: 'cat-15', name: 'Short-term Savings', allocation: 9, expenses: [],
-    color: 'violet', icon: 'currency-dollar'
+    color: 'violet', icon: 'currency-dollar', spent: 0, planned: 0, budget: 0
   },
 ];
 

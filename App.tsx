@@ -190,7 +190,7 @@ const AppContent: React.FC = () => {
       const updatedCategories = importedData.categories.map((cat: any) => {
         const spent = cat.expenses ? cat.expenses.reduce((sum: number, exp: { amount: number }) => sum + exp.amount, 0) : 0;
         const planned = newIncome * (cat.allocation / 100);
-        return { ...cat, spent, planned };
+        return { ...cat, spent, planned, budget: planned };
       });
       setCategories(updatedCategories);
     }
