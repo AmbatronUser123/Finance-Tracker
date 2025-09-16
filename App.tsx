@@ -49,7 +49,7 @@ const AppContent: React.FC = () => {
   const navigate = useNavigate();
   const { addToast } = useToast();
   const currentView = location.pathname.replace('/', '') || 'dashboard';
-  const [income] = useLocalStorage<number>('monthlyIncome', 0);
+  const [income, setIncome] = useLocalStorage<number>('monthlyIncome', 0);
   const [categories, setCategories] = useLocalStorage<CategoryWithBudget[]>('categories', INITIAL_CATEGORIES as CategoryWithBudget[]);
   const [goals, setGoals] = useLocalStorage<Goal[]>('goals', []);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -181,12 +181,24 @@ const AppContent: React.FC = () => {
   };
 
   const handleImportData = (importedData: any) => {
-    if (importedData.categories) setCategories(importedData.categories);
-    if (importedData.goals) setGoals(importedData.goals);
+    const newIncome = importedData.income || income;
     if (importedData.income) {
-      // Assuming you have a setIncome function from useLocalStorage
-      // setIncome(importedData.income);
+      setIncome(newIncome);
     }
+
+    if (importedData.categories) {
+      const updatedCategories = importedData.categories.map((cat: any) => {
+        const spent = cat.expenses ? cat.expenses.reduce((sum: number, exp: { amount: number }) => sum + exp.amount, 0) : 0;
+        const planned = newIncome * (cat.allocation / 100);
+        return { ...cat, spent, planned };
+      });
+      setCategories(updatedCategories);
+    }
+
+    if (importedData.goals) {
+      setGoals(importedData.goals);
+    }
+
     addToast({ type: 'success', message: 'Data imported successfully!' });
   };
 

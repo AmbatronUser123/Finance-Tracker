@@ -1,18 +1,18 @@
 import React, { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { Category } from '../types';
+import { CategoryWithBudget } from '../App';
 import { ChartPieIcon, PlusIcon, PencilIcon, TrashIcon } from './icons';
 import { TAILWIND_COLORS } from '../constants';
 // Toast notifications are handled by the parent component
 
 interface CategoryManagerProps {
-  categories: Category[];
+  categories: CategoryWithBudget[];
   onAllocationChange: (categoryId: string, newAllocation: number) => void;
   totalAllocation: number;
-  onOpenModal: (category: Category | null) => void;
+  onOpenModal: (category: CategoryWithBudget | null) => void;
   onDeleteCategory: (categoryId: string) => void;
   onAutoAdjustAllocation: () => void;
-  onViewCategory: (category: Category) => void;
+  onViewCategory: (category: CategoryWithBudget) => void;
 }
 
 const CategoryManager: React.FC<CategoryManagerProps> = ({ 
@@ -101,6 +101,18 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
                     <button onClick={() => onViewCategory(cat)} className="text-left w-full">
                       <span className="text-slate-600 truncate text-sm font-medium cursor-pointer hover:text-indigo-600">{cat.name}</span>
                     </button>
+                    <div className="mt-2">
+                      <div className="flex justify-between text-xs text-slate-500 mb-1">
+                        <span>{`Rp${cat.spent.toLocaleString()}`}</span>
+                        <span>{`Rp${cat.planned.toLocaleString()}`}</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2.5">
+                        <div 
+                          className="bg-indigo-600 h-2.5 rounded-full"
+                          style={{ width: `${cat.planned > 0 ? Math.min((cat.spent / cat.planned) * 100, 100) : 0}%` }}
+                        ></div>
+                      </div>
+                    </div>
                     <div className="relative w-full mt-1">
                       <input
                         id={`alloc-${cat.id}`}

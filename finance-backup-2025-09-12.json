@@ -1,0 +1,416 @@
+{
+  "income": 4943139,
+  "categories": [
+    {
+      "id": "cat-1",
+      "name": "Transportation",
+      "allocation": 10,
+      "expenses": [
+        {
+          "categoryId": "cat-1",
+          "description": "Bensin full tank",
+          "amount": 31300,
+          "date": "2025-08-31",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756823882257"
+        },
+        {
+          "categoryId": "cat-1",
+          "description": "Parkir Margo",
+          "amount": 9500,
+          "date": "2025-08-31",
+          "sourceId": "src-1756542030372",
+          "id": "exp-1756825761073"
+        },
+        {
+          "categoryId": "cat-1",
+          "description": "Bensin 1lt",
+          "amount": 12000,
+          "date": "2025-08-30",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756918919910"
+        },
+        {
+          "categoryId": "cat-1",
+          "description": "Oli",
+          "amount": 85000,
+          "date": "2025-09-03",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756919141613"
+        },
+        {
+          "categoryId": "cat-1",
+          "description": "Ban",
+          "amount": 45321,
+          "date": "2025-09-03",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756919157486"
+        }
+      ],
+      "color": "indigo",
+      "icon": "plane"
+    },
+    {
+      "id": "cat-2",
+      "name": "Phone/Internet",
+      "allocation": 2,
+      "expenses": [
+        {
+          "categoryId": "cat-2",
+          "description": "Paket 16gb",
+          "amount": 43000,
+          "date": "2025-08-31",
+          "sourceId": "src-1756542020188",
+          "id": "exp-1756825526553"
+        },
+        {
+          "categoryId": "cat-2",
+          "description": "Spotify sebulan",
+          "amount": 30525,
+          "date": "2025-09-02",
+          "sourceId": "src-1756542020188",
+          "id": "exp-1756826154937"
+        }
+      ],
+      "color": "sky",
+      "icon": "receipt"
+    },
+    {
+      "id": "cat-3",
+      "name": "Personal Care",
+      "allocation": 1,
+      "expenses": [],
+      "color": "emerald",
+      "icon": "heart"
+    },
+    {
+      "id": "cat-4",
+      "name": "Medical",
+      "allocation": 1,
+      "expenses": [],
+      "color": "rose",
+      "icon": "bolt"
+    },
+    {
+      "id": "cat-5",
+      "name": "Small Purchases",
+      "allocation": 1,
+      "expenses": [
+        {
+          "categoryId": "cat-5",
+          "description": "Colokan Kamar",
+          "amount": 35000,
+          "date": "2025-08-30",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756552954443"
+        }
+      ],
+      "color": "amber",
+      "icon": "shopping-bag"
+    },
+    {
+      "id": "cat-7",
+      "name": "Food & Drinks",
+      "allocation": 12,
+      "expenses": [
+        {
+          "categoryId": "cat-7",
+          "description": "Rokok Garpit 3 Batang",
+          "amount": 9000,
+          "date": "2025-08-29",
+          "sourceId": "src-1756542023344",
+          "id": "exp-1756542691438"
+        },
+        {
+          "categoryId": "cat-7",
+          "description": "Susu Murni Vanilla",
+          "amount": 12000,
+          "date": "2025-08-29",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756542724695"
+        },
+        {
+          "categoryId": "cat-7",
+          "description": "Mie Rebus Ati",
+          "amount": 20000,
+          "date": "2025-08-30",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756542858553"
+        },
+        {
+          "categoryId": "cat-7",
+          "description": "Ziga Bungkus, Kopi Autis, dan Korek",
+          "amount": 28400,
+          "date": "2025-08-30",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756552992768"
+        },
+        {
+          "categoryId": "cat-7",
+          "description": "Ocha",
+          "amount": 8000,
+          "date": "2025-08-31",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756823926365"
+        },
+        {
+          "categoryId": "cat-7",
+          "description": "Ayam Geprek",
+          "amount": 12000,
+          "date": "2025-09-01",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756823950995"
+        },
+        {
+          "categoryId": "cat-7",
+          "description": "Bubur Ayam",
+          "amount": 14000,
+          "date": "2025-09-01",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756823965522"
+        },
+        {
+          "categoryId": "cat-7",
+          "description": "Kimukatsu",
+          "amount": 77000,
+          "date": "2025-09-01",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756823981768"
+        },
+        {
+          "categoryId": "cat-7",
+          "description": "Nasi Bebek",
+          "amount": 22000,
+          "date": "2025-09-01",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756824020918"
+        },
+        {
+          "categoryId": "cat-7",
+          "description": "Cash",
+          "amount": 50000,
+          "date": "2025-09-02",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756826072877"
+        },
+        {
+          "categoryId": "cat-7",
+          "description": "Narik cepe",
+          "amount": 50000,
+          "date": "2025-09-03",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756919112875"
+        },
+        {
+          "categoryId": "cat-7",
+          "description": "Camel ",
+          "amount": 28500,
+          "date": "2025-09-03",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756919125269"
+        },
+        {
+          "categoryId": "cat-7",
+          "description": "CGR",
+          "amount": 18000,
+          "date": "2025-09-03",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756919191487"
+        }
+      ],
+      "color": "lime",
+      "icon": "gift"
+    },
+    {
+      "id": "cat-8",
+      "name": "Entertainment/Leisure",
+      "allocation": 5,
+      "expenses": [],
+      "color": "violet",
+      "icon": "film"
+    },
+    {
+      "id": "cat-9",
+      "name": "Shopping",
+      "allocation": 7,
+      "expenses": [
+        {
+          "categoryId": "cat-9",
+          "description": "Hadiah Anggrek",
+          "amount": 63500,
+          "date": "2025-08-30",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756553016350"
+        },
+        {
+          "categoryId": "cat-9",
+          "description": "Hand Cream",
+          "amount": 17000,
+          "date": "2025-09-01",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756824742987"
+        },
+        {
+          "categoryId": "cat-9",
+          "description": "Trae",
+          "amount": 55309,
+          "date": "2025-08-30",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756918838762"
+        },
+        {
+          "categoryId": "cat-9",
+          "description": "Efootball",
+          "amount": 66600,
+          "date": "2025-08-30",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756918893851"
+        },
+        {
+          "categoryId": "cat-9",
+          "description": "Trae",
+          "amount": 25329,
+          "date": "2025-08-30",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756918999985"
+        }
+      ],
+      "color": "cyan",
+      "icon": "shopping-bag"
+    },
+    {
+      "id": "cat-10",
+      "name": "Dating",
+      "allocation": 16,
+      "expenses": [
+        {
+          "categoryId": "cat-10",
+          "description": "Pho Ba Ba",
+          "amount": 148500,
+          "date": "2025-09-01",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756824718936"
+        },
+        {
+          "categoryId": "cat-10",
+          "description": "Preksu",
+          "amount": 34000,
+          "date": "2025-09-02",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756826222676"
+        },
+        {
+          "categoryId": "cat-10",
+          "description": "Bunga",
+          "amount": 200000,
+          "date": "2025-09-03",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756919172743"
+        }
+      ],
+      "color": "rose",
+      "icon": "heart"
+    },
+    {
+      "id": "cat-11",
+      "name": "Home Allowance",
+      "allocation": 13,
+      "expenses": [
+        {
+          "categoryId": "cat-11",
+          "description": "Les Anggrek",
+          "amount": 500000,
+          "date": "2025-08-31",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756823899584"
+        },
+        {
+          "categoryId": "cat-11",
+          "description": "Makanan Kucing",
+          "amount": 20000,
+          "date": "2025-09-02",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756826093326"
+        },
+        {
+          "categoryId": "cat-11",
+          "description": "Narik cepe 2",
+          "amount": 50000,
+          "date": "2025-09-03",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756919276786"
+        }
+      ],
+      "color": "amber",
+      "icon": "home"
+    },
+    {
+      "id": "cat-13",
+      "name": "Monthly Bills",
+      "allocation": 17,
+      "expenses": [
+        {
+          "categoryId": "cat-13",
+          "description": "Adapundi",
+          "amount": 559680,
+          "date": "2025-08-29",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756542795099"
+        },
+        {
+          "categoryId": "cat-13",
+          "description": "Token Listrik",
+          "amount": 53000,
+          "date": "2025-08-30",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756542902727"
+        },
+        {
+          "categoryId": "cat-13",
+          "description": "Tokped Later",
+          "amount": 50469,
+          "date": "2025-08-30",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756553057054"
+        }
+      ],
+      "color": "sky",
+      "icon": "receipt"
+    },
+    {
+      "id": "cat-14",
+      "name": "Long-term Savings",
+      "allocation": 5,
+      "expenses": [
+        {
+          "categoryId": "cat-14",
+          "description": "Bibit",
+          "amount": 197157,
+          "date": "2025-08-30",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756826288325"
+        }
+      ],
+      "color": "indigo",
+      "icon": "banknotes"
+    },
+    {
+      "id": "cat-15",
+      "name": "Short-term Savings",
+      "allocation": 10,
+      "expenses": [
+        {
+          "categoryId": "cat-15",
+          "description": "Short Term Saving to BNI",
+          "amount": 394614,
+          "date": "2025-08-30",
+          "sourceId": "src-1756542013309",
+          "id": "exp-1756553143554"
+        }
+      ],
+      "color": "violet",
+      "icon": "currency-dollar"
+    }
+  ],
+  "goals": []
+}

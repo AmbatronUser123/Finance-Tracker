@@ -1,5 +1,6 @@
 import React from 'react';
 import { FiUpload, FiDownload } from 'react-icons/fi';
+import Papa from 'papaparse';
 
 interface DataManagerProps {
   onImport: (data: any) => void;
@@ -10,17 +11,31 @@ const DataManager: React.FC<DataManagerProps> = ({ onImport, onExport }) => {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const data = JSON.parse(e.target?.result as string);
-          onImport(data);
-        } catch (error) {
-          console.error('Failed to parse JSON', error);
-          // You might want to show a toast notification here
-        }
-      };
-      reader.readAsText(file);
+      if (file.type === 'application/json') {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target?.result as string);
+            onImport(data);
+          } catch (error) {
+            console.error('Failed to parse JSON', error);
+          }
+        };
+        reader.readAsText(file);
+      } else if (file.type === 'text/csv') {
+        Papa.parse(file, {
+          header: true,
+          complete: (results) => {
+            const categories = results.data.map((row: any) => ({
+              name: row.Category,
+              planned: parseFloat(row.Planned),
+              spent: parseFloat(row.Spent),
+              expenses: [], // CSV doesn't contain detailed expenses
+            }));
+            onImport({ categories });
+          },
+        });
+      }
     }
   };
 
