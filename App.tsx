@@ -4,6 +4,9 @@ import { Category, Goal, Expense } from './types';
 import { INITIAL_CATEGORIES } from './constants';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useToast } from './contexts/ToastContext';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import Papa from 'papaparse';
 import { 
   FiHome, 
   FiPieChart, 
@@ -11,7 +14,8 @@ import {
   FiTag, 
   FiTarget, 
   FiX, 
-  FiMenu
+  FiMenu,
+  FiDatabase
 } from 'react-icons/fi';
 
 // Components
@@ -20,6 +24,7 @@ import ExpenseLogger from './components/ExpenseLogger';
 import CategoryManager from './components/CategoryManager';
 import GoalManager from './components/GoalManager';
 import CategoryEditor from './components/CategoryEditor';
+import DataManager from './components/DataManager';
 
 // Navigation items
 const navItems = [
@@ -28,6 +33,7 @@ const navItems = [
   { id: 'categories', label: 'Categories', icon: <FiTag size={20} /> },
   { id: 'goals', label: 'Goals', icon: <FiTarget size={20} /> },
   { id: 'reports', label: 'Reports', icon: <FiPieChart size={20} /> },
+  { id: 'data', label: 'Data', icon: <FiDatabase size={20} /> },
 ];
 
 // Update the Category type to include planned and spent
@@ -122,6 +128,62 @@ const AppContent: React.FC = () => {
     }
   };
 
+  const handleExportData = (format: 'json' | 'pdf' | 'csv') => {
+    const data = { categories, goals, income };
+
+    if (format === 'json') {
+      const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
+      const link = document.createElement('a');
+      link.href = jsonString;
+      link.download = 'finance-data.json';
+      link.click();
+    }
+
+    if (format === 'pdf') {
+      const doc = new jsPDF();
+      doc.text('Finance Report', 20, 10);
+      
+      // Categories
+      (doc as any).autoTable({
+        head: [['Category', 'Planned', 'Spent']],
+        body: categories.map(c => [c.name, c.planned, c.spent]),
+        startY: 20,
+      });
+
+      // Goals
+      (doc as any).autoTable({
+        head: [['Goal', 'Target', 'Current']],
+        body: goals.map(g => [g.name, g.targetAmount, g.currentAmount]),
+        startY: (doc as any).lastAutoTable.finalY + 10,
+      });
+
+      doc.save('finance-report.pdf');
+    }
+
+    if (format === 'csv') {
+      const csv = Papa.unparse(categories.map(c => ({ Category: c.name, Planned: c.planned, Spent: c.spent })))
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'finance-data.csv');
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const handleImportData = (importedData: any) => {
+    if (importedData.categories) setCategories(importedData.categories);
+    if (importedData.goals) setGoals(importedData.goals);
+    if (importedData.income) {
+      // Assuming you have a setIncome function from useLocalStorage
+      // setIncome(importedData.income);
+    }
+    addToast({ type: 'success', message: 'Data imported successfully!' });
+  };
+
   // Render the appropriate view based on the current route
   const renderView = (): React.ReactNode => {
     switch (currentView) {
@@ -172,6 +234,13 @@ const AppContent: React.FC = () => {
               addToast({ type: 'info', message: 'Goal deleted.' });
             }}
             availableFunds={totalSavings}
+          />
+        );
+      case 'data':
+        return (
+          <DataManager
+            onImport={handleImportData}
+            onExport={handleExportData}
           />
         );
       case 'reports':
