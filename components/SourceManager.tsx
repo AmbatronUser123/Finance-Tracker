@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { TransactionSource } from '../types';
+import { formatRupiah } from '../src/utils/currency';
 
 interface SourceManagerProps {
   sources: TransactionSource[];
   onAddSource: (name: string) => void;
   onDeleteSource: (id: string) => void;
+  totalsBySource?: Record<string, number>;
+  usedCountBySource?: Record<string, number>;
 }
 
-const SourceManager: React.FC<SourceManagerProps> = ({ sources, onAddSource, onDeleteSource }) => {
+const SourceManager: React.FC<SourceManagerProps> = ({ sources, onAddSource, onDeleteSource, totalsBySource = {}, usedCountBySource = {} }) => {
   const [newSourceName, setNewSourceName] = useState('');
 
   const handleAddSource = () => {
@@ -18,7 +21,7 @@ const SourceManager: React.FC<SourceManagerProps> = ({ sources, onAddSource, onD
   };
 
   return (
-    <div className="p-4 bg-white rounded-lg shadow-md">
+    <div className="p-4 bg-white dark:bg-slate-800 rounded-lg shadow-md dark:shadow-slate-900/30">
       <h3 className="text-xl font-bold mb-4">Manage Transaction Sources</h3>
       <div className="flex gap-2 mb-4">
         <input
@@ -26,21 +29,33 @@ const SourceManager: React.FC<SourceManagerProps> = ({ sources, onAddSource, onD
           value={newSourceName}
           onChange={(e) => setNewSourceName(e.target.value)}
           placeholder="e.g., BCA, GoPay"
-          className="flex-grow p-2 border rounded"
+          className="flex-grow p-2 border rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-600"
         />
         <button onClick={handleAddSource} className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600">
           Add Source
         </button>
       </div>
       <ul>
-        {sources.map(source => (
-          <li key={source.id} className="flex justify-between items-center p-2 border-b">
-            <span>{source.name}</span>
-            <button onClick={() => onDeleteSource(source.id)} className="p-1 bg-red-500 text-white rounded hover:bg-red-600">
-              Remove
-            </button>
-          </li>
-        ))}
+        {sources.map(source => {
+          const total = totalsBySource[source.id] || 0;
+          const usedCount = usedCountBySource[source.id] || 0;
+          const isDisabled = usedCount > 0;
+          return (
+            <li key={source.id} className="flex justify-between items-center p-2 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex flex-col">
+                <span className="font-medium">{source.name}</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">Total: {formatRupiah(total)} • {usedCount} tx</span>
+              </div>
+              <button
+                onClick={() => !isDisabled && onDeleteSource(source.id)}
+                disabled={isDisabled}
+                className={`p-1 rounded text-white ${isDisabled ? 'bg-slate-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600'}`}
+              >
+                Remove
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

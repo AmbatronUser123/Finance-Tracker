@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { BrowserRouter as Router, useNavigate, useLocation } from 'react-router-dom';
-import { Category, Goal, Expense } from './types';
-import { INITIAL_CATEGORIES } from './constants';
+import { Category, Goal, Expense, TransactionSource } from './types';
+import { INITIAL_CATEGORIES, INITIAL_SOURCES } from './constants';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useToast } from './contexts/ToastContext';
 import jsPDF from 'jspdf';
@@ -26,6 +26,10 @@ import GoalManager from './components/GoalManager';
 import CategoryEditor from './components/CategoryEditor';
 import DataManager from './components/DataManager';
 import CategoryDetailModal from './components/CategoryDetailModal';
+import SourceManager from './components/SourceManager';
+import ExpenseHistory from '@/components/ExpenseHistory';
+import { useDarkMode } from './hooks/useDarkMode';
+import { SunIcon, MoonIcon } from './components/icons';
 
 // Navigation items
 const navItems = [
@@ -48,14 +52,17 @@ const AppContent: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const [theme, toggleTheme] = useDarkMode();
   const currentView = location.pathname.replace('/', '') || 'dashboard';
   const [income, setIncome] = useLocalStorage<number>('monthlyIncome', 0);
   const [categories, setCategories] = useLocalStorage<CategoryWithBudget[]>('categories', INITIAL_CATEGORIES as CategoryWithBudget[]);
   const [goals, setGoals] = useLocalStorage<Goal[]>('goals', []);
+  const [sources, setSources] = useLocalStorage<TransactionSource[]>('sources', INITIAL_SOURCES);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryWithBudget | null>(null);
   const [viewingCategory, setViewingCategory] = useState<CategoryWithBudget | null>(null);
+  const [lastDeletedExpense, setLastDeletedExpense] = useState<{ expense: Expense; categoryId: string } | null>(null);
 
   // Calculate totals
   const totalExpenses = useMemo(() => {
@@ -87,6 +94,64 @@ const AppContent: React.FC = () => {
       addToast({ type: 'success', message: 'Expense added!' });
     }
   };
+
+  const handleDeleteExpense = useCallback((expenseId: string) => {
+    let found = false;
+    const updated = categories.map(cat => {
+      const exp = cat.expenses.find(e => e.id === expenseId);
+      if (exp) {
+        found = true;
+        const newExpenses = cat.expenses.filter(e => e.id !== expenseId);
+        const newSpent = Math.max(0, cat.spent - exp.amount);
+        // Track for undo
+        setLastDeletedExpense({ expense: exp, categoryId: cat.id });
+        return { ...cat, expenses: newExpenses, spent: newSpent };
+      }
+      return cat;
+    });
+    if (found) {
+      setCategories(updated);
+      addToast({ 
+        type: 'info', 
+        message: 'Expense removed.',
+        action: {
+          text: 'Undo',
+          onClick: () => {
+            setCategories(prev => prev.map(cat => {
+              if (lastDeletedExpense && cat.id === lastDeletedExpense.categoryId) {
+                return {
+                  ...cat,
+                  expenses: [...cat.expenses, lastDeletedExpense.expense],
+                  spent: cat.spent + lastDeletedExpense.expense.amount,
+                };
+              }
+              return cat;
+            }));
+            setLastDeletedExpense(null);
+          }
+        }
+      });
+    } else {
+      addToast({ type: 'error', message: 'Expense not found.' });
+    }
+  }, [categories, setCategories, addToast, lastDeletedExpense]);
+
+  const handleAddSource = useCallback((name: string) => {
+    const newSource: TransactionSource = { id: `src-${Date.now()}`, name };
+    setSources(prev => [...prev, newSource]);
+    addToast({ type: 'success', message: 'Source added!' });
+  }, [setSources, addToast]);
+
+  const handleDeleteSource = useCallback((id: string) => {
+    // Prevent deletion if any expense is using this source
+    const isUsed = categories.some(cat => cat.expenses.some(e => e.sourceId === id));
+    if (isUsed) {
+      addToast({ type: 'error', message: 'Cannot delete source: it is used by some expenses.' });
+      return;
+    }
+    setSources(prev => prev.filter(s => s.id !== id));
+    addToast({ type: 'info', message: 'Source deleted.' });
+  }, [categories, setSources, addToast]);
 
   const handleSaveCategory = useCallback((categoryData: Omit<Category, 'id' | 'expenses'> & { id?: string }) => {
     if (categoryData.id) {
@@ -135,7 +200,7 @@ const AppContent: React.FC = () => {
   };
 
   const handleExportData = (format: 'json' | 'pdf' | 'csv') => {
-    const data = { categories, goals, income };
+    const data = { categories, goals, income, sources };
 
     if (format === 'json') {
       const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
@@ -199,6 +264,27 @@ const AppContent: React.FC = () => {
       setGoals(importedData.goals);
     }
 
+    if (importedData.sources) {
+      setSources(importedData.sources);
+    } else {
+      // Derive sources from expenses if present
+      const sourceIds = new Set<string>();
+      if (importedData.categories) {
+        importedData.categories.forEach((cat: any) => {
+          (cat.expenses || []).forEach((exp: any) => {
+            if (exp.sourceId) sourceIds.add(exp.sourceId);
+          });
+        });
+      }
+      if (sourceIds.size > 0) {
+        const derived = Array.from(sourceIds).map((id) => ({ id, name: `Source ${id.slice(-4)}` }));
+        setSources(derived);
+      } else if (sources.length === 0) {
+        // keep existing or initialize empty
+        setSources(prev => (prev && prev.length > 0 ? prev : INITIAL_SOURCES));
+      }
+    }
+
     addToast({ type: 'success', message: 'Data imported successfully!' });
   };
 
@@ -213,16 +299,40 @@ const AppContent: React.FC = () => {
             totalSavings={totalSavings}
             categories={categories}
             goals={goals}
+            sources={sources}
           />
         );
       case 'expenses':
+        // Compute totals and usage per source
+        const totalsBySource: Record<string, number> = {};
+        const usedCountBySource: Record<string, number> = {};
+        categories.forEach(cat => {
+          cat.expenses.forEach(exp => {
+            totalsBySource[exp.sourceId] = (totalsBySource[exp.sourceId] || 0) + exp.amount;
+            usedCountBySource[exp.sourceId] = (usedCountBySource[exp.sourceId] || 0) + 1;
+          });
+        });
         return (
-          <ExpenseLogger
-            categories={categories}
-            onAddExpense={handleAddExpense}
-            isAddDisabled={false}
-            transactionSources={[]}
-          />
+          <div className="space-y-6">
+            <ExpenseLogger
+              categories={categories}
+              onAddExpense={handleAddExpense}
+              isAddDisabled={false}
+              transactionSources={sources}
+            />
+            <ExpenseHistory
+              categories={categories}
+              sources={sources}
+              onDeleteExpense={handleDeleteExpense}
+            />
+            <SourceManager
+              sources={sources}
+              onAddSource={handleAddSource}
+              onDeleteSource={handleDeleteSource}
+              totalsBySource={totalsBySource}
+              usedCountBySource={usedCountBySource}
+            />
+          </div>
         );
       case 'categories':
         return (
@@ -290,7 +400,7 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100">
       {/* Mobile menu button */}
       <button
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -301,11 +411,11 @@ const AppContent: React.FC = () => {
 
       {/* Sidebar */}
       <div className={`${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} 
-        md:translate-x-0 fixed inset-y-0 left-0 w-64 bg-white shadow-lg transform transition-transform duration-200 ease-in-out z-40`}
+        md:translate-x-0 fixed inset-y-0 left-0 w-64 bg-white dark:bg-slate-800 shadow-lg transform transition-transform duration-200 ease-in-out z-40`}
       >
         <div className="flex flex-col h-full">
-          <div className="p-4 border-b">
-            <h1 className="text-xl font-bold text-gray-800">Finance Tracker</h1>
+          <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+            <h1 className="text-xl font-bold text-gray-800 dark:text-slate-100">Finance Tracker</h1>
           </div>
           <nav className="flex-1 p-4 space-y-2">
             {navItems.map((item) => (
@@ -314,8 +424,8 @@ const AppContent: React.FC = () => {
                 onClick={() => handleNavigation(item.id)}
                 className={`w-full flex items-center px-4 py-2 rounded-lg transition-colors ${
                   currentView === item.id
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200'
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
                 <span className="mr-3">{item.icon}</span>
@@ -323,8 +433,8 @@ const AppContent: React.FC = () => {
               </button>
             ))}
           </nav>
-          <div className="p-4 border-t">
-            <div className="text-sm text-gray-500">
+          <div className="p-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="text-sm text-gray-500 dark:text-slate-300">
               <p>Total Income: ${income.toFixed(2)}</p>
               <p>Total Expenses: ${totalExpenses.toFixed(2)}</p>
               <p className="font-medium">Balance: ${totalSavings.toFixed(2)}</p>
@@ -335,11 +445,20 @@ const AppContent: React.FC = () => {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden md:ml-64">
-        <header className="bg-white shadow-sm z-10">
-          <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-            <h1 className="text-2xl font-semibold text-gray-900">
+        <header className="bg-white dark:bg-slate-800 shadow-sm z-10">
+          <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-slate-100">
               {navItems.find(item => item.id === currentView)?.label || 'Dashboard'}
             </h1>
+            <button
+              onClick={toggleTheme}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-600"
+              aria-label="Toggle theme"
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {theme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
+              <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'} Mode</span>
+            </button>
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-4 bg-gray-50">

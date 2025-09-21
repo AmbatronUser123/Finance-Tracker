@@ -1,5 +1,5 @@
-import React from 'react';
-import { Category, Goal } from '../types';
+import React, { useMemo } from 'react';
+import { Category, Goal, TransactionSource } from '../types';
 import { FiDollarSign, FiTrendingUp, FiPieChart, FiArrowRight } from 'react-icons/fi';
 import { formatRupiah } from '../src/utils/currency';
 import { useNavigate } from 'react-router-dom';
@@ -10,6 +10,7 @@ interface DashboardProps {
   goals: Goal[];
   totalExpenses: number;
   totalSavings: number;
+  sources: TransactionSource[];
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ 
@@ -17,7 +18,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   categories, 
   goals, 
   totalExpenses, 
-  totalSavings 
+  totalSavings,
+  sources,
 }) => {
   // Calculate category totals and percentages
   const categoryTotals = categories.map(category => ({
@@ -37,6 +39,19 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const navigate = useNavigate();
 
+  // Per-source totals
+  const { totalsBySource, countsBySource } = useMemo(() => {
+    const totals: Record<string, number> = {};
+    const counts: Record<string, number> = {};
+    categories.forEach(cat => {
+      cat.expenses.forEach(exp => {
+        totals[exp.sourceId] = (totals[exp.sourceId] || 0) + exp.amount;
+        counts[exp.sourceId] = (counts[exp.sourceId] || 0) + 1;
+      });
+    });
+    return { totalsBySource: totals, countsBySource: counts };
+  }, [categories]);
+
   // Get top 3 categories by spending (filter out categories with no spending)
   const topCategories = [...categoryTotals]
     .filter(cat => cat.spent > 0)
@@ -52,11 +67,11 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Income Card */}
-        <div className="bg-white rounded-xl shadow p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Monthly Income</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-gray-500 dark:text-slate-300">Monthly Income</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">
                 {formatRupiah(income)}
               </p>
             </div>
@@ -67,11 +82,11 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Expenses Card */}
-        <div className="bg-white rounded-xl shadow p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Expenses</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-gray-500 dark:text-slate-300">Total Expenses</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">
                 {formatRupiah(totalExpenses)}
               </p>
             </div>
@@ -82,11 +97,11 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Savings Card */}
-        <div className="bg-white rounded-xl shadow p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Savings</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-gray-500 dark:text-slate-300">Total Savings</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">
                 {formatRupiah(totalSavings)}
               </p>
             </div>
@@ -97,9 +112,9 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Categories Overview */}
-        <div className="bg-white rounded-xl shadow p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow p-6 lg:col-span-1">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Top Categories</h3>
             <button 
@@ -131,7 +146,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Goals Overview */}
-        <div className="bg-white rounded-xl shadow p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow p-6 lg:col-span-1">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Saving Goals</h3>
             <button 
@@ -166,10 +181,38 @@ const Dashboard: React.FC<DashboardProps> = ({
             )}
           </div>
         </div>
+
+        {/* Sources Overview */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow p-6 lg:col-span-1">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Sources Breakdown</h3>
+            <button 
+              onClick={() => handleViewAll('expenses')}
+              className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+            >
+              Manage <FiArrowRight className="ml-1" size={16} />
+            </button>
+          </div>
+          <div className="space-y-3">
+            {sources.map(src => {
+              const total = totalsBySource[src.id] || 0;
+              const count = countsBySource[src.id] || 0;
+              return (
+                <div key={src.id} className="flex justify-between text-sm">
+                  <span className="font-medium">{src.name}</span>
+                  <span>{formatRupiah(total)} • {count} tx</span>
+                </div>
+              );
+            })}
+            {sources.length === 0 && (
+              <p className="text-sm text-gray-500 text-center py-4">No sources yet.</p>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Recent Transactions */}
-      <div className="bg-white rounded-xl shadow p-6">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">Recent Transactions</h3>
           <button 
@@ -180,18 +223,18 @@ const Dashboard: React.FC<DashboardProps> = ({
           </button>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead>
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+            <thead className="bg-slate-50 dark:bg-slate-700/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Description</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Category</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Amount</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
               <tr>
-                <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">
+                <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-slate-300">
                   No recent transactions
                 </td>
               </tr>

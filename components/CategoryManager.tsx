@@ -36,15 +36,15 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
   // Auto adjust allocation is handled by the parent component
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-lg shadow-slate-200/50">
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-slate-900/30">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="flex items-center gap-3 text-xl font-bold text-slate-800">
+        <h2 className="flex items-center gap-3 text-xl font-bold text-slate-800 dark:text-slate-100">
           <ChartPieIcon className="w-7 h-7 text-indigo-500" />
           Category Allocations
         </h2>
         <button 
           onClick={() => onOpenModal(null)}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-indigo-500"
+          className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 focus:ring-indigo-500"
         >
           <PlusIcon className="w-4 h-4" />
           <span className="hidden sm:inline">Add Category</span>
