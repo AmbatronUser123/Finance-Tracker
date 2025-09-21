@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { BrowserRouter as Router, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Category, Goal, Expense, TransactionSource } from './types';
 import { INITIAL_CATEGORIES, INITIAL_SOURCES } from './constants';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -484,9 +484,7 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <AppContent />
   );
 };
 
