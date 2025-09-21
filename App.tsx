@@ -30,6 +30,7 @@ import SourceManager from './components/SourceManager';
 import ExpenseHistory from '@/components/ExpenseHistory';
 import { useDarkMode } from './hooks/useDarkMode';
 import { SunIcon, MoonIcon } from './components/icons';
+import NewMonthModal from './components/NewMonthModal.tsx';
 
 // Navigation items
 const navItems = [
@@ -58,11 +59,13 @@ const AppContent: React.FC = () => {
   const [categories, setCategories] = useLocalStorage<CategoryWithBudget[]>('categories', INITIAL_CATEGORIES as CategoryWithBudget[]);
   const [goals, setGoals] = useLocalStorage<Goal[]>('goals', []);
   const [sources, setSources] = useLocalStorage<TransactionSource[]>('sources', INITIAL_SOURCES);
+  const [lastActiveMonth, setLastActiveMonth] = useLocalStorage<string>('lastActiveMonth', '');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryWithBudget | null>(null);
   const [viewingCategory, setViewingCategory] = useState<CategoryWithBudget | null>(null);
   const [lastDeletedExpense, setLastDeletedExpense] = useState<{ expense: Expense; categoryId: string } | null>(null);
+  const [showNewMonthModal, setShowNewMonthModal] = useState(false);
 
   // Calculate totals
   const totalExpenses = useMemo(() => {
@@ -142,6 +145,11 @@ const AppContent: React.FC = () => {
     addToast({ type: 'success', message: 'Source added!' });
   }, [setSources, addToast]);
 
+  const handleEditSource = useCallback((id: string, name: string) => {
+    setSources(prev => prev.map(s => (s.id === id ? { ...s, name } : s)));
+    addToast({ type: 'success', message: 'Source updated!' });
+  }, [setSources, addToast]);
+
   const handleDeleteSource = useCallback((id: string) => {
     // Prevent deletion if any expense is using this source
     const isUsed = categories.some(cat => cat.expenses.some(e => e.sourceId === id));
@@ -152,6 +160,41 @@ const AppContent: React.FC = () => {
     setSources(prev => prev.filter(s => s.id !== id));
     addToast({ type: 'info', message: 'Source deleted.' });
   }, [categories, setSources, addToast]);
+
+  // Detect new month and prompt user
+  React.useEffect(() => {
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    if (!lastActiveMonth) {
+      setLastActiveMonth(currentMonth);
+      return;
+    }
+    if (lastActiveMonth !== currentMonth) {
+      setShowNewMonthModal(true);
+    }
+  }, [lastActiveMonth, setLastActiveMonth]);
+
+  const handleNewMonthConfirm = useCallback((options: { resetExpenses: boolean; newIncome?: number | null }) => {
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    if (typeof options.newIncome === 'number' && !Number.isNaN(options.newIncome)) {
+      setIncome(options.newIncome);
+      addToast({ type: 'success', message: 'Income updated for the new month.' });
+    }
+    if (options.resetExpenses) {
+      setCategories(prev => prev.map(c => ({ ...c, spent: 0, expenses: [] })));
+      addToast({ type: 'info', message: 'Expenses reset for the new month.' });
+    }
+    setLastActiveMonth(currentMonth);
+    setShowNewMonthModal(false);
+  }, [setIncome, setCategories, setLastActiveMonth, addToast]);
+
+  const handleNewMonthSkip = useCallback(() => {
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    setLastActiveMonth(currentMonth);
+    setShowNewMonthModal(false);
+  }, [setLastActiveMonth]);
 
   const handleSaveCategory = useCallback((categoryData: Omit<Category, 'id' | 'expenses'> & { id?: string }) => {
     if (categoryData.id) {
@@ -329,6 +372,7 @@ const AppContent: React.FC = () => {
               sources={sources}
               onAddSource={handleAddSource}
               onDeleteSource={handleDeleteSource}
+              onEditSource={handleEditSource}
               totalsBySource={totalsBySource}
               usedCountBySource={usedCountBySource}
             />
@@ -478,6 +522,14 @@ const AppContent: React.FC = () => {
         category={viewingCategory}
         onClose={() => setViewingCategory(null)}
       />
+      {/* New Month Modal */}
+      {showNewMonthModal && (
+        <NewMonthModal
+          currentIncome={income}
+          onConfirm={handleNewMonthConfirm}
+          onSkip={handleNewMonthSkip}
+        />
+      )}
     </div>
   );
 };
