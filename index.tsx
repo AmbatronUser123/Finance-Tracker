@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ToastProvider, useToast } from './contexts/ToastContext';
 import ErrorBoundary from './components/ErrorBoundary';
+import { BrowserRouter } from 'react-router-dom';
 
 // Import global styles
 import './global.css';
@@ -73,8 +74,10 @@ const AppWithPWA = () => (
   <React.StrictMode>
     <ErrorBoundary>
       <ToastProvider>
-        <PWAInstallPrompt />
-        <App />
+        <BrowserRouter>
+          <PWAInstallPrompt />
+          <App />
+        </BrowserRouter>
       </ToastProvider>
     </ErrorBoundary>
   </React.StrictMode>
