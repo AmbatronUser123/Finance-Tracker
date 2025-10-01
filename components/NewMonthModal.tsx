@@ -21,42 +21,47 @@ const NewMonthModal: React.FC<NewMonthModalProps> = ({ currentIncome, onConfirm,
         <div className="border-b border-slate-200 dark:border-slate-700 p-4">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">New Month Detected</h2>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            It looks like a new month has started. Would you like to reset expenses and/or update your monthly income?
+            It looks like a new month has started.
           </p>
         </div>
         <div className="p-4 space-y-4">
-          <label className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              checked={resetExpenses}
-              onChange={(e) => setResetExpenses(e.target.checked)}
-            />
-            <span className="text-slate-800 dark:text-slate-100">Reset all expenses for this month</span>
-          </label>
-
-          <div className="space-y-2">
-            <label className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={updateIncome}
-                onChange={(e) => setUpdateIncome(e.target.checked)}
-              />
-              <span className="text-slate-800 dark:text-slate-100">Update monthly income</span>
-            </label>
-            {updateIncome && (
-              <div className="flex items-center gap-2">
+          <details className="bg-slate-50 dark:bg-slate-700/40 rounded-md p-3">
+            <summary className="cursor-pointer font-medium text-slate-800 dark:text-slate-100">Options</summary>
+            <div className="mt-3 space-y-4">
+              <label className="flex items-center gap-3">
                 <input
-                  type="number"
-                  className="flex-grow p-2 border rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-600"
-                  placeholder={`Current: ${currentIncome}`}
-                  value={newIncome}
-                  onChange={(e) => setNewIncome(e.target.value === '' ? '' : Number(e.target.value))}
-                  min={0}
-                  step={1000}
+                  type="checkbox"
+                  checked={resetExpenses}
+                  onChange={(e) => setResetExpenses(e.target.checked)}
                 />
+                <span className="text-slate-800 dark:text-slate-100">Reset all expenses for this month</span>
+              </label>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={updateIncome}
+                    onChange={(e) => setUpdateIncome(e.target.checked)}
+                  />
+                  <span className="text-slate-800 dark:text-slate-100">Update monthly income</span>
+                </label>
+                {updateIncome && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      className="flex-grow p-2 border rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-600"
+                      placeholder={`Current: ${currentIncome}`}
+                      value={newIncome}
+                      onChange={(e) => setNewIncome(e.target.value === '' ? '' : Number(e.target.value))}
+                      min={0}
+                      step={1000}
+                    />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          </details>
         </div>
         <div className="flex justify-end gap-2 border-t border-slate-200 dark:border-slate-700 p-4">
           <button

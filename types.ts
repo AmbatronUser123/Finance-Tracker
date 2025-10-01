@@ -45,3 +45,11 @@ export interface Goal {
   targetAmount: number;
   currentAmount: number;
 }
+
+export interface MonthlyArchive {
+  month: string; // YYYY-MM
+  income: number;
+  categories: Category[];
+  goals: Goal[];
+  sources: TransactionSource[];
+}
