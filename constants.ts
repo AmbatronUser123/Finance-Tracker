@@ -1,9 +1,9 @@
 import { Category, Goal, TransactionSource } from './types';
 
 export const INITIAL_SOURCES: TransactionSource[] = [
-  { id: 'src-1', name: 'Salary' },
-  { id: 'src-2', name: 'Freelance' },
-  { id: 'src-3', name: 'Other' }
+  { id: 'src-1', name: 'Salary', balance: 0 },
+  { id: 'src-2', name: 'Freelance', balance: 0 },
+  { id: 'src-3', name: 'Other', balance: 0 }
 ];
 
 export const CATEGORY_COLORS = ['indigo', 'sky', 'rose', 'amber', 'emerald', 'violet', 'lime', 'cyan', 'slate'];

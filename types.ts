@@ -2,6 +2,7 @@
 export interface TransactionSource {
   id: string;
   name: string;
+  balance: number;
 }
 
 export interface Income {

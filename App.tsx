@@ -139,14 +139,14 @@ const AppContent: React.FC = () => {
     }
   }, [categories, setCategories, addToast, lastDeletedExpense]);
 
-  const handleAddSource = useCallback((name: string) => {
-    const newSource: TransactionSource = { id: `src-${Date.now()}`, name };
+  const handleAddSource = useCallback((name: string, balance: number = 0) => {
+    const newSource: TransactionSource = { id: `src-${Date.now()}`, name, balance };
     setSources(prev => [...prev, newSource]);
     addToast({ type: 'success', message: 'Source added!' });
   }, [setSources, addToast]);
 
-  const handleEditSource = useCallback((id: string, name: string) => {
-    setSources(prev => prev.map(s => (s.id === id ? { ...s, name } : s)));
+  const handleEditSource = useCallback((id: string, name: string, balance: number) => {
+    setSources(prev => prev.map(s => (s.id === id ? { ...s, name, balance } : s)));
     addToast({ type: 'success', message: 'Source updated!' });
   }, [setSources, addToast]);
 
@@ -308,7 +308,12 @@ const AppContent: React.FC = () => {
     }
 
     if (importedData.sources) {
-      setSources(importedData.sources);
+      const normalized = importedData.sources.map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        balance: typeof s.balance === 'number' ? s.balance : 0
+      }));
+      setSources(normalized);
     } else {
       // Derive sources from expenses if present
       const sourceIds = new Set<string>();
@@ -320,7 +325,7 @@ const AppContent: React.FC = () => {
         });
       }
       if (sourceIds.size > 0) {
-        const derived = Array.from(sourceIds).map((id) => ({ id, name: `Source ${id.slice(-4)}` }));
+        const derived = Array.from(sourceIds).map((id) => ({ id, name: `Source ${id.slice(-4)}`, balance: 0 }));
         setSources(derived);
       } else if (sources.length === 0) {
         // keep existing or initialize empty

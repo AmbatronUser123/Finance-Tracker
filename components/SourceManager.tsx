@@ -4,38 +4,45 @@ import { formatRupiah } from '../src/utils/currency';
 
 interface SourceManagerProps {
   sources: TransactionSource[];
-  onAddSource: (name: string) => void;
+  onAddSource: (name: string, balance: number) => void;
   onDeleteSource: (id: string) => void;
-  onEditSource: (id: string, name: string) => void;
+  onEditSource: (id: string, name: string, balance: number) => void;
   totalsBySource?: Record<string, number>;
   usedCountBySource?: Record<string, number>;
 }
 
 const SourceManager: React.FC<SourceManagerProps> = ({ sources, onAddSource, onDeleteSource, onEditSource, totalsBySource = {}, usedCountBySource = {} }) => {
   const [newSourceName, setNewSourceName] = useState('');
+  const [newSourceBalance, setNewSourceBalance] = useState<string>('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  const [editingBalance, setEditingBalance] = useState<string>('');
 
   const handleAddSource = () => {
     if (newSourceName.trim() !== '') {
-      onAddSource(newSourceName.trim());
+      const bal = Math.max(0, parseInt(newSourceBalance.replace(/[^0-9]/g, '') || '0', 10));
+      onAddSource(newSourceName.trim(), bal);
       setNewSourceName('');
+      setNewSourceBalance('');
     }
   };
 
-  const startEdit = (id: string, currentName: string) => {
+  const startEdit = (id: string, currentName: string, currentBalance: number) => {
     setEditingId(id);
     setEditingName(currentName);
+    setEditingBalance(String(currentBalance || 0));
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setEditingName('');
+    setEditingBalance('');
   };
 
   const saveEdit = () => {
     if (editingId && editingName.trim()) {
-      onEditSource(editingId, editingName.trim());
+      const bal = Math.max(0, parseInt(editingBalance.replace(/[^0-9]/g, '') || '0', 10));
+      onEditSource(editingId, editingName.trim(), bal);
       cancelEdit();
     }
   };
@@ -50,6 +57,13 @@ const SourceManager: React.FC<SourceManagerProps> = ({ sources, onAddSource, onD
           onChange={(e) => setNewSourceName(e.target.value)}
           placeholder="e.g., BCA, GoPay"
           className="flex-grow p-2 border rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-600"
+        />
+        <input
+          type="text"
+          value={newSourceBalance}
+          onChange={(e) => setNewSourceBalance(e.target.value.replace(/[^0-9]/g, ''))}
+          placeholder="Saldo (IDR)"
+          className="w-40 p-2 border rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-600"
         />
         <button onClick={handleAddSource} className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600">
           Add Source
@@ -71,20 +85,27 @@ const SourceManager: React.FC<SourceManagerProps> = ({ sources, onAddSource, onD
                       onChange={(e) => setEditingName(e.target.value)}
                       className="flex-grow p-2 border rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-600"
                     />
+                    <input
+                      type="text"
+                      value={editingBalance}
+                      onChange={(e) => setEditingBalance(e.target.value.replace(/[^0-9]/g, ''))}
+                      className="w-40 p-2 border rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-600"
+                      placeholder="Saldo (IDR)"
+                    />
                     <button onClick={saveEdit} className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">Save</button>
                     <button onClick={cancelEdit} className="px-3 py-1 bg-slate-400 text-white rounded hover:bg-slate-500">Cancel</button>
                   </div>
                 ) : (
                   <>
                     <span className="font-medium">{source.name}</span>
-                    <span className="text-sm text-slate-600 dark:text-slate-300">Total: {formatRupiah(total)} • {usedCount} tx</span>
+                    <span className="text-sm text-slate-600 dark:text-slate-300">Saldo: {formatRupiah(source.balance || 0)} • Total: {formatRupiah(total)} • Sisa: {formatRupiah(Math.max(0, (source.balance || 0) - total))} • {usedCount} tx</span>
                   </>
                 )}
               </div>
               {editingId !== source.id && (
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => startEdit(source.id, source.name)}
+                    onClick={() => startEdit(source.id, source.name, source.balance || 0)}
                     className="px-2 py-1 bg-amber-500 text-white rounded hover:bg-amber-600"
                   >
                     Edit
