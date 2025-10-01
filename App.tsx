@@ -373,6 +373,27 @@ const AppContent: React.FC = () => {
     setShowNewMonthModal(false);
   }, [income, categories, goals, sources, lastActiveMonth, setIncome, setCategories, setLastActiveMonth, setMonthlyArchives, addToast]);
 
+  const handleArchiveAndResetCurrentMonth = useCallback(() => {
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    // Arsipkan snapshot bulan berjalan
+    const archive: MonthlyArchive = {
+      month: currentMonth,
+      income,
+      categories: categories.map(c => ({ ...c })),
+      goals: goals.map(g => ({ ...g })),
+      sources: sources.map(s => ({ ...s })),
+    };
+    setMonthlyArchives(prev => {
+      const withoutDup = prev.filter(a => a.month !== archive.month);
+      return [...withoutDup, archive];
+    });
+    // Reset pengeluaran bulan berjalan
+    setCategories(prev => prev.map(c => ({ ...c, spent: 0, expenses: [] })));
+    setLastActiveMonth(currentMonth);
+    addToast({ type: 'info', message: 'Current month archived and expenses reset.' });
+  }, [income, categories, goals, sources, setMonthlyArchives, setCategories, setLastActiveMonth, addToast]);
+
   const handleNewMonthSkip = useCallback(() => {
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -607,6 +628,7 @@ const AppContent: React.FC = () => {
           <DataManager
             onImport={handleImportData}
             onExport={handleExportData}
+            onResetCurrentMonth={handleArchiveAndResetCurrentMonth}
           />
         );
       case 'reports': {

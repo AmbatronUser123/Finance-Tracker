@@ -5,9 +5,10 @@ import Papa from 'papaparse';
 interface DataManagerProps {
   onImport: (data: any) => void;
   onExport: (format: 'json' | 'pdf' | 'csv') => void;
+  onResetCurrentMonth?: () => void;
 }
 
-const DataManager: React.FC<DataManagerProps> = ({ onImport, onExport }) => {
+const DataManager: React.FC<DataManagerProps> = ({ onImport, onExport, onResetCurrentMonth }) => {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -42,7 +43,7 @@ const DataManager: React.FC<DataManagerProps> = ({ onImport, onExport }) => {
   return (
     <div className="bg-white p-6 rounded-2xl shadow-lg shadow-slate-200/50">
       <h2 className="text-xl font-bold text-slate-800 mb-4">Data Management</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Import Section */}
         <div className="space-y-4">
           <h3 className="font-bold text-lg text-slate-700">Import Data</h3>
@@ -82,6 +83,21 @@ const DataManager: React.FC<DataManagerProps> = ({ onImport, onExport }) => {
             >
               <FiDownload />
               Export as CSV
+            </button>
+          </div>
+        </div>
+
+        {/* Maintenance Section */}
+        <div className="space-y-4">
+          <h3 className="font-bold text-lg text-slate-700">Maintenance</h3>
+          <div className="flex flex-col space-y-3">
+            <button
+              onClick={onResetCurrentMonth}
+              disabled={!onResetCurrentMonth}
+              className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-base font-semibold text-white bg-amber-600 rounded-lg shadow-sm hover:bg-amber-700 disabled:bg-slate-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+              title="Archive current month and reset expenses"
+            >
+              Reset Current Month (Archive First)
             </button>
           </div>
         </div>
