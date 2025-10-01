@@ -49,6 +49,173 @@ export interface CategoryWithBudget extends Category {
   spent: number;
 }
 
+// Extracted Reports view into its own component to use Hooks safely
+const ReportsView: React.FC<{
+  categories: CategoryWithBudget[];
+  monthlyArchives: MonthlyArchive[];
+}> = ({ categories, monthlyArchives }) => {
+  const currentAllExpenses = categories.flatMap(c => c.expenses.map(e => ({ ...e, categoryName: c.name })));
+  const archiveMonths = monthlyArchives.map(a => a.month);
+  const uniqueMonths = Array.from(new Set([
+    ...currentAllExpenses.map(e => e.date?.slice(0, 7)).filter(Boolean) as string[],
+    ...archiveMonths,
+  ])).sort();
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const [selectedMonth, setSelectedMonth] = React.useState(uniqueMonths.includes(currentMonth) ? currentMonth : (uniqueMonths[0] || currentMonth));
+  const [useISOWeek, setUseISOWeek] = React.useState(false);
+
+  React.useEffect(() => {
+    const months = Array.from(new Set(
+      categories.flatMap(c => c.expenses.map(e => e.date?.slice(0, 7)).filter(Boolean))
+    ));
+    if (months.length > 0 && !months.includes(selectedMonth)) {
+      setSelectedMonth(months[0]);
+    }
+  }, [categories]);
+
+  const getISOWeekLabel = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())) as any;
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1)) as any;
+    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+    return `ISO W${weekNo}`;
+  };
+
+  const getWeekLabel = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const day = d.getDate();
+    if (day <= 7) return 'Week 1 (1-7)';
+    if (day <= 14) return 'Week 2 (8-14)';
+    if (day <= 21) return 'Week 3 (15-21)';
+    return 'Week 4 (22-end)';
+  };
+
+  const isArchive = !categories.some(c => c.expenses.some(e => e.date?.startsWith(selectedMonth))) && monthlyArchives.some(a => a.month === selectedMonth);
+  const sourceCategories = isArchive ? monthlyArchives.find(a => a.month === selectedMonth)!.categories as CategoryWithBudget[] : categories;
+
+  const filteredByMonth = sourceCategories.map(cat => {
+    const expenses = cat.expenses.filter(e => e.date?.startsWith(selectedMonth));
+    const weekly: Record<string, number> = {};
+    expenses.forEach(e => {
+      const label = useISOWeek ? getISOWeekLabel(e.date) : getWeekLabel(e.date);
+      weekly[label] = (weekly[label] || 0) + e.amount;
+    });
+    const total = Object.values(weekly).reduce((a, b) => a + b, 0);
+    return {
+      categoryId: (cat as any).id,
+      categoryName: (cat as any).name,
+      weekly,
+      total
+    };
+  }).filter(c => c.total > 0);
+
+  filteredByMonth.sort((a, b) => b.total - a.total);
+  const monthOptions = uniqueMonths.length ? uniqueMonths : [currentMonth];
+
+  const orderedWeekLabels = () => {
+    if (!useISOWeek) return ['Week 1 (1-7)', 'Week 2 (8-14)', 'Week 3 (15-21)', 'Week 4 (22-end)'];
+    const set = new Set<string>();
+    filteredByMonth.forEach(c => Object.keys(c.weekly).forEach(l => set.add(l)));
+    return Array.from(set).sort();
+  };
+
+  const exportReport = (format: 'pdf' | 'csv') => {
+    const weekLabels = orderedWeekLabels();
+    const rows = filteredByMonth.map(cat => {
+      const row: Record<string, any> = { Category: cat.categoryName };
+      weekLabels.forEach(w => { row[w] = cat.weekly[w] || 0; });
+      row.Total = cat.total;
+      return row;
+    });
+
+    if (format === 'pdf') {
+      const doc = new jsPDF();
+      doc.text(`Finance Report ${selectedMonth}${useISOWeek ? ' (ISO Weeks)' : ''}`, 20, 10);
+      const head = [['Category', ...weekLabels, 'Total']];
+      const body = rows.map(r => [
+        r.Category,
+        ...weekLabels.map(w => r[w]),
+        r.Total,
+      ]);
+      (doc as any).autoTable({ head, body, startY: 20 });
+      doc.save(`finance-report-${selectedMonth}.pdf`);
+    } else {
+      const header = ['Category', ...weekLabels, 'Total'];
+      const data = rows.map(r => {
+        const obj: any = { Category: r.Category };
+        weekLabels.forEach(w => obj[w] = r[w]);
+        obj.Total = r.Total;
+        return obj;
+      });
+      const csv = Papa.unparse({ fields: header, data: data.map(d => header.map(h => d[h])) });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `finance-report-${selectedMonth}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  return (
+    <div className="p-6 space-y-6">
+      <h2 className="text-2xl font-bold">Reports</h2>
+
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 flex items-center gap-3 flex-wrap">
+        <label className="text-sm text-slate-700 dark:text-slate-300">Bulan:</label>
+        <select
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(e.target.value)}
+          className="p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded"
+        >
+          {monthOptions.map(m => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+        <label className="ml-2 inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+          <input type="checkbox" checked={useISOWeek} onChange={(e) => setUseISOWeek(e.target.checked)} />
+          ISO Week
+        </label>
+        <div className="ml-auto flex items-center gap-2">
+          <button onClick={() => exportReport('pdf')} className="px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Export PDF</button>
+          <button onClick={() => exportReport('csv')} className="px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700">Export CSV</button>
+        </div>
+      </div>
+
+      {filteredByMonth.length === 0 ? (
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+          <p className="text-gray-600 dark:text-slate-300">Belum ada pengeluaran pada bulan ini.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredByMonth.map(cat => (
+            <details key={cat.categoryId} className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+              <summary className="cursor-pointer flex items-center justify-between">
+                <span className="font-semibold">{cat.categoryName}</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">Total: {formatRupiah(cat.total)}</span>
+              </summary>
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {['Week 1 (1-7)', 'Week 2 (8-14)', 'Week 3 (15-21)', 'Week 4 (22-end)'].map(week => (
+                  <div key={week} className="p-3 rounded border border-slate-200 dark:border-slate-700">
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{week}</div>
+                    <div className="text-base font-medium">{formatRupiah(cat.weekly[week] || 0)}</div>
+                  </div>
+                ))}
+              </div>
+            </details>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AppContent: React.FC = () => {
   // State and hooks
   const location = useLocation();
@@ -452,161 +619,7 @@ const AppContent: React.FC = () => {
         ])).sort();
         const now = new Date();
         const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        const [selectedMonth, setSelectedMonth] = React.useState(uniqueMonths.includes(currentMonth) ? currentMonth : (uniqueMonths[0] || currentMonth));
-        const [useISOWeek, setUseISOWeek] = React.useState(false);
-
-        React.useEffect(() => {
-          const months = Array.from(new Set(
-            categories.flatMap(c => c.expenses.map(e => e.date?.slice(0, 7)).filter(Boolean))
-          ));
-          if (months.length > 0 && !months.includes(selectedMonth)) {
-            setSelectedMonth(months[0]);
-          }
-        }, [categories]);
-
-        const getISOWeekLabel = (dateStr: string) => {
-          const date = new Date(dateStr);
-          const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())) as any;
-          const dayNum = d.getUTCDay() || 7;
-          d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-          const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1)) as any;
-          const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-          return `ISO W${weekNo}`;
-        };
-
-        const getWeekLabel = (dateStr: string) => {
-          const d = new Date(dateStr);
-          const day = d.getDate();
-          if (day <= 7) return 'Week 1 (1-7)';
-          if (day <= 14) return 'Week 2 (8-14)';
-          if (day <= 21) return 'Week 3 (15-21)';
-          return 'Week 4 (22-end)';
-        };
-
-        // Ambil sumber data: jika bulan dipilih adalah bulan berjalan, gunakan categories saat ini.
-        // Jika bulan berasal dari arsip, gunakan snapshot dari arsip tersebut.
-        const isArchive = !categories.some(c => c.expenses.some(e => e.date?.startsWith(selectedMonth))) && monthlyArchives.some(a => a.month === selectedMonth);
-        const sourceCategories = isArchive ? monthlyArchives.find(a => a.month === selectedMonth)!.categories : categories;
-
-        const filteredByMonth = sourceCategories.map(cat => {
-          const expenses = cat.expenses.filter(e => e.date?.startsWith(selectedMonth));
-          const weekly: Record<string, number> = {};
-          expenses.forEach(e => {
-            const label = useISOWeek ? getISOWeekLabel(e.date) : getWeekLabel(e.date);
-            weekly[label] = (weekly[label] || 0) + e.amount;
-          });
-          const total = Object.values(weekly).reduce((a, b) => a + b, 0);
-          return {
-            categoryId: cat.id,
-            categoryName: cat.name,
-            weekly,
-            total
-          };
-        }).filter(c => c.total > 0);
-
-        filteredByMonth.sort((a, b) => b.total - a.total);
-
-        const monthOptions = uniqueMonths.length ? uniqueMonths : [currentMonth];
-
-        const orderedWeekLabels = () => {
-          if (!useISOWeek) return ['Week 1 (1-7)', 'Week 2 (8-14)', 'Week 3 (15-21)', 'Week 4 (22-end)'];
-          const set = new Set<string>();
-          filteredByMonth.forEach(c => Object.keys(c.weekly).forEach(l => set.add(l)));
-          return Array.from(set).sort();
-        };
-
-        const exportReport = (format: 'pdf' | 'csv') => {
-          const weekLabels = orderedWeekLabels();
-          const rows = filteredByMonth.map(cat => {
-            const row: Record<string, any> = { Category: cat.categoryName };
-            weekLabels.forEach(w => { row[w] = cat.weekly[w] || 0; });
-            row.Total = cat.total;
-            return row;
-          });
-
-          if (format === 'pdf') {
-            const doc = new jsPDF();
-            doc.text(`Finance Report ${selectedMonth}${useISOWeek ? ' (ISO Weeks)' : ''}`, 20, 10);
-            const head = [['Category', ...weekLabels, 'Total']];
-            const body = rows.map(r => [
-              r.Category,
-              ...weekLabels.map(w => r[w]),
-              r.Total,
-            ]);
-            (doc as any).autoTable({ head, body, startY: 20 });
-            doc.save(`finance-report-${selectedMonth}.pdf`);
-          } else {
-            const header = ['Category', ...weekLabels, 'Total'];
-            const data = rows.map(r => {
-              const obj: any = { Category: r.Category };
-              weekLabels.forEach(w => obj[w] = r[w]);
-              obj.Total = r.Total;
-              return obj;
-            });
-            const csv = Papa.unparse({ fields: header, data: data.map(d => header.map(h => d[h])) });
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `finance-report-${selectedMonth}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          }
-        };
-
-        return (
-          <div className="p-6 space-y-6">
-            <h2 className="text-2xl font-bold">Reports</h2>
-
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 flex items-center gap-3 flex-wrap">
-              <label className="text-sm text-slate-700 dark:text-slate-300">Bulan:</label>
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded"
-              >
-                {monthOptions.map(m => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
-              <label className="ml-2 inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                <input type="checkbox" checked={useISOWeek} onChange={(e) => setUseISOWeek(e.target.checked)} />
-                ISO Week
-              </label>
-              <div className="ml-auto flex items-center gap-2">
-                <button onClick={() => exportReport('pdf')} className="px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Export PDF</button>
-                <button onClick={() => exportReport('csv')} className="px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700">Export CSV</button>
-              </div>
-            </div>
-
-            {filteredByMonth.length === 0 ? (
-              <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-                <p className="text-gray-600 dark:text-slate-300">Belum ada pengeluaran pada bulan ini.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredByMonth.map(cat => (
-                  <details key={cat.categoryId} className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
-                    <summary className="cursor-pointer flex items-center justify-between">
-                      <span className="font-semibold">{cat.categoryName}</span>
-                      <span className="text-sm text-slate-600 dark:text-slate-300">Total: {formatRupiah(cat.total)}</span>
-                    </summary>
-                    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                      {['Week 1 (1-7)', 'Week 2 (8-14)', 'Week 3 (15-21)', 'Week 4 (22-end)'].map(week => (
-                        <div key={week} className="p-3 rounded border border-slate-200 dark:border-slate-700">
-                          <div className="text-xs text-slate-500 dark:text-slate-400">{week}</div>
-                          <div className="text-base font-medium">{formatRupiah(cat.weekly[week] || 0)}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </details>
-                ))}
-              </div>
-            )}
-          </div>
-        );
+        return <ReportsView categories={categories} monthlyArchives={monthlyArchives} />;
       }
       default:
         return (
