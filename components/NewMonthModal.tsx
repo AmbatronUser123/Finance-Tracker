@@ -15,6 +15,10 @@ const NewMonthModal: React.FC<NewMonthModalProps> = ({ currentIncome, onConfirm,
     onConfirm({ resetExpenses, newIncome: updateIncome ? Number(newIncome) : null });
   };
 
+  const handleQuickReset = () => {
+    onConfirm({ resetExpenses: true, newIncome: updateIncome ? Number(newIncome) : null });
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-lg rounded-xl bg-white dark:bg-slate-800 shadow-xl">
@@ -69,6 +73,13 @@ const NewMonthModal: React.FC<NewMonthModalProps> = ({ currentIncome, onConfirm,
             className="px-4 py-2 rounded bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 hover:bg-slate-300 dark:hover:bg-slate-600"
           >
             Continue Without Changes
+          </button>
+          <button
+            onClick={handleQuickReset}
+            className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+            title="Reset all expenses for the new month now"
+          >
+            Reset This Month Now
           </button>
           <button
             onClick={handleConfirm}
