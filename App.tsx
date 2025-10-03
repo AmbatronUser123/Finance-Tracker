@@ -517,6 +517,9 @@ const AppContent: React.FC = () => {
     if (typeof options.newIncome === 'number' && !Number.isNaN(options.newIncome)) {
       setIncome(options.newIncome);
       addToast({ type: 'success', message: 'Income updated for the new month.' });
+    } else if (options.resetExpenses) {
+      // If resetting without specifying a new income, default to 0
+      setIncome(0);
     }
     if (options.resetExpenses) {
       // Arsipkan bulan sebelumnya agar tetap tersedia di Reports
@@ -565,6 +568,8 @@ const AppContent: React.FC = () => {
     setCategories(prev => prev.map(c => ({ ...c, spent: 0, expenses: [] })));
     setIncomes([]);
     setSources([]);
+    // Also reset monthly income value when archiving via Data page
+    setIncome(0);
     setLastActiveMonth(currentMonth);
     addToast({ type: 'info', message: 'Current month archived and expenses reset.' });
   }, [income, categories, goals, sources, setMonthlyArchives, setCategories, setLastActiveMonth, addToast]);
