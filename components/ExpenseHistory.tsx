@@ -1,20 +1,27 @@
 import React, { useMemo, useState } from 'react';
 import { Category, TransactionSource } from '../types';
-import { formatRupiah } from '../src/utils/currency';
+import { formatRupiah } from '@/src/utils/currency';
 
 interface ExpenseHistoryProps {
   categories: Category[];
   sources: TransactionSource[];
   onDeleteExpense: (expenseId: string) => void;
+  onEditExpense?: (expense: any) => void;
 }
 
-const ExpenseHistory: React.FC<ExpenseHistoryProps> = ({ categories, sources, onDeleteExpense }) => {
+const ExpenseHistory: React.FC<ExpenseHistoryProps> = ({ categories, sources, onDeleteExpense, onEditExpense }) => {
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [dateSort, setDateSort] = useState<'desc' | 'asc'>('desc');
   const [monthFilter, setMonthFilter] = useState<string>('all'); // '01'..'12' or 'all'
   const [yearFilter, setYearFilter] = useState<string>('all');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDesc, setEditDesc] = useState('');
+  const [editAmount, setEditAmount] = useState('');
+  const [editCategoryId, setEditCategoryId] = useState<string>('');
+  const [editSourceId, setEditSourceId] = useState<string>('');
+  const [editDate, setEditDate] = useState<string>('');
 
   const sourceMap = useMemo(() => Object.fromEntries(sources.map(s => [s.id, s.name])), [sources]);
   const categoryMap = useMemo(() => Object.fromEntries(categories.map(c => [c.id, c.name])), [categories]);
@@ -57,6 +64,39 @@ const ExpenseHistory: React.FC<ExpenseHistoryProps> = ({ categories, sources, on
       return dateSort === 'desc' ? db - da : da - db;
     });
   }, [allExpenses, query, categoryFilter, sourceFilter, monthFilter, yearFilter, dateSort]);
+
+  const beginEdit = (exp: any) => {
+    setEditingId(exp.id);
+    setEditDesc(exp.description);
+    setEditAmount(String(exp.amount));
+    setEditCategoryId(exp.categoryId);
+    setEditSourceId(exp.sourceId);
+    setEditDate(new Date(exp.date).toISOString().slice(0,10));
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditDesc('');
+    setEditAmount('');
+    setEditCategoryId('');
+    setEditSourceId('');
+    setEditDate('');
+  };
+
+  const saveEdit = (exp: any) => {
+    if (!onEditExpense) return;
+    const amt = Number(editAmount);
+    if (!(amt > 0)) return;
+    onEditExpense({
+      ...exp,
+      description: editDesc,
+      amount: amt,
+      categoryId: editCategoryId,
+      sourceId: editSourceId,
+      date: new Date(editDate).toISOString(),
+    });
+    cancelEdit();
+  };
 
   return (
     <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-slate-900/30">
@@ -149,23 +189,72 @@ const ExpenseHistory: React.FC<ExpenseHistoryProps> = ({ categories, sources, on
                 <td className="px-4 py-4 text-center text-slate-500 dark:text-slate-300" colSpan={6}>No expenses found.</td>
               </tr>
             )}
-            {filtered.map(exp => (
-              <tr key={exp.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                <td className="px-4 py-2 text-slate-700 dark:text-slate-200 whitespace-nowrap">{new Date(exp.date).toLocaleDateString('en-CA')}</td>
-                <td className="px-4 py-2 text-slate-700 dark:text-slate-200">{exp.description}</td>
-                <td className="px-4 py-2 text-slate-700 dark:text-slate-200 whitespace-nowrap">{exp.categoryName}</td>
-                <td className="px-4 py-2 text-slate-700 dark:text-slate-200 whitespace-nowrap">{exp.sourceName}</td>
-                <td className="px-4 py-2 text-right font-medium text-slate-800 dark:text-slate-100 whitespace-nowrap">{formatRupiah(exp.amount)}</td>
-                <td className="px-4 py-2 text-right">
-                  <button
-                    onClick={() => onDeleteExpense(exp.id)}
-                    className="px-3 py-1.5 text-sm bg-red-500 hover:bg-red-600 text-white rounded"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {filtered.map(exp => {
+              const isEditing = editingId === exp.id;
+              return (
+                <tr key={exp.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                  <td className="px-4 py-2 text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                    {isEditing ? (
+                      <input type="date" value={editDate} onChange={(e)=>setEditDate(e.target.value)} className="p-1 bg-slate-100 dark:bg-slate-700 rounded" />
+                    ) : (
+                      new Date(exp.date).toLocaleDateString('en-CA')
+                    )}
+                  </td>
+                  <td className="px-4 py-2 text-slate-700 dark:text-slate-200">
+                    {isEditing ? (
+                      <input value={editDesc} onChange={(e)=>setEditDesc(e.target.value)} className="w-full p-1 bg-slate-100 dark:bg-slate-700 rounded" />
+                    ) : (
+                      exp.description
+                    )}
+                  </td>
+                  <td className="px-4 py-2 text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                    {isEditing ? (
+                      <select value={editCategoryId} onChange={(e)=>setEditCategoryId(e.target.value)} className="p-1 bg-slate-100 dark:bg-slate-700 rounded">
+                        {categories.map(c => (<option key={c.id} value={c.id}>{c.name}</option>))}
+                      </select>
+                    ) : (
+                      exp.categoryName
+                    )}
+                  </td>
+                  <td className="px-4 py-2 text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                    {isEditing ? (
+                      <select value={editSourceId} onChange={(e)=>setEditSourceId(e.target.value)} className="p-1 bg-slate-100 dark:bg-slate-700 rounded">
+                        {sources.map(s => (<option key={s.id} value={s.id}>{s.name}</option>))}
+                      </select>
+                    ) : (
+                      exp.sourceName
+                    )}
+                  </td>
+                  <td className="px-4 py-2 text-right font-medium text-slate-800 dark:text-slate-100 whitespace-nowrap">
+                    {isEditing ? (
+                      <input type="number" value={editAmount} onChange={(e)=>setEditAmount(e.target.value)} className="w-28 p-1 text-right bg-slate-100 dark:bg-slate-700 rounded" />
+                    ) : (
+                      formatRupiah(exp.amount)
+                    )}
+                  </td>
+                  <td className="px-4 py-2 text-right">
+                    {isEditing ? (
+                      <div className="flex justify-end gap-2">
+                        <button onClick={()=>saveEdit(exp)} className="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 text-white rounded">Save</button>
+                        <button onClick={cancelEdit} className="px-3 py-1.5 text-sm bg-slate-400 hover:bg-slate-500 text-white rounded">Cancel</button>
+                      </div>
+                    ) : (
+                      <div className="flex justify-end gap-2">
+                        {onEditExpense && (
+                          <button onClick={()=>beginEdit(exp)} className="px-3 py-1.5 text-sm bg-amber-500 hover:bg-amber-600 text-white rounded">Edit</button>
+                        )}
+                        <button
+                          onClick={() => onDeleteExpense(exp.id)}
+                          className="px-3 py-1.5 text-sm bg-red-500 hover:bg-red-600 text-white rounded"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

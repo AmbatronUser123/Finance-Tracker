@@ -4,6 +4,7 @@ import App from './App';
 import { ToastProvider, useToast } from './contexts/ToastContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import { BrowserRouter } from 'react-router-dom';
+import { registerSW } from 'virtual:pwa-register';
 
 // Import global styles
 import './global.css';
@@ -69,6 +70,9 @@ if (!rootElement) {
 }
 
 const root = ReactDOM.createRoot(rootElement);
+
+// Register the service worker for PWA (auto update)
+registerSW({ immediate: true });
 
 const AppWithPWA = () => (
   <React.StrictMode>

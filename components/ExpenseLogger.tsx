@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Category, Expense, TransactionSource } from '../types';
 import { ReceiptPlusIcon } from './icons';
-import { parseRupiah, formatRupiah } from '../src/utils/currency';
+import { parseRupiah, formatRupiah } from '@/src/utils/currency';
 
 interface ExpenseLoggerProps {
   categories: Category[];

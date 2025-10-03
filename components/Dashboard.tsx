@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Category, Goal, TransactionSource } from '../types';
 import { FiDollarSign, FiTrendingUp, FiPieChart, FiArrowRight } from 'react-icons/fi';
-import { formatRupiah } from '../src/utils/currency';
+import { formatRupiah } from '@/src/utils/currency';
 import { useNavigate } from 'react-router-dom';
 
 interface DashboardProps {
@@ -229,15 +229,36 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Description</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Amount</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-300 uppercase tracking-wider">Amount</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
-              <tr>
-                <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-slate-300">
-                  No recent transactions
-                </td>
-              </tr>
+              {
+                (() => {
+                  const recent = categories
+                    .flatMap(cat => (cat.expenses || []).map(exp => ({
+                      ...exp,
+                      categoryName: cat.name,
+                    })))
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    .slice(0, 5);
+                  if (recent.length === 0) {
+                    return (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-slate-300">No recent transactions</td>
+                      </tr>
+                    );
+                  }
+                  return recent.map(item => (
+                    <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                      <td className="px-6 py-3 whitespace-nowrap">{new Date(item.date).toLocaleDateString('en-CA')}</td>
+                      <td className="px-6 py-3">{item.description}</td>
+                      <td className="px-6 py-3 whitespace-nowrap">{item.categoryName}</td>
+                      <td className="px-6 py-3 text-right font-medium">{formatRupiah(item.amount)}</td>
+                    </tr>
+                  ));
+                })()
+              }
             </tbody>
           </table>
         </div>

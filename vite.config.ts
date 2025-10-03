@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
         react(),
         VitePWA({
           registerType: 'autoUpdate',
-          includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+          includeAssets: ['pwa-192x192.png', 'pwa-512x512.png', 'manifest.json', 'sw.js'],
           manifest: {
             name: 'Finance Tracker',
             short_name: 'Finance',
@@ -37,7 +37,7 @@ export default defineConfig(({ mode }) => {
             ]
           },
           devOptions: {
-            enabled: true
+            enabled: false
           }
         })
       ],

@@ -10,6 +10,7 @@ const IncomeInput: React.FC<IncomeInputProps> = ({ onAddIncome, transactionSourc
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [sourceId, setSourceId] = useState<string>('');
+  const [date, setDate] = useState<string>(new Date().toISOString().slice(0,10));
 
   useEffect(() => {
     if (transactionSources.length > 0 && !sourceId) {
@@ -26,11 +27,12 @@ const IncomeInput: React.FC<IncomeInputProps> = ({ onAddIncome, transactionSourc
     onAddIncome({
       description,
       amount: parseFloat(amount),
-      date: new Date().toISOString(),
+      date: new Date(date).toISOString(),
       sourceId,
     });
     setDescription('');
     setAmount('');
+    setDate(new Date().toISOString().slice(0,10));
   };
 
   return (
@@ -48,6 +50,12 @@ const IncomeInput: React.FC<IncomeInputProps> = ({ onAddIncome, transactionSourc
         placeholder="Amount"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
+        className="w-full p-2 border rounded"
+      />
+      <input
+        type="date"
+        value={date}
+        onChange={(e) => setDate(e.target.value)}
         className="w-full p-2 border rounded"
       />
       <select

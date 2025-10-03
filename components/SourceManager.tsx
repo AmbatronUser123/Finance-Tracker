@@ -1,22 +1,26 @@
 import React, { useState } from 'react';
 import { TransactionSource } from '../types';
-import { formatRupiah } from '../src/utils/currency';
+import { formatRupiah } from '@/src/utils/currency';
 
 interface SourceManagerProps {
   sources: TransactionSource[];
   onAddSource: (name: string, balance: number) => void;
   onDeleteSource: (id: string) => void;
   onEditSource: (id: string, name: string, balance: number) => void;
+  onTransfer?: (fromId: string, toId: string, amount: number) => void;
   totalsBySource?: Record<string, number>;
   usedCountBySource?: Record<string, number>;
 }
 
-const SourceManager: React.FC<SourceManagerProps> = ({ sources, onAddSource, onDeleteSource, onEditSource, totalsBySource = {}, usedCountBySource = {} }) => {
+const SourceManager: React.FC<SourceManagerProps> = ({ sources, onAddSource, onDeleteSource, onEditSource, onTransfer, totalsBySource = {}, usedCountBySource = {} }) => {
   const [newSourceName, setNewSourceName] = useState('');
   const [newSourceBalance, setNewSourceBalance] = useState<string>('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [editingBalance, setEditingBalance] = useState<string>('');
+  const [transferFromId, setTransferFromId] = useState<string>('');
+  const [transferToId, setTransferToId] = useState<string>('');
+  const [transferAmount, setTransferAmount] = useState<string>('');
 
   const handleAddSource = () => {
     if (newSourceName.trim() !== '') {
@@ -68,6 +72,34 @@ const SourceManager: React.FC<SourceManagerProps> = ({ sources, onAddSource, onD
         <button onClick={handleAddSource} className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600">
           Add Source
         </button>
+      </div>
+      {/* Transfer Section */}
+      <div className="mt-6 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+        <div className="font-semibold mb-2">Transfer antar sumber</div>
+        <div className="flex flex-wrap gap-2 items-center">
+          <select value={transferFromId} onChange={(e)=>setTransferFromId(e.target.value)} className="p-2 border rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-600">
+            <option value="">Dari</option>
+            {sources.map(s => (<option key={s.id} value={s.id}>{s.name}</option>))}
+          </select>
+          <span className="text-slate-500">→</span>
+          <select value={transferToId} onChange={(e)=>setTransferToId(e.target.value)} className="p-2 border rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-600">
+            <option value="">Ke</option>
+            {sources.map(s => (<option key={s.id} value={s.id}>{s.name}</option>))}
+          </select>
+          <input
+            type="text"
+            value={transferAmount}
+            onChange={(e)=>setTransferAmount(e.target.value.replace(/[^0-9]/g, ''))}
+            placeholder="Nominal (IDR)"
+            className="w-44 p-2 border rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-600"
+          />
+          <button
+            onClick={() => onTransfer && onTransfer(transferFromId, transferToId, Math.max(0, parseInt(transferAmount || '0', 10)))}
+            className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded"
+          >
+            Transfer
+          </button>
+        </div>
       </div>
       <ul>
         {sources.map(source => {

@@ -1,13 +1,13 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Category, Goal, Expense, TransactionSource, MonthlyArchive } from './types';
+import { Category, Goal, Expense, TransactionSource, MonthlyArchive, Income } from './types';
 import { INITIAL_CATEGORIES, INITIAL_SOURCES } from './constants';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useToast } from './contexts/ToastContext';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import Papa from 'papaparse';
-import { formatRupiah } from './src/utils/currency';
+import { formatRupiah } from '@/src/utils/currency';
 import { 
   FiHome, 
   FiPieChart, 
@@ -32,11 +32,14 @@ import ExpenseHistory from '@/components/ExpenseHistory';
 import { useDarkMode } from './hooks/useDarkMode';
 import { SunIcon, MoonIcon } from './components/icons';
 import NewMonthModal from './components/NewMonthModal.tsx';
+import IncomeInput from './components/IncomeInput';
+import IncomeHistory from './components/IncomeHistory';
 
 // Navigation items
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: <FiHome size={20} /> },
   { id: 'expenses', label: 'Expenses', icon: <FiDollarSign size={20} /> },
+  { id: 'income', label: 'Income', icon: <FiDollarSign size={20} /> },
   { id: 'categories', label: 'Categories', icon: <FiTag size={20} /> },
   { id: 'goals', label: 'Goals', icon: <FiTarget size={20} /> },
   { id: 'reports', label: 'Reports', icon: <FiPieChart size={20} /> },
@@ -227,6 +230,7 @@ const AppContent: React.FC = () => {
   const [categories, setCategories] = useLocalStorage<CategoryWithBudget[]>('categories', INITIAL_CATEGORIES as CategoryWithBudget[]);
   const [goals, setGoals] = useLocalStorage<Goal[]>('goals', []);
   const [sources, setSources] = useLocalStorage<TransactionSource[]>('sources', INITIAL_SOURCES);
+  const [incomes, setIncomes] = useLocalStorage<Income[]>('incomes', []);
   const [lastActiveMonth, setLastActiveMonth] = useLocalStorage<string>('lastActiveMonth', '');
   const [monthlyArchives, setMonthlyArchives] = useLocalStorage<MonthlyArchive[]>('monthlyArchives', []);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -266,6 +270,55 @@ const AppContent: React.FC = () => {
       addToast({ type: 'success', message: 'Expense added!' });
     }
   };
+
+  const handleEditExpense = useCallback((updated: Expense) => {
+    setCategories(prev => {
+      // Locate the original expense and category
+      let originalCategoryId: string | null = null;
+      let originalExpense: Expense | null = null;
+      prev.forEach(cat => {
+        const exp = cat.expenses.find(e => e.id === updated.id);
+        if (exp) {
+          originalCategoryId = cat.id;
+          originalExpense = exp;
+        }
+      });
+
+      if (!originalExpense || !originalCategoryId) {
+        addToast({ type: 'error', message: 'Original expense not found.' });
+        return prev;
+      }
+
+      // If category changed, move expense
+      if (originalCategoryId !== updated.categoryId) {
+        return prev.map(cat => {
+          if (cat.id === originalCategoryId) {
+            // remove from old category and adjust spent
+            const newExpenses = cat.expenses.filter(e => e.id !== updated.id);
+            const newSpent = Math.max(0, cat.spent - originalExpense!.amount);
+            return { ...cat, expenses: newExpenses, spent: newSpent };
+          }
+          if (cat.id === updated.categoryId) {
+            // add to new category and adjust spent
+            const newExpenses = [...cat.expenses, { ...updated }];
+            const newSpent = cat.spent + updated.amount;
+            return { ...cat, expenses: newExpenses, spent: newSpent };
+          }
+          return cat;
+        });
+      }
+
+      // Same category: update in place and adjust spent delta
+      return prev.map(cat => {
+        if (cat.id !== originalCategoryId) return cat;
+        const newExpenses = cat.expenses.map(e => (e.id === updated.id ? { ...e, ...updated } : e));
+        const delta = (updated.amount || 0) - (originalExpense!.amount || 0);
+        const newSpent = Math.max(0, cat.spent + delta);
+        return { ...cat, expenses: newExpenses, spent: newSpent };
+      });
+    });
+    addToast({ type: 'success', message: 'Expense updated!' });
+  }, [setCategories, addToast]);
 
   const handleDeleteExpense = useCallback((expenseId: string) => {
     let found = false;
@@ -329,6 +382,85 @@ const AppContent: React.FC = () => {
     setSources(prev => prev.filter(s => s.id !== id));
     addToast({ type: 'info', message: 'Source deleted.' });
   }, [categories, setSources, addToast]);
+
+  const handleTransferSources = useCallback((fromId: string, toId: string, amount: number) => {
+    if (!fromId || !toId || fromId === toId) {
+      addToast({ type: 'error', message: 'Pilih sumber berbeda.' });
+      return;
+    }
+    if (!(amount > 0)) {
+      addToast({ type: 'error', message: 'Nominal transfer harus > 0.' });
+      return;
+    }
+    setSources(prev => {
+      const from = prev.find(s => s.id === fromId);
+      const to = prev.find(s => s.id === toId);
+      if (!from || !to) return prev;
+      if ((from.balance || 0) < amount) {
+        addToast({ type: 'error', message: 'Saldo sumber tidak mencukupi.' });
+        return prev;
+      }
+      return prev.map(s => {
+        if (s.id === fromId) return { ...s, balance: (s.balance || 0) - amount };
+        if (s.id === toId) return { ...s, balance: (s.balance || 0) + amount };
+        return s;
+      });
+    });
+    addToast({ type: 'success', message: 'Transfer berhasil.' });
+  }, [setSources, addToast]);
+
+  // Income handlers
+  const handleAddIncome = useCallback((incomeItem: Omit<Income, 'id' | 'date'> & { date?: string }) => {
+    const newIncome: Income = {
+      id: `inc-${Date.now()}`,
+      description: incomeItem.description,
+      amount: incomeItem.amount,
+      sourceId: incomeItem.sourceId,
+      date: incomeItem.date || new Date().toISOString(),
+    };
+    setIncomes(prev => [newIncome, ...prev]);
+    // Update source balance
+    setSources(prev => prev.map(s => s.id === newIncome.sourceId ? { ...s, balance: (s.balance || 0) + newIncome.amount } : s));
+    addToast({ type: 'success', message: 'Income added!' });
+  }, [setIncomes, setSources, addToast]);
+
+  const handleEditIncome = useCallback((updated: Income) => {
+    setIncomes(prev => prev.map(i => i.id === updated.id ? { ...updated } : i));
+    // Adjust source balances by delta and source change
+    setSources(prev => {
+      // find original
+      let original: Income | undefined = incomes.find(i => i.id === updated.id);
+      if (!original) return prev;
+      const arr = prev.map(s => {
+        if (s.id === original!.sourceId && original!.sourceId !== updated.sourceId) {
+          return { ...s, balance: (s.balance || 0) - original!.amount };
+        }
+        if (s.id === updated.sourceId && original!.sourceId !== updated.sourceId) {
+          return { ...s, balance: (s.balance || 0) + updated.amount };
+        }
+        return s;
+      });
+      // if same source, apply delta
+      if (original.sourceId === updated.sourceId) {
+        const delta = updated.amount - original.amount;
+        return arr.map(s => s.id === updated.sourceId ? { ...s, balance: (s.balance || 0) + delta } : s);
+      }
+      return arr;
+    });
+    addToast({ type: 'success', message: 'Income updated!' });
+  }, [incomes, setIncomes, setSources, addToast]);
+
+  const handleDeleteIncome = useCallback((incomeId: string) => {
+    let removed: Income | undefined;
+    setIncomes(prev => {
+      removed = prev.find(i => i.id === incomeId);
+      return prev.filter(i => i.id !== incomeId);
+    });
+    if (removed) {
+      setSources(prev => prev.map(s => s.id === removed!.sourceId ? { ...s, balance: Math.max(0, (s.balance || 0) - removed!.amount) } : s));
+      addToast({ type: 'info', message: 'Income deleted.' });
+    }
+  }, [setIncomes, setSources, addToast]);
 
   // Detect new month and prompt user
   React.useEffect(() => {
@@ -580,6 +712,7 @@ const AppContent: React.FC = () => {
             <ExpenseHistory
               categories={categories}
               sources={sources}
+            onEditExpense={handleEditExpense}
               onDeleteExpense={handleDeleteExpense}
             />
             <SourceManager
@@ -587,9 +720,17 @@ const AppContent: React.FC = () => {
               onAddSource={handleAddSource}
               onDeleteSource={handleDeleteSource}
               onEditSource={handleEditSource}
+            onTransfer={handleTransferSources}
               totalsBySource={totalsBySource}
               usedCountBySource={usedCountBySource}
             />
+          </div>
+        );
+      case 'income':
+        return (
+          <div className="space-y-6">
+            <IncomeInput onAddIncome={(payload) => handleAddIncome({ ...payload })} transactionSources={sources} />
+            <IncomeHistory incomes={incomes} sources={sources} onEditIncome={handleEditIncome} onDeleteIncome={handleDeleteIncome} />
           </div>
         );
       case 'categories':
@@ -633,14 +774,6 @@ const AppContent: React.FC = () => {
         );
       case 'reports': {
         // Kumpulkan bulan dari transaksi aktif + arsip
-        const currentAllExpenses = categories.flatMap(c => c.expenses.map(e => ({ ...e, categoryName: c.name })));
-        const archiveMonths = monthlyArchives.map(a => a.month);
-        const uniqueMonths = Array.from(new Set([
-          ...currentAllExpenses.map(e => e.date?.slice(0, 7)).filter(Boolean) as string[],
-          ...archiveMonths,
-        ])).sort();
-        const now = new Date();
-        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         return <ReportsView categories={categories} monthlyArchives={monthlyArchives} />;
       }
       default:
