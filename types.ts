@@ -52,4 +52,5 @@ export interface MonthlyArchive {
   categories: Category[];
   goals: Goal[];
   sources: TransactionSource[];
+  incomes?: Income[];
 }

@@ -56,7 +56,8 @@ export interface CategoryWithBudget extends Category {
 const ReportsView: React.FC<{
   categories: CategoryWithBudget[];
   monthlyArchives: MonthlyArchive[];
-}> = ({ categories, monthlyArchives }) => {
+  incomes: Income[];
+}> = ({ categories, monthlyArchives, incomes }) => {
   const currentAllExpenses = categories.flatMap(c => c.expenses.map(e => ({ ...e, categoryName: c.name })));
   const archiveMonths = monthlyArchives.map(a => a.month);
   const uniqueMonths = Array.from(new Set([
@@ -97,7 +98,12 @@ const ReportsView: React.FC<{
   };
 
   const isArchive = !categories.some(c => c.expenses.some(e => e.date?.startsWith(selectedMonth))) && monthlyArchives.some(a => a.month === selectedMonth);
-  const sourceCategories = isArchive ? monthlyArchives.find(a => a.month === selectedMonth)!.categories as CategoryWithBudget[] : categories;
+  const archiveEntry = isArchive ? monthlyArchives.find(a => a.month === selectedMonth)! : null;
+  const sourceCategories = isArchive ? (archiveEntry!.categories as CategoryWithBudget[]) : categories;
+
+  // Incomes for the selected month (from archive if available)
+  const monthIncomes = (isArchive ? (archiveEntry?.incomes || []) : incomes.filter(i => i.date?.startsWith(selectedMonth)));
+  const totalMonthIncome = monthIncomes.reduce((s, i) => s + (i.amount || 0), 0);
 
   const filteredByMonth = sourceCategories.map(cat => {
     const expenses = cat.expenses.filter(e => e.date?.startsWith(selectedMonth));
@@ -189,6 +195,36 @@ const ReportsView: React.FC<{
           <button onClick={() => exportReport('pdf')} className="px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Export PDF</button>
           <button onClick={() => exportReport('csv')} className="px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700">Export CSV</button>
         </div>
+      </div>
+
+      {/* Income summary */}
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+        <div className="flex items-center justify-between">
+          <div className="font-semibold">Total Income ({selectedMonth})</div>
+          <div className="text-sm text-slate-700 dark:text-slate-300">{formatRupiah(totalMonthIncome)}</div>
+        </div>
+        {monthIncomes.length > 0 && (
+          <div className="mt-3 overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="text-slate-500">
+                  <th className="text-left py-1 pr-4">Date</th>
+                  <th className="text-left py-1 pr-4">Description</th>
+                  <th className="text-right py-1">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {monthIncomes.map(i => (
+                  <tr key={i.id} className="border-t border-slate-200 dark:border-slate-700">
+                    <td className="py-1 pr-4">{new Date(i.date).toLocaleDateString('en-CA')}</td>
+                    <td className="py-1 pr-4">{i.description}</td>
+                    <td className="py-1 text-right">{formatRupiah(i.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {filteredByMonth.length === 0 ? (
@@ -492,13 +528,17 @@ const AppContent: React.FC = () => {
           categories: categories.map(c => ({ ...c })),
           goals: goals.map(g => ({ ...g })),
           sources: sources.map(s => ({ ...s })),
+          incomes: incomes.map(i => ({ ...i })),
         };
         setMonthlyArchives(prev => {
           const withoutDup = prev.filter(a => a.month !== archive.month);
           return [...withoutDup, archive];
         });
       }
+      // Reset data berjalan
       setCategories(prev => prev.map(c => ({ ...c, spent: 0, expenses: [] })));
+      setIncomes([]);
+      setSources([]);
       addToast({ type: 'info', message: 'Expenses reset for the new month.' });
     }
     setLastActiveMonth(currentMonth);
@@ -515,13 +555,16 @@ const AppContent: React.FC = () => {
       categories: categories.map(c => ({ ...c })),
       goals: goals.map(g => ({ ...g })),
       sources: sources.map(s => ({ ...s })),
+      incomes: incomes.map(i => ({ ...i })),
     };
     setMonthlyArchives(prev => {
       const withoutDup = prev.filter(a => a.month !== archive.month);
       return [...withoutDup, archive];
     });
-    // Reset pengeluaran bulan berjalan
+    // Reset data bulan berjalan
     setCategories(prev => prev.map(c => ({ ...c, spent: 0, expenses: [] })));
+    setIncomes([]);
+    setSources([]);
     setLastActiveMonth(currentMonth);
     addToast({ type: 'info', message: 'Current month archived and expenses reset.' });
   }, [income, categories, goals, sources, setMonthlyArchives, setCategories, setLastActiveMonth, addToast]);
@@ -774,7 +817,7 @@ const AppContent: React.FC = () => {
         );
       case 'reports': {
         // Kumpulkan bulan dari transaksi aktif + arsip
-        return <ReportsView categories={categories} monthlyArchives={monthlyArchives} />;
+        return <ReportsView categories={categories} monthlyArchives={monthlyArchives} incomes={incomes} />;
       }
       default:
         return (
