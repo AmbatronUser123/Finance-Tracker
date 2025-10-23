@@ -276,14 +276,27 @@ const AppContent: React.FC = () => {
   const [lastDeletedExpense, setLastDeletedExpense] = useState<{ expense: Expense; categoryId: string } | null>(null);
   const [showNewMonthModal, setShowNewMonthModal] = useState(false);
 
-  // Derive monthly income shown on Dashboard from current-month incomes
+  // Derive dashboard "Monthly income" from total of transaction sources balances
   React.useEffect(() => {
-    const now = new Date();
-    const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const sum = incomes.filter(i => (i.date || '').slice(0, 7) === key)
-      .reduce((acc, i) => acc + (i.amount || 0), 0);
+    const sum = sources.reduce((acc, s) => acc + (s.balance || 0), 0);
     setIncome(sum);
-  }, [incomes, setIncome]);
+  }, [sources, setIncome]);
+
+  // Recompute category planned/budget when income or allocations change
+  React.useEffect(() => {
+    setCategories(prev => {
+      let changed = false;
+      const updated = prev.map(cat => {
+        const planned = (income || 0) * (cat.allocation / 100);
+        if (cat.planned !== planned || cat.budget !== planned) {
+          changed = true;
+          return { ...cat, planned, budget: planned } as CategoryWithBudget;
+        }
+        return cat;
+      });
+      return changed ? updated : prev;
+    });
+  }, [income, setCategories]);
 
   // Calculate totals
   const totalExpenses = useMemo(() => {
@@ -466,11 +479,6 @@ const AppContent: React.FC = () => {
     setIncomes(prev => [newIncome, ...prev]);
     // Update source balance
     setSources(prev => prev.map(s => s.id === newIncome.sourceId ? { ...s, balance: (s.balance || 0) + newIncome.amount } : s));
-    // If this income belongs to current month, reflect it on Dashboard monthly income
-    const nowMonth = new Date().toISOString().slice(0, 7);
-    if ((newIncome.date || '').slice(0, 7) === nowMonth) {
-      setIncome(prev => (prev || 0) + newIncome.amount);
-    }
     addToast({ type: 'success', message: 'Income added!' });
   }, [setIncomes, setSources, addToast]);
 
@@ -497,18 +505,6 @@ const AppContent: React.FC = () => {
       }
       return arr;
     });
-    // Adjust monthly income for Dashboard based on current month inclusion transitions
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    const wasInCurrent = !!incomes.find(i => i.id === updated.id && (i.date || '').slice(0, 7) === currentMonth);
-    const isInCurrent = (updated.date || '').slice(0, 7) === currentMonth;
-    const original = incomes.find(i => i.id === updated.id);
-    if (original) {
-      let delta = 0;
-      if (wasInCurrent && isInCurrent) delta = updated.amount - original.amount;
-      else if (!wasInCurrent && isInCurrent) delta = updated.amount;
-      else if (wasInCurrent && !isInCurrent) delta = -original.amount;
-      if (delta !== 0) setIncome(prev => Math.max(0, (prev || 0) + delta));
-    }
     addToast({ type: 'success', message: 'Income updated!' });
   }, [incomes, setIncomes, setSources, addToast]);
 
@@ -520,11 +516,6 @@ const AppContent: React.FC = () => {
     });
     if (removed) {
       setSources(prev => prev.map(s => s.id === removed!.sourceId ? { ...s, balance: Math.max(0, (s.balance || 0) - removed!.amount) } : s));
-      // Reflect removal on monthly income if within current month
-      const currentMonth = new Date().toISOString().slice(0, 7);
-      if ((removed!.date || '').slice(0, 7) === currentMonth) {
-        setIncome(prev => Math.max(0, (prev || 0) - removed!.amount));
-      }
       addToast({ type: 'info', message: 'Income deleted.' });
     }
   }, [setIncomes, setSources, addToast]);

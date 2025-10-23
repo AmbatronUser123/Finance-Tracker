@@ -104,13 +104,16 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
                     <div className="mt-2">
                       <div className="flex justify-between text-xs text-slate-500 mb-1">
                         <span>{`Rp${(cat.spent || 0).toLocaleString()}`}</span>
-                        <span>{`Rp${(cat.planned || 0).toLocaleString()}`}</span>
+                        <span>{`Max Rp${(cat.planned || 0).toLocaleString()}`}</span>
                       </div>
                       <div className="w-full bg-slate-200 rounded-full h-2.5">
                         <div 
                           className="bg-indigo-600 h-2.5 rounded-full"
                           style={{ width: `${cat.planned > 0 ? Math.min((cat.spent / cat.planned) * 100, 100) : 0}%` }}
                         ></div>
+                      </div>
+                      <div className="mt-1 text-[11px] leading-tight text-slate-500">
+                        {`Max berasal dari ${cat.allocation}% alokasi kategori terhadap income bulanan`}
                       </div>
                     </div>
                     <div className="relative w-full mt-1">
