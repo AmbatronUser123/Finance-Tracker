@@ -61,12 +61,12 @@ const CategoryEditor: React.FC<CategoryEditorProps> = ({ onClose, onSave, catego
             role="dialog"
             aria-modal="true"
         >
-            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md m-4 transform transition-all">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-md m-4 transform transition-all border border-slate-200 dark:border-slate-700">
                 <div className="flex justify-between items-center mb-4">
-                    <h2 id="category-editor-title" className="text-xl font-bold text-slate-800">
+                    <h2 id="category-editor-title" className="text-xl font-bold text-slate-900 dark:text-slate-100">
                         {categoryToEdit ? 'Edit Category' : 'Add New Category'}
                     </h2>
-                    <button onClick={onClose} className="text-slate-500 hover:text-slate-800">
+                    <button onClick={onClose} className="text-slate-500 hover:text-slate-800 dark:text-slate-300 dark:hover:text-slate-100">
                         <XMarkIcon className="w-6 h-6" />
                     </button>
                 </div>
@@ -74,16 +74,16 @@ const CategoryEditor: React.FC<CategoryEditorProps> = ({ onClose, onSave, catego
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {error && <div className="text-red-500 text-sm text-center">{error}</div>}
                     <div>
-                        <label htmlFor="cat-name" className="block text-sm font-medium text-slate-700 mb-1">Category Name</label>
-                        <input id="cat-name" type="text" value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g., Groceries" className="w-full p-2 bg-slate-100 text-slate-800 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                        <label htmlFor="cat-name" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Category Name</label>
+                        <input id="cat-name" type="text" value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g., Groceries" className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
                     </div>
                     <div>
-                        <label htmlFor="cat-allocation" className="block text-sm font-medium text-slate-700 mb-1">Allocation (%)</label>
-                        <input id="cat-allocation" type="number" value={allocation} onChange={(e) => setAllocation(Number(e.target.value))} required min="0" placeholder="e.g., 10" className="w-full p-2 bg-slate-100 text-slate-800 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                        <label htmlFor="cat-allocation" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Allocation (%)</label>
+                        <input id="cat-allocation" type="number" value={allocation} onChange={(e) => setAllocation(Number(e.target.value))} required min="0" placeholder="e.g., 10" className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Color</label>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Color</label>
                       <div className="grid grid-cols-8 gap-2">
                         {CATEGORY_COLORS.map(c => (
                             <button 
@@ -91,26 +91,26 @@ const CategoryEditor: React.FC<CategoryEditorProps> = ({ onClose, onSave, catego
                                 type="button" 
                                 onClick={() => setColor(c)}
                                 style={{ backgroundColor: TAILWIND_COLORS[c] || '#ccc' }}
-                                className={`w-full h-8 rounded-full focus:outline-none ring-2 ring-offset-2 ${color === c ? 'ring-indigo-500' : 'ring-transparent'}`}>
+                                className={`w-full h-8 rounded-full focus:outline-none ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-800 ${color === c ? 'ring-indigo-500' : 'ring-transparent'}`}>
                             </button>
                         ))}
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Icon</label>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Icon</label>
                       <div className="grid grid-cols-8 gap-2">
                         {CATEGORY_ICONS.map(i => (
-                            <button key={i} type="button" onClick={() => setIcon(i)} className={`p-2 rounded-lg border-2 ${icon === i ? 'border-indigo-500 bg-indigo-100' : 'border-slate-200 bg-slate-100'}`}>
-                                <CategoryIcon name={i} className="w-full h-full text-slate-600" />
+                            <button key={i} type="button" onClick={() => setIcon(i)} className={`p-2 rounded-lg border-2 ${icon === i ? 'border-indigo-500 bg-indigo-100 dark:bg-indigo-900/30' : 'border-slate-200 bg-slate-100 dark:border-slate-600 dark:bg-slate-700'}`}>
+                                <CategoryIcon name={i} className="w-full h-full text-slate-600 dark:text-slate-200" />
                             </button>
                         ))}
                       </div>
                     </div>
 
-                    <div className="flex justify-end gap-4 pt-4 border-t border-slate-200">
-                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200">Cancel</button>
-                        <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Save Category</button>
+                    <div className="flex justify-end gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-100 bg-slate-100 dark:bg-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600">Cancel</button>
+                        <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 focus:ring-indigo-500">Save Category</button>
                     </div>
                 </form>
             </div>

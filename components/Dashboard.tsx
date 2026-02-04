@@ -75,7 +75,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 {formatRupiah(income)}
               </p>
             </div>
-            <div className="p-3 rounded-full bg-blue-50 text-blue-600">
+            <div className="p-3 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-200">
               <FiDollarSign size={24} />
             </div>
           </div>
@@ -90,7 +90,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 {formatRupiah(totalExpenses)}
               </p>
             </div>
-            <div className="p-3 rounded-full bg-red-50 text-red-600">
+            <div className="p-3 rounded-full bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-200">
               <FiTrendingUp size={24} />
             </div>
           </div>
@@ -105,7 +105,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 {formatRupiah(totalSavings)}
               </p>
             </div>
-            <div className="p-3 rounded-full bg-green-50 text-green-600">
+            <div className="p-3 rounded-full bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-200">
               <FiPieChart size={24} />
             </div>
           </div>
@@ -119,7 +119,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <h3 className="text-lg font-semibold">Top Categories</h3>
             <button 
               onClick={() => handleViewAll('categories')}
-              className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+              className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-300 dark:hover:text-indigo-200 font-medium transition-colors"
             >
               View All <FiArrowRight className="ml-1" size={16} />
             </button>
@@ -131,7 +131,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <span className="font-medium">{category.name}</span>
                   <span>{formatRupiah(category.spent)} dari {formatRupiah(category.budget)}</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
                   <div 
                     className="h-2 rounded-full bg-primary-600" 
                     style={{ 
@@ -151,7 +151,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <h3 className="text-lg font-semibold">Saving Goals</h3>
             <button 
               onClick={() => handleViewAll('goals')}
-              className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+              className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-300 dark:hover:text-indigo-200 font-medium transition-colors"
             >
               View All <FiArrowRight className="ml-1" size={16} />
             </button>
@@ -163,7 +163,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <span className="font-medium">{goal.name}</span>
                   <span>{formatRupiah(goal.currentAmount)} dari {formatRupiah(goal.targetAmount)}</span>
                 </div>
-                <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
+                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
                   <div 
                     className="h-2 rounded-full bg-green-500" 
                     style={{ 
@@ -171,11 +171,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                     }}
                   />
                 </div>
-                <p className="text-xs text-gray-500">Target: {formatRupiah(goal.targetAmount)}</p>
+                <p className="text-xs text-gray-500 dark:text-slate-300">Target: {formatRupiah(goal.targetAmount)}</p>
               </div>
             ))}
             {goals.length === 0 && (
-              <p className="text-sm text-gray-500 text-center py-4">
+              <p className="text-sm text-gray-500 dark:text-slate-300 text-center py-4">
                 No saving goals yet. Create one to get started!
               </p>
             )}
@@ -187,8 +187,8 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Sources Breakdown</h3>
             <button 
-              onClick={() => handleViewAll('expenses')}
-              className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+              onClick={() => handleViewAll('sources')}
+              className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-300 dark:hover:text-indigo-200 font-medium transition-colors"
             >
               Manage <FiArrowRight className="ml-1" size={16} />
             </button>
@@ -205,7 +205,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               );
             })}
             {sources.length === 0 && (
-              <p className="text-sm text-gray-500 text-center py-4">No sources yet.</p>
+              <p className="text-sm text-gray-500 dark:text-slate-300 text-center py-4">No sources yet.</p>
             )}
           </div>
         </div>
@@ -217,7 +217,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <h3 className="text-lg font-semibold">Recent Transactions</h3>
           <button 
             onClick={() => handleViewAll('expenses')}
-            className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+            className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-300 dark:hover:text-indigo-200 font-medium transition-colors"
           >
             View All <FiArrowRight className="ml-1" size={16} />
           </button>

@@ -7,7 +7,7 @@ import { useToast } from './contexts/ToastContext';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import Papa from 'papaparse';
-import { formatRupiah } from '@/src/utils/currency';
+import { formatRupiah } from './src/utils/currency';
 import { 
   FiHome, 
   FiPieChart, 
@@ -16,7 +16,8 @@ import {
   FiTarget, 
   FiX, 
   FiMenu,
-  FiDatabase
+  FiDatabase,
+  FiCreditCard
 } from 'react-icons/fi';
 
 // Components
@@ -28,10 +29,10 @@ import CategoryEditor from './components/CategoryEditor';
 import DataManager from './components/DataManager';
 import CategoryDetailModal from './components/CategoryDetailModal';
 import SourceManager from './components/SourceManager';
-import ExpenseHistory from '@/components/ExpenseHistory';
+import ExpenseHistory from './components/ExpenseHistory';
 import { useDarkMode } from './hooks/useDarkMode';
 import { SunIcon, MoonIcon } from './components/icons';
-import NewMonthModal from './components/NewMonthModal.tsx';
+import NewMonthModal from './components/NewMonthModal';
 import IncomeInput from './components/IncomeInput';
 import IncomeHistory from './components/IncomeHistory';
 
@@ -40,6 +41,7 @@ const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: <FiHome size={20} /> },
   { id: 'expenses', label: 'Expenses', icon: <FiDollarSign size={20} /> },
   { id: 'income', label: 'Income', icon: <FiDollarSign size={20} /> },
+  { id: 'sources', label: 'Sources', icon: <FiCreditCard size={20} /> },
   { id: 'categories', label: 'Categories', icon: <FiTag size={20} /> },
   { id: 'goals', label: 'Goals', icon: <FiTarget size={20} /> },
   { id: 'reports', label: 'Reports', icon: <FiPieChart size={20} /> },
@@ -326,11 +328,11 @@ const AppContent: React.FC = () => {
   const [lastDeletedExpense, setLastDeletedExpense] = useState<{ expense: Expense; categoryId: string } | null>(null);
   const [showNewMonthModal, setShowNewMonthModal] = useState(false);
 
-  // Derive dashboard "Monthly income" from total of transaction sources balances
-  React.useEffect(() => {
-    const sum = sources.reduce((acc, s) => acc + (s.balance || 0), 0);
-    setIncome(sum);
-  }, [sources, setIncome]);
+  // Keep `income` as user-controlled monthly income.
+  // If you want to display total balances across sources, compute it separately (do not persist into `income`).
+  const totalSourceBalance = useMemo(() => {
+    return sources.reduce((acc, s) => acc + (s.balance || 0), 0);
+  }, [sources]);
 
   // Recompute category planned/budget when income or allocations change
   React.useEffect(() => {
@@ -430,6 +432,7 @@ const AppContent: React.FC = () => {
 
   const handleDeleteExpense = useCallback((expenseId: string) => {
     let found = false;
+    let deleted: { expense: Expense; categoryId: string } | null = null;
     const updated = categories.map(cat => {
       const exp = cat.expenses.find(e => e.id === expenseId);
       if (exp) {
@@ -437,7 +440,8 @@ const AppContent: React.FC = () => {
         const newExpenses = cat.expenses.filter(e => e.id !== expenseId);
         const newSpent = Math.max(0, cat.spent - exp.amount);
         // Track for undo
-        setLastDeletedExpense({ expense: exp, categoryId: cat.id });
+        deleted = { expense: exp, categoryId: cat.id };
+        setLastDeletedExpense(deleted);
         return { ...cat, expenses: newExpenses, spent: newSpent };
       }
       return cat;
@@ -451,11 +455,11 @@ const AppContent: React.FC = () => {
           text: 'Undo',
           onClick: () => {
             setCategories(prev => prev.map(cat => {
-              if (lastDeletedExpense && cat.id === lastDeletedExpense.categoryId) {
+              if (deleted && cat.id === deleted.categoryId) {
                 return {
                   ...cat,
-                  expenses: [...cat.expenses, lastDeletedExpense.expense],
-                  spent: cat.spent + lastDeletedExpense.expense.amount,
+                  expenses: [...cat.expenses, deleted.expense],
+                  spent: cat.spent + deleted.expense.amount,
                 };
               }
               return cat;
@@ -467,7 +471,7 @@ const AppContent: React.FC = () => {
     } else {
       addToast({ type: 'error', message: 'Expense not found.' });
     }
-  }, [categories, setCategories, addToast, lastDeletedExpense]);
+  }, [categories, setCategories, addToast]);
 
   const handleAddSource = useCallback((name: string, balance: number = 0) => {
     const newSource: TransactionSource = { id: `src-${Date.now()}`, name, balance };
@@ -816,15 +820,6 @@ const AppContent: React.FC = () => {
           />
         );
       case 'expenses':
-        // Compute totals and usage per source
-        const totalsBySource: Record<string, number> = {};
-        const usedCountBySource: Record<string, number> = {};
-        categories.forEach(cat => {
-          cat.expenses.forEach(exp => {
-            totalsBySource[exp.sourceId] = (totalsBySource[exp.sourceId] || 0) + exp.amount;
-            usedCountBySource[exp.sourceId] = (usedCountBySource[exp.sourceId] || 0) + 1;
-          });
-        });
         return (
           <div className="space-y-6">
             <ExpenseLogger
@@ -839,17 +834,29 @@ const AppContent: React.FC = () => {
             onEditExpense={handleEditExpense}
               onDeleteExpense={handleDeleteExpense}
             />
-            <SourceManager
-              sources={sources}
-              onAddSource={handleAddSource}
-              onDeleteSource={handleDeleteSource}
-              onEditSource={handleEditSource}
-            onTransfer={handleTransferSources}
-              totalsBySource={totalsBySource}
-              usedCountBySource={usedCountBySource}
-            />
           </div>
         );
+      case 'sources': {
+        const totalsBySource: Record<string, number> = {};
+        const usedCountBySource: Record<string, number> = {};
+        categories.forEach(cat => {
+          cat.expenses.forEach(exp => {
+            totalsBySource[exp.sourceId] = (totalsBySource[exp.sourceId] || 0) + exp.amount;
+            usedCountBySource[exp.sourceId] = (usedCountBySource[exp.sourceId] || 0) + 1;
+          });
+        });
+        return (
+          <SourceManager
+            sources={sources}
+            onAddSource={handleAddSource}
+            onDeleteSource={handleDeleteSource}
+            onEditSource={handleEditSource}
+            onTransfer={handleTransferSources}
+            totalsBySource={totalsBySource}
+            usedCountBySource={usedCountBySource}
+          />
+        );
+      }
       case 'income':
         return (
           <div className="space-y-6">
@@ -904,8 +911,8 @@ const AppContent: React.FC = () => {
         return (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-800">404</h2>
-              <p className="text-gray-600">Page not found</p>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">404</h2>
+              <p className="text-slate-600 dark:text-slate-300">Page not found</p>
               <button
                 onClick={() => navigate('/')}
                 className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -919,7 +926,7 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100">
       {/* Mobile menu button */}
       <button
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -954,9 +961,12 @@ const AppContent: React.FC = () => {
           </nav>
           <div className="p-4 border-t border-slate-200 dark:border-slate-700">
             <div className="text-sm text-gray-500 dark:text-slate-300">
-              <p>Total Income: ${income.toFixed(2)}</p>
-              <p>Total Expenses: ${totalExpenses.toFixed(2)}</p>
-              <p className="font-medium">Balance: ${totalSavings.toFixed(2)}</p>
+              <p>Total Income: {formatRupiah(income)}</p>
+              <p>Total Expenses: {formatRupiah(totalExpenses)}</p>
+              <p className="font-medium">Balance: {formatRupiah(totalSavings)}</p>
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                Total Source Balance: {formatRupiah(totalSourceBalance)}
+              </p>
             </div>
           </div>
         </div>
@@ -980,7 +990,7 @@ const AppContent: React.FC = () => {
             </button>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto p-4 bg-gray-50">
+        <main className="flex-1 overflow-y-auto p-4 bg-slate-50 dark:bg-slate-900">
           {renderView()}
         </main>
       </div>

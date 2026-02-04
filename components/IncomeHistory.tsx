@@ -61,7 +61,7 @@ const IncomeHistory: React.FC<IncomeHistoryProps> = ({ incomes, sources, onEditI
   return (
     <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-slate-900/30">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-slate-800">Income History</h2>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Income History</h2>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
         <input
@@ -74,7 +74,7 @@ const IncomeHistory: React.FC<IncomeHistoryProps> = ({ incomes, sources, onEditI
         <select
           value={sourceFilter}
           onChange={(e) => setSourceFilter(e.target.value)}
-          className="w-full p-2 bg-slate-100 text-slate-800 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+          className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
         >
           <option value="all">All Sources</option>
           {sources.map(s => (<option key={s.id} value={s.id}>{s.name}</option>))}
@@ -82,7 +82,7 @@ const IncomeHistory: React.FC<IncomeHistoryProps> = ({ incomes, sources, onEditI
         <select
           value={dateSort}
           onChange={(e) => setDateSort(e.target.value as 'desc' | 'asc')}
-          className="w-full p-2 bg-slate-100 text-slate-800 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+          className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
         >
           <option value="desc">Newest first</option>
           <option value="asc">Oldest first</option>
@@ -112,21 +112,21 @@ const IncomeHistory: React.FC<IncomeHistoryProps> = ({ incomes, sources, onEditI
                 <tr key={inc.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-200 whitespace-nowrap">
                     {isEditing ? (
-                      <input type="date" value={editDate} onChange={(e)=>setEditDate(e.target.value)} className="p-1 bg-slate-100 dark:bg-slate-700 rounded" />
+                      <input type="date" value={editDate} onChange={(e)=>setEditDate(e.target.value)} className="p-1 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded" />
                     ) : (
                       new Date(inc.date).toLocaleDateString('en-CA')
                     )}
                   </td>
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-200">
                     {isEditing ? (
-                      <input value={editDesc} onChange={(e)=>setEditDesc(e.target.value)} className="w-full p-1 bg-slate-100 dark:bg-slate-700 rounded" />
+                      <input value={editDesc} onChange={(e)=>setEditDesc(e.target.value)} className="w-full p-1 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded" />
                     ) : (
                       inc.description
                     )}
                   </td>
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-200 whitespace-nowrap">
                     {isEditing ? (
-                      <select value={editSourceId} onChange={(e)=>setEditSourceId(e.target.value)} className="p-1 bg-slate-100 dark:bg-slate-700 rounded">
+                      <select value={editSourceId} onChange={(e)=>setEditSourceId(e.target.value)} className="p-1 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded">
                         {sources.map(s => (<option key={s.id} value={s.id}>{s.name}</option>))}
                       </select>
                     ) : (
@@ -135,7 +135,7 @@ const IncomeHistory: React.FC<IncomeHistoryProps> = ({ incomes, sources, onEditI
                   </td>
                   <td className="px-4 py-2 text-right font-medium text-slate-800 dark:text-slate-100 whitespace-nowrap">
                     {isEditing ? (
-                      <input type="number" value={editAmount} onChange={(e)=>setEditAmount(e.target.value)} className="w-28 p-1 text-right bg-slate-100 dark:bg-slate-700 rounded" />
+                      <input type="number" value={editAmount} onChange={(e)=>setEditAmount(e.target.value)} className="w-28 p-1 text-right bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded" />
                     ) : (
                       formatRupiah(inc.amount)
                     )}
@@ -164,6 +164,5 @@ const IncomeHistory: React.FC<IncomeHistoryProps> = ({ incomes, sources, onEditI
 };
 
 export default IncomeHistory;
-
 
 

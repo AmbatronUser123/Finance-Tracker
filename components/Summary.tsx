@@ -71,39 +71,39 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
 
   return (
     <>
-      <div className="bg-white p-6 rounded-2xl shadow-lg shadow-slate-200/50">
-        <h2 className="text-xl font-bold text-slate-800 mb-4">Monthly Overview</h2>
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-slate-900/30">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Monthly Overview</h2>
         <div className="space-y-3">
           <div className="flex justify-between items-baseline">
-            <span className="text-slate-600">Income</span>
+            <span className="text-slate-600 dark:text-slate-300">Income</span>
             <span className="font-bold text-lg text-green-600">{formatCurrency(totalBudget)}</span>
           </div>
           <div className="flex justify-between items-baseline">
-            <span className="text-slate-600">Spent</span>
+            <span className="text-slate-600 dark:text-slate-300">Spent</span>
             <span className="font-bold text-lg text-red-600">{formatCurrency(totalSpent)}</span>
           </div>
           <div className="flex justify-between items-baseline">
-            <span className="text-slate-600">Saved to Goals</span>
+            <span className="text-slate-600 dark:text-slate-300">Saved to Goals</span>
             <span className="font-bold text-lg text-sky-500">{formatCurrency(totalAllocatedToGoals)}</span>
           </div>
-          <div className="w-full bg-slate-200 rounded-full h-2 my-1">
+          <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 my-1">
               <div
                   className="bg-gradient-to-r from-indigo-500 to-sky-400 h-2 rounded-full"
                   style={{ width: `${Math.min(spentPercentage, 100)}%` }}
               ></div>
           </div>
-          <div className="flex justify-between items-baseline pt-2 border-t border-slate-200">
-            <span className="text-slate-600 font-semibold">Remaining</span>
-            <span className={`font-bold text-lg ${totalRemaining >= 0 ? 'text-slate-800' : 'text-red-600'}`}>
+          <div className="flex justify-between items-baseline pt-2 border-t border-slate-200 dark:border-slate-700">
+            <span className="text-slate-600 dark:text-slate-300 font-semibold">Remaining</span>
+            <span className={`font-bold text-lg ${totalRemaining >= 0 ? 'text-slate-900 dark:text-slate-100' : 'text-red-600'}`}>
               {formatCurrency(totalRemaining)}
             </span>
           </div>
         </div>
       </div>
       
-      <div className="bg-white p-6 rounded-2xl shadow-lg shadow-slate-200/50">
-        <h2 className="text-xl font-bold text-slate-800 mb-4">30-Day Spending Trend</h2>
-        <div style={{ width: '100%', height: '160px' }}>
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-slate-900/30">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">30-Day Spending Trend</h2>
+        <div className="text-slate-600 dark:text-slate-300" style={{ width: '100%', height: '160px' }}>
             <ResponsiveContainer width="100%" height="100%">
             <LineChart data={dailySpendingData} margin={{ top: 5, right: 20, left: -15, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.2} />
@@ -111,12 +111,15 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
                 <YAxis fontSize={12} tickLine={false} axisLine={false} stroke="currentColor" tickFormatter={(value) => `${(value as number) / 1000}k`} />
                 <Tooltip
                     contentStyle={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        backgroundColor: 'var(--chart-tooltip-bg)',
                         backdropFilter: 'blur(4px)',
-                        border: '1px solid #e2e8f0',
+                        border: '1px solid var(--chart-tooltip-border)',
                         borderRadius: '0.75rem',
-                        color: '#334155',
+                        color: 'var(--chart-tooltip-text)',
                     }}
+                    labelStyle={{ color: 'var(--chart-tooltip-muted)' }}
+                    itemStyle={{ color: 'var(--chart-tooltip-text)' }}
+                    cursor={{ fill: 'var(--chart-tooltip-cursor)' }}
                     formatter={(value: number) => [formatCurrency(value), 'Spent']}
                 />
                 <Line type="monotone" dataKey="amount" stroke="#4f46e5" strokeWidth={2} dot={{ r: 3, fill: '#4f46e5' }} activeDot={{ r: 6, stroke: '#4f46e5', fill: '#fff', strokeWidth: 2 }} />
@@ -125,10 +128,10 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl shadow-lg shadow-slate-200/50">
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-slate-900/30">
         <div className="flex items-center gap-3 mb-4">
             <CalendarDaysIcon className="w-6 h-6 text-indigo-600" />
-            <h2 className="text-xl font-bold text-slate-800">Daily History</h2>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Daily History</h2>
         </div>
         <div>
             <label htmlFor="history-date" className="sr-only">Select a date</label>
@@ -137,17 +140,17 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full p-2 bg-slate-100 text-slate-800 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
             />
         </div>
         <div className="mt-4">
           {expensesForSelectedDate.length > 0 ? (
             <ul className="space-y-2 max-h-48 overflow-y-auto pr-2">
               {expensesForSelectedDate.map(exp => (
-                <li key={exp.id} className="flex justify-between items-center text-sm text-slate-700 bg-slate-50 p-2 rounded-md">
+                <li key={exp.id} className="flex justify-between items-center text-sm text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-700/40 p-2 rounded-md">
                   <div>
                     <p className="font-medium truncate">{exp.description}</p>
-                    <p className="text-xs text-slate-500">{exp.categoryName}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-300">{exp.categoryName}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-semibold flex-shrink-0">{formatCurrency(exp.amount)}</span>
@@ -166,8 +169,8 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
           ) : (
             <div className="text-center py-4">
                 <EmptyStateIcon className="mx-auto h-20 w-20" />
-                <p className="mt-2 text-sm font-medium text-slate-500">No expenses on this day.</p>
-                <p className="text-xs text-slate-400">Your records are squeaky clean!</p>
+                <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-300">No expenses on this day.</p>
+                <p className="text-xs text-slate-400 dark:text-slate-400">Your records are squeaky clean!</p>
             </div>
           )}
         </div>
@@ -176,15 +179,15 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
       {/* Delete Confirmation Modal */}
       {expenseToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-slate-800 mb-2">Confirm Deletion</h3>
-            <p className="text-slate-600 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg max-w-md w-full p-6 border border-slate-200 dark:border-slate-700">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">Confirm Deletion</h3>
+            <p className="text-slate-600 dark:text-slate-300 mb-4">
               Are you sure you want to delete the expense "<strong>{expenseToDelete.description}</strong>"? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={cancelDelete}
-                className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 focus:outline-none"
+                className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-100 bg-slate-100 dark:bg-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 focus:outline-none"
               >
                 Cancel
               </button>

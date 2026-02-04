@@ -85,11 +85,11 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearEx
   };
 
   return (
-    <div className={`p-6 rounded-2xl shadow-lg flex flex-col justify-between bg-white shadow-slate-200/50 border-t-4 ${border}`}>
+    <div className={`p-6 rounded-2xl shadow-lg flex flex-col justify-between bg-white dark:bg-slate-800 shadow-slate-200/50 dark:shadow-slate-900/30 border-t-4 ${border}`}>
       <div>
         <div className="flex justify-between items-start">
-            <h3 className="text-xl font-bold text-slate-800">{category.name} ({category.allocation}%)</h3>
-            <button onClick={() => setIsExpanded(!isExpanded)} className="text-slate-400 hover:text-slate-600">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{category.name} ({category.allocation}%)</h3>
+            <button onClick={() => setIsExpanded(!isExpanded)} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 dark:hover:text-slate-100">
                 <InfoIcon className="w-6 h-6"/>
             </button>
         </div>
@@ -97,9 +97,9 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearEx
         
         <ProgressBar percentage={spentPercentage} colorClass={progressColor} />
 
-        <div className="flex justify-between text-sm mt-2 text-slate-600 font-medium">
+        <div className="flex justify-between text-sm mt-2 text-slate-600 dark:text-slate-300 font-medium">
           <span>Spent: {formatCurrency(spent)}</span>
-          <span className={remaining < 0 ? 'font-bold text-red-600' : ''}>
+          <span className={remaining < 0 ? 'font-bold text-red-600' : 'text-slate-700 dark:text-slate-200'}>
             Remaining: {formatCurrency(remaining)}
           </span>
         </div>
@@ -107,8 +107,8 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearEx
         {tip && (
           <div className={`mt-4 p-3 border-l-4 rounded-r-lg ${
             tip.includes('API Key is not configured') || tip.includes('Could not fetch a tip')
-              ? 'bg-red-50 border-red-400'
-              : 'bg-sky-50 border-sky-300'
+              ? 'bg-red-50 border-red-400 dark:bg-red-900/20 dark:border-red-500/60'
+              : 'bg-sky-50 border-sky-300 dark:bg-sky-900/20 dark:border-sky-500/60'
           }`}>
               <div className="flex items-start">
                   <SparklesIcon className={`h-5 w-5 mr-3 mt-0.5 flex-shrink-0 ${
@@ -119,15 +119,15 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearEx
                   <div>
                     <p className={`text-sm font-semibold ${
                       tip.includes('API Key is not configured') || tip.includes('Could not fetch a tip')
-                        ? 'text-red-800'
-                        : 'text-sky-800'
+                        ? 'text-red-800 dark:text-red-200'
+                        : 'text-sky-800 dark:text-sky-200'
                     }`}>
                       {tip.includes('API Key is not configured') || tip.includes('Could not fetch a tip') ? 'AI Error' : 'Spending Tip'}
                     </p>
                     <p className={`text-sm ${
                       tip.includes('API Key is not configured') || tip.includes('Could not fetch a tip')
-                        ? 'text-red-700'
-                        : 'text-sky-700'
+                        ? 'text-red-700 dark:text-red-200/90'
+                        : 'text-sky-700 dark:text-sky-200/90'
                     }`}>
                       {isLoadingTip ? 'Getting a fresh tip for you...' : tip}
                     </p>
@@ -138,9 +138,9 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearEx
       </div>
 
       {isExpanded && (
-        <div className="mt-4 pt-4 border-t border-slate-200">
+        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
           <div className="flex justify-between items-center mb-2">
-            <h4 className="font-semibold text-slate-700">Expense History</h4>
+            <h4 className="font-semibold text-slate-900 dark:text-slate-100">Expense History</h4>
             {category.expenses.length > 0 && (
                 <button onClick={() => onClearExpenses(category.id)} className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 font-semibold">
                     <TrashIcon className="w-3 h-3"/> Clear
@@ -150,10 +150,10 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearEx
           {category.expenses.length > 0 ? (
             <ul className="space-y-1 max-h-32 overflow-y-auto pr-2">
               {category.expenses.slice().reverse().map(exp => (
-                <li key={exp.id} className="flex justify-between items-center text-sm text-slate-600 bg-white/50 p-1.5 rounded group">
+                <li key={exp.id} className="flex justify-between items-center text-sm text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-700/40 p-1.5 rounded group">
                   <span className="truncate pr-2">{exp.description}</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{formatCurrency(exp.amount)}</span>
+                    <span className="font-medium text-slate-900 dark:text-slate-100">{formatCurrency(exp.amount)}</span>
                     <button 
                       onClick={() => handleDeleteExpenseClick(category.id, exp.id, exp.description)}
                       className="text-red-400 hover:text-red-600 transition-opacity"
@@ -165,7 +165,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearEx
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-center text-slate-400 py-4">No expenses logged in this category yet.</p>
+            <p className="text-sm text-center text-slate-500 dark:text-slate-300 py-4">No expenses logged in this category yet.</p>
           )}
         </div>
       )}
@@ -173,15 +173,15 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearEx
       {/* Delete Confirmation Modal */}
       {expenseToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-slate-800 mb-2">Confirm Deletion</h3>
-            <p className="text-slate-600 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg max-w-md w-full p-6 border border-slate-200 dark:border-slate-700">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">Confirm Deletion</h3>
+            <p className="text-slate-600 dark:text-slate-300 mb-4">
               Are you sure you want to delete the expense "<strong>{expenseToDelete.description}</strong>"? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={cancelDeleteExpense}
-                className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 focus:outline-none"
+                className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-100 bg-slate-100 dark:bg-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 focus:outline-none"
               >
                 Cancel
               </button>

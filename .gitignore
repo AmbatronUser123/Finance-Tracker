@@ -31,4 +31,6 @@ dev-dist
 *.zip
 finance-backup*.json
 finance-data*.json
+finance-backup*.json*
+finance-data*.json*
 .cursor

@@ -33,6 +33,29 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
       .map(cat => ({ name: cat.name, value: cat.allocation, color: cat.color }));
   }, [categories]);
 
+  const renderPieLabel = (props: any) => {
+    const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props;
+    if (!percent) return null;
+
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
+    const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+    const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+
+    return (
+      <text
+        x={x}
+        y={y}
+        fill="currentColor"
+        textAnchor={x > cx ? 'start' : 'end'}
+        dominantBaseline="central"
+        fontSize={12}
+        fontWeight={600}
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
+
   // Auto adjust allocation is handled by the parent component
 
   return (
@@ -52,7 +75,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
       </div>
       <div className="flex flex-col md:flex-row gap-6">
         {/* Chart Container */}
-        <div className="w-full md:w-1/2">
+        <div className="w-full md:w-1/2 text-slate-600 dark:text-slate-300">
          <div style={{ width: '100%', minHeight: '300px' }}>
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
@@ -65,7 +88,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
                     cy="50%" 
                     outerRadius={80} 
                     fill="#8884d8" 
-                    label={({ percent }) => percent ? `${(percent * 100).toFixed(0)}%` : ''} 
+                    label={renderPieLabel} 
                     labelLine={false} 
                     fontSize={12}
                   >
@@ -76,12 +99,15 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
                   <Tooltip 
                     formatter={(value, name) => [`${value}%`, name]} 
                     contentStyle={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        backgroundColor: 'var(--chart-tooltip-bg)',
                         backdropFilter: 'blur(4px)',
-                        border: '1px solid #e2e8f0',
+                        border: '1px solid var(--chart-tooltip-border)',
                         borderRadius: '0.75rem',
-                        color: '#334155',
+                        color: 'var(--chart-tooltip-text)',
                       }}
+                    labelStyle={{ color: 'var(--chart-tooltip-muted)' }}
+                    itemStyle={{ color: 'var(--chart-tooltip-text)' }}
+                    cursor={{ fill: 'var(--chart-tooltip-cursor)' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -96,23 +122,23 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
         {/* Categories List */}
         <div className="w-full md:w-1/2 space-y-3 max-h-96 overflow-y-auto pr-2">
             {categories.map(cat => (
-              <div key={cat.id} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-50">
+              <div key={cat.id} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-700/40">
                 <div className="flex-grow">
                     <button onClick={() => onViewCategory(cat)} className="text-left w-full">
-                      <span className="text-slate-600 truncate text-sm font-medium cursor-pointer hover:text-indigo-600">{cat.name}</span>
+                      <span className="text-slate-700 dark:text-slate-100 truncate text-sm font-medium cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-300">{cat.name}</span>
                     </button>
                     <div className="mt-2">
-                      <div className="flex justify-between text-xs text-slate-500 mb-1">
+                      <div className="flex justify-between text-xs text-slate-500 dark:text-slate-300 mb-1">
                         <span>{`Rp${(cat.spent || 0).toLocaleString()}`}</span>
                         <span>{`Max Rp${(cat.planned || 0).toLocaleString()}`}</span>
                       </div>
-                      <div className="w-full bg-slate-200 rounded-full h-2.5">
+                      <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2.5">
                         <div 
                           className="bg-indigo-600 h-2.5 rounded-full"
                           style={{ width: `${cat.planned > 0 ? Math.min((cat.spent / cat.planned) * 100, 100) : 0}%` }}
                         ></div>
                       </div>
-                      <div className="mt-1 text-[11px] leading-tight text-slate-500">
+                      <div className="mt-1 text-[11px] leading-tight text-slate-500 dark:text-slate-300">
                         {`Max berasal dari ${cat.allocation}% alokasi kategori terhadap income bulanan`}
                       </div>
                     </div>
@@ -122,16 +148,16 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
                         type="number"
                         value={cat.allocation}
                         onChange={(e) => onAllocationChange(cat.id, Number(e.target.value))}
-                        className="w-full pr-7 pl-2 py-1 text-right font-medium text-slate-800 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                        className="w-full pr-7 pl-2 py-1 text-right font-medium text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                       />
-                      <span className="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500">%</span>
+                      <span className="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500 dark:text-slate-300">%</span>
                     </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-1.5 flex-shrink-0">
-                    <button onClick={() => onOpenModal(cat)} className="p-2 text-slate-500 hover:text-indigo-600 bg-white hover:bg-slate-100 rounded-md shadow-sm border border-slate-200">
+                    <button onClick={() => onOpenModal(cat)} className="p-2 text-slate-500 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-300 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md shadow-sm border border-slate-200 dark:border-slate-600">
                         <PencilIcon className="w-4 h-4" />
                     </button>
-                    <button onClick={() => onDeleteCategory(cat.id)} className="p-2 text-slate-500 hover:text-red-600 bg-white hover:bg-slate-100 rounded-md shadow-sm border border-slate-200">
+                    <button onClick={() => onDeleteCategory(cat.id)} className="p-2 text-slate-500 hover:text-red-600 dark:text-slate-300 dark:hover:text-red-300 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md shadow-sm border border-slate-200 dark:border-slate-600">
                         <TrashIcon className="w-4 h-4" />
                     </button>
                 </div>
@@ -139,11 +165,11 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
             ))}
          </div>
       </div>
-      <div className="mt-6 pt-4 border-t border-slate-200">
+      <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
         <div className="flex justify-between items-center">
           <div>
             <div className="font-bold text-lg">
-              <span className="text-slate-800">Total Allocation: </span>
+              <span className="text-slate-900 dark:text-slate-100">Total Allocation: </span>
               <span className={isInvalid ? 'text-red-500' : 'text-green-600'}>
                 {totalAllocation}%
               </span>

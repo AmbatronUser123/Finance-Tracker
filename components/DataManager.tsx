@@ -41,18 +41,18 @@ const DataManager: React.FC<DataManagerProps> = ({ onImport, onExport, onResetCu
   };
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-lg shadow-slate-200/50">
-      <h2 className="text-xl font-bold text-slate-800 mb-4">Data Management</h2>
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-slate-900/30">
+      <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Data Management</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Import Section */}
         <div className="space-y-4">
-          <h3 className="font-bold text-lg text-slate-700">Import Data</h3>
+          <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">Import Data</h3>
           <div className="flex items-center justify-center w-full">
-            <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+            <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-48 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-lg cursor-pointer bg-slate-50 dark:bg-slate-700/40 hover:bg-slate-100 dark:hover:bg-slate-700">
               <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                <FiUpload className="w-10 h-10 mb-3 text-gray-400" />
-                <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                <p className="text-xs text-gray-500">JSON or CSV files</p>
+                <FiUpload className="w-10 h-10 mb-3 text-slate-400 dark:text-slate-300" />
+                <p className="mb-2 text-sm text-slate-600 dark:text-slate-200"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                <p className="text-xs text-slate-500 dark:text-slate-300">JSON or CSV files</p>
               </div>
               <input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} accept=".json,.csv" />
             </label>
@@ -61,7 +61,7 @@ const DataManager: React.FC<DataManagerProps> = ({ onImport, onExport, onResetCu
 
         {/* Export Section */}
         <div className="space-y-4">
-          <h3 className="font-bold text-lg text-slate-700">Export Data</h3>
+          <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">Export Data</h3>
           <div className="flex flex-col space-y-3">
             <button 
               onClick={() => onExport('json')}
@@ -89,7 +89,7 @@ const DataManager: React.FC<DataManagerProps> = ({ onImport, onExport, onResetCu
 
         {/* Maintenance Section */}
         <div className="space-y-4">
-          <h3 className="font-bold text-lg text-slate-700">Maintenance</h3>
+          <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">Maintenance</h3>
           <div className="flex flex-col space-y-3">
             <button
               onClick={onResetCurrentMonth}
