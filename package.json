@@ -1,0 +1,12 @@
+{
+  "name": "finance-tracker-root",
+  "private": true,
+  "workspaces": [
+    "Finance-Tracker-master"
+  ],
+  "scripts": {
+    "dev": "npm --workspace Finance-Tracker-master run dev",
+    "build": "npm --workspace Finance-Tracker-master run build",
+    "preview": "npm --workspace Finance-Tracker-master run preview"
+  }
+}
