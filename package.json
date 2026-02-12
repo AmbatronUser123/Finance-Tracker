@@ -2,7 +2,7 @@
   "name": "finance-tracker-root",
   "private": true,
   "scripts": {
-    "postinstall": "npm ci --prefix Finance-Tracker-master",
+    "postinstall": "npm install --prefix Finance-Tracker-master --no-audit --no-fund",
     "dev": "npm --prefix Finance-Tracker-master run dev",
     "build": "npm --prefix Finance-Tracker-master run build",
     "preview": "npm --prefix Finance-Tracker-master run preview"
