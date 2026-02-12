@@ -325,8 +325,13 @@ const AppContent: React.FC = () => {
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryWithBudget | null>(null);
   const [viewingCategory, setViewingCategory] = useState<CategoryWithBudget | null>(null);
-  const [lastDeletedExpense, setLastDeletedExpense] = useState<{ expense: Expense; categoryId: string } | null>(null);
   const [showNewMonthModal, setShowNewMonthModal] = useState(false);
+
+  const totalLoggedIncome = useMemo(() => {
+    return incomes.reduce((acc, inc) => acc + (inc.amount || 0), 0);
+  }, [incomes]);
+
+  const effectiveIncome = totalLoggedIncome > 0 ? totalLoggedIncome : income;
 
   // Keep `income` as user-controlled monthly income.
   // If you want to display total balances across sources, compute it separately (do not persist into `income`).
@@ -339,7 +344,7 @@ const AppContent: React.FC = () => {
     setCategories(prev => {
       let changed = false;
       const updated = prev.map(cat => {
-        const planned = (income || 0) * (cat.allocation / 100);
+        const planned = (effectiveIncome || 0) * (cat.allocation / 100);
         if (cat.planned !== planned || cat.budget !== planned) {
           changed = true;
           return { ...cat, planned, budget: planned } as CategoryWithBudget;
@@ -348,7 +353,7 @@ const AppContent: React.FC = () => {
       });
       return changed ? updated : prev;
     });
-  }, [income, setCategories]);
+  }, [effectiveIncome, categories, setCategories]);
 
   // Calculate totals
   const totalExpenses = useMemo(() => {
@@ -356,8 +361,8 @@ const AppContent: React.FC = () => {
   }, [categories]);
 
   const totalSavings = useMemo(() => {
-    return income - totalExpenses;
-  }, [income, totalExpenses]);
+    return effectiveIncome - totalExpenses;
+  }, [effectiveIncome, totalExpenses]);
 
   // Navigation handler
   const handleNavigation = useCallback((view: string) => {
@@ -441,7 +446,6 @@ const AppContent: React.FC = () => {
         const newSpent = Math.max(0, cat.spent - exp.amount);
         // Track for undo
         deleted = { expense: exp, categoryId: cat.id };
-        setLastDeletedExpense(deleted);
         return { ...cat, expenses: newExpenses, spent: newSpent };
       }
       return cat;
@@ -464,7 +468,6 @@ const AppContent: React.FC = () => {
               }
               return cat;
             }));
-            setLastDeletedExpense(null);
           }
         }
       });
@@ -602,7 +605,7 @@ const AppContent: React.FC = () => {
       if (lastActiveMonth) {
         const archive: MonthlyArchive = {
           month: lastActiveMonth,
-          income,
+          income: effectiveIncome,
           // simpan snapshot lengkap untuk laporan terperinci mingguan
           categories: categories.map(c => ({ ...c })),
           goals: goals.map(g => ({ ...g })),
@@ -622,7 +625,7 @@ const AppContent: React.FC = () => {
     }
     setLastActiveMonth(currentMonth);
     setShowNewMonthModal(false);
-  }, [income, categories, goals, sources, lastActiveMonth, setIncome, setCategories, setLastActiveMonth, setMonthlyArchives, addToast]);
+  }, [income, effectiveIncome, categories, goals, sources, incomes, lastActiveMonth, setIncome, setCategories, setLastActiveMonth, setMonthlyArchives, addToast]);
 
   const handleArchiveAndResetCurrentMonth = useCallback(() => {
     const now = new Date();
@@ -630,7 +633,7 @@ const AppContent: React.FC = () => {
     // Arsipkan snapshot bulan berjalan
     const archive: MonthlyArchive = {
       month: currentMonth,
-      income,
+      income: effectiveIncome,
       categories: categories.map(c => ({ ...c })),
       goals: goals.map(g => ({ ...g })),
       sources: sources.map(s => ({ ...s })),
@@ -648,7 +651,7 @@ const AppContent: React.FC = () => {
     setIncome(0);
     setLastActiveMonth(currentMonth);
     addToast({ type: 'info', message: 'Current month archived and expenses reset.' });
-  }, [income, categories, goals, sources, setMonthlyArchives, setCategories, setLastActiveMonth, addToast]);
+  }, [income, effectiveIncome, categories, goals, sources, incomes, setIncome, setMonthlyArchives, setCategories, setLastActiveMonth, addToast]);
 
   const handleNewMonthSkip = useCallback(() => {
     const now = new Date();
@@ -689,13 +692,74 @@ const AppContent: React.FC = () => {
   }, []);
 
   const handleAllocationChange = (categoryId: string, newAllocation: number) => {
-    setCategories(categories.map(c => c.id === categoryId ? { ...c, allocation: newAllocation } : c));
+    const normalizedAllocation = Number.isFinite(newAllocation) ? Math.max(0, newAllocation) : 0;
+    setCategories(prev =>
+      prev.map(c => (c.id === categoryId ? { ...c, allocation: normalizedAllocation } : c))
+    );
   };
 
   const handleAutoAdjustAllocation = () => {
-    const totalAlloc = categories.reduce((sum, cat) => sum + cat.allocation, 0);
-    if (totalAlloc !== 100) {
-      addToast({ type: 'error', message: 'Total allocation must be 100%' });
+    setCategories(prev => {
+      if (prev.length === 0) return prev;
+
+      const totalAlloc = prev.reduce((sum, cat) => sum + (cat.allocation || 0), 0);
+
+      if (totalAlloc === 100) {
+        const base = Math.floor(100 / prev.length);
+        let remainder = 100 - base * prev.length;
+        return prev.map((cat) => {
+          const allocation = base + (remainder > 0 ? 1 : 0);
+          if (remainder > 0) remainder -= 1;
+          return { ...cat, allocation };
+        });
+      }
+
+      const adjustableIndices = prev
+        .map((cat, idx) => ({ idx, allocation: cat.allocation || 0 }))
+        .filter(x => x.allocation > 0)
+        .map(x => x.idx);
+
+      if (adjustableIndices.length === 0) {
+        const base = Math.floor(100 / prev.length);
+        let remainder = 100 - base * prev.length;
+        return prev.map((cat) => {
+          const allocation = base + (remainder > 0 ? 1 : 0);
+          if (remainder > 0) remainder -= 1;
+          return { ...cat, allocation };
+        });
+      }
+
+      const adjustableTotal = adjustableIndices.reduce((sum, idx) => sum + (prev[idx].allocation || 0), 0);
+      if (adjustableTotal === 0) return prev;
+
+      const raw = adjustableIndices.map((idx) => {
+        const exact = ((prev[idx].allocation || 0) / adjustableTotal) * 100;
+        const floored = Math.floor(exact);
+        return { idx, exact, floored, frac: exact - floored };
+      });
+
+      let remaining = 100 - raw.reduce((sum, r) => sum + r.floored, 0);
+      const withRemainder = [...raw].sort((a, b) => b.frac - a.frac);
+      for (let i = 0; i < withRemainder.length && remaining > 0; i += 1) {
+        withRemainder[i] = { ...withRemainder[i], floored: withRemainder[i].floored + 1 };
+        remaining -= 1;
+      }
+
+      const nextAllocations = new Map<number, number>(
+        withRemainder.map(r => [r.idx, r.floored])
+      );
+
+      return prev.map((cat, idx) => {
+        if (!nextAllocations.has(idx)) return { ...cat, allocation: 0 };
+        return { ...cat, allocation: nextAllocations.get(idx)! };
+      });
+    });
+
+    const currentTotal = categories.reduce((sum, cat) => sum + (cat.allocation || 0), 0);
+    if (currentTotal === 100) {
+      addToast({ type: 'success', message: 'Allocations equalized.' });
+    } else {
+      addToast({ type: 'success', message: 'Allocations fixed to 100%.' });
     }
   };
 
@@ -704,7 +768,7 @@ const AppContent: React.FC = () => {
   };
 
   const handleExportData = (format: 'json' | 'pdf' | 'csv') => {
-    const data = { categories, goals, income, sources, incomes, monthlyArchives };
+    const data = { categories, goals, income: effectiveIncome, sources, incomes, monthlyArchives };
 
     if (format === 'json') {
       const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
@@ -811,7 +875,7 @@ const AppContent: React.FC = () => {
       case 'dashboard':
         return (
           <Dashboard 
-            income={income}
+            income={effectiveIncome}
             totalExpenses={totalExpenses}
             totalSavings={totalSavings}
             categories={categories}
@@ -961,7 +1025,7 @@ const AppContent: React.FC = () => {
           </nav>
           <div className="p-4 border-t border-slate-200 dark:border-slate-700">
             <div className="text-sm text-gray-500 dark:text-slate-300">
-              <p>Total Income: {formatRupiah(income)}</p>
+              <p>Total Income: {formatRupiah(effectiveIncome)}</p>
               <p>Total Expenses: {formatRupiah(totalExpenses)}</p>
               <p className="font-medium">Balance: {formatRupiah(totalSavings)}</p>
               <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
@@ -1010,7 +1074,7 @@ const AppContent: React.FC = () => {
       {/* New Month Modal */}
       {showNewMonthModal && (
         <NewMonthModal
-          currentIncome={income}
+          currentIncome={effectiveIncome}
           onConfirm={handleNewMonthConfirm}
           onSkip={handleNewMonthSkip}
         />

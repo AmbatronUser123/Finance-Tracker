@@ -1,39 +1,17 @@
 {
-  "name": "finance-tracker",
+  "name": "finance-tracker-root",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
   "dependencies": {
-    "@google/genai": "^1.11.0",
-    "@types/jspdf": "^1.3.3",
-    "@types/papaparse": "^5.3.16",
-    "@types/react-router-dom": "^5.3.3",
-    "jspdf": "^3.0.2",
-    "jspdf-autotable": "^5.0.2",
-    "papaparse": "^5.5.3",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-icons": "^5.5.0",
-    "react-router-dom": "^7.9.1",
-    "recharts": "^3.1.0"
+    "@google/genai": "^1.11.0"
   },
   "devDependencies": {
-    "@tailwindcss/forms": "^0.5.10",
-    "@tailwindcss/typography": "^0.5.16",
-    "@types/node": "^22.14.0",
-    "@types/react": "^19.1.9",
-    "@types/react-dom": "^19.1.7",
-    "@vitejs/plugin-react": "^5.0.0",
-    "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.17",
-    "typescript": "~5.7.2",
-    "vite": "^6.2.0",
-    "vite-plugin-pwa": "^1.0.3"
+    "@types/node": "^22.14.0"
+  },
+  "scripts": {
+    "preinstall": "node -e \"const fs=require('fs');const {execSync}=require('child_process');if(!fs.existsSync('.gitmodules'))process.exit(0);try{execSync('git submodule sync --recursive',{stdio:'inherit'});}catch{}try{execSync('git submodule update --init --recursive',{stdio:'inherit'});}catch{}\"",
+    "postinstall": "node -e \"const fs=require('fs');const path=require('path');const {execSync}=require('child_process');const root=process.cwd();const candidates=[];const isViteProject=(dir)=>{const pj=path.join(dir,'package.json');if(!fs.existsSync(pj))return false;try{const j=JSON.parse(fs.readFileSync(pj,'utf8'));const deps=Object.assign({},j.dependencies||{},j.devDependencies||{});return Boolean(deps.vite)||(j.scripts&&Object.values(j.scripts).some(s=>String(s).includes('vite')));}catch{return false;}};const walk=(dir,depth)=>{if(depth>4)return;for(const ent of fs.readdirSync(dir,{withFileTypes:true})){if(ent.name==='node_modules'||ent.name.startsWith('.'))continue;const p=path.join(dir,ent.name);if(ent.isDirectory()){if(isViteProject(p))candidates.push(p);walk(p,depth+1);}}};walk(root,0);const target=candidates.sort((a,b)=>a.length-b.length)[0];if(!target)throw new Error('No Vite project folder with package.json found');execSync('npm install --prefix '+JSON.stringify(target)+' --no-audit --no-fund',{stdio:'inherit'});\"",
+    "dev": "node -e \"const fs=require('fs');const path=require('path');const {spawnSync}=require('child_process');const root=process.cwd();const candidates=[];const isViteProject=(dir)=>{const pj=path.join(dir,'package.json');if(!fs.existsSync(pj))return false;try{const j=JSON.parse(fs.readFileSync(pj,'utf8'));const deps=Object.assign({},j.dependencies||{},j.devDependencies||{});return Boolean(deps.vite)||(j.scripts&&Object.values(j.scripts).some(s=>String(s).includes('vite')));}catch{return false;}};const walk=(dir,depth)=>{if(depth>4)return;for(const ent of fs.readdirSync(dir,{withFileTypes:true})){if(ent.name==='node_modules'||ent.name.startsWith('.'))continue;const p=path.join(dir,ent.name);if(ent.isDirectory()){if(isViteProject(p))candidates.push(p);walk(p,depth+1);}}};walk(root,0);const target=candidates.sort((a,b)=>a.length-b.length)[0];if(!target)throw new Error('No Vite project folder with package.json found');const r=spawnSync('npm',['--prefix',target,'run','dev'],{stdio:'inherit'});process.exit(r.status??1);\"",
+    "build": "node -e \"const fs=require('fs');const path=require('path');const {spawnSync}=require('child_process');const root=process.cwd();const candidates=[];const isViteProject=(dir)=>{const pj=path.join(dir,'package.json');if(!fs.existsSync(pj))return false;try{const j=JSON.parse(fs.readFileSync(pj,'utf8'));const deps=Object.assign({},j.dependencies||{},j.devDependencies||{});return Boolean(deps.vite)||(j.scripts&&Object.values(j.scripts).some(s=>String(s).includes('vite')));}catch{return false;}};const walk=(dir,depth)=>{if(depth>4)return;for(const ent of fs.readdirSync(dir,{withFileTypes:true})){if(ent.name==='node_modules'||ent.name.startsWith('.'))continue;const p=path.join(dir,ent.name);if(ent.isDirectory()){if(isViteProject(p))candidates.push(p);walk(p,depth+1);}}};walk(root,0);const target=candidates.sort((a,b)=>a.length-b.length)[0];if(!target)throw new Error('No Vite project folder with package.json found');const r=spawnSync('npm',['--prefix',target,'run','build'],{stdio:'inherit'});process.exit(r.status??1);\"",
+    "preview": "node -e \"const fs=require('fs');const path=require('path');const {spawnSync}=require('child_process');const root=process.cwd();const candidates=[];const isViteProject=(dir)=>{const pj=path.join(dir,'package.json');if(!fs.existsSync(pj))return false;try{const j=JSON.parse(fs.readFileSync(pj,'utf8'));const deps=Object.assign({},j.dependencies||{},j.devDependencies||{});return Boolean(deps.vite)||(j.scripts&&Object.values(j.scripts).some(s=>String(s).includes('vite')));}catch{return false;}};const walk=(dir,depth)=>{if(depth>4)return;for(const ent of fs.readdirSync(dir,{withFileTypes:true})){if(ent.name==='node_modules'||ent.name.startsWith('.'))continue;const p=path.join(dir,ent.name);if(ent.isDirectory()){if(isViteProject(p))candidates.push(p);walk(p,depth+1);}}};walk(root,0);const target=candidates.sort((a,b)=>a.length-b.length)[0];if(!target)throw new Error('No Vite project folder with package.json found');const r=spawnSync('npm',['--prefix',target,'run','preview'],{stdio:'inherit'});process.exit(r.status??1);\""
   }
 }

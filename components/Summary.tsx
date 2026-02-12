@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Category, Expense } from '../types';
+import { Category } from '../types';
 import { CalendarDaysIcon, EmptyStateIcon, TrashIcon } from './icons';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
