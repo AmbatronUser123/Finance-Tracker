@@ -1,18 +1,18 @@
 import React, { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { CategoryWithBudget } from '../App';
+import { Category } from '../types';
 import { ChartPieIcon, PlusIcon, PencilIcon, TrashIcon } from './icons';
 import { TAILWIND_COLORS } from '../constants';
 // Toast notifications are handled by the parent component
 
 interface CategoryManagerProps {
-  categories: CategoryWithBudget[];
+  categories: Category[];
   onAllocationChange: (categoryId: string, newAllocation: number) => void;
   totalAllocation: number;
-  onOpenModal: (category: CategoryWithBudget | null) => void;
+  onOpenModal: (category: Category | null) => void;
   onDeleteCategory: (categoryId: string) => void;
   onAutoAdjustAllocation: () => void;
-  onViewCategory: (category: CategoryWithBudget) => void;
+  onViewCategory: (category: Category) => void;
 }
 
 const CategoryManager: React.FC<CategoryManagerProps> = ({ 
