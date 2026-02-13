@@ -1064,6 +1064,7 @@ const AppContent: React.FC = () => {
           categoryToEdit={editingCategory}
           onSave={handleSaveCategory}
           onClose={() => setCategoryModalOpen(false)}
+          existingCategories={categories}
         />
       )}
 

@@ -2,21 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { Category } from '../types';
 import { CATEGORY_COLORS, CATEGORY_ICONS, TAILWIND_COLORS } from '../constants';
 import { XMarkIcon, CategoryIcon } from './icons';
+import { isCategoryNameUnique } from '../src/utils/validation';
 
 interface CategoryEditorProps {
     onClose: () => void;
     onSave: (categoryData: Omit<Category, 'id' | 'expenses'> & { id?: string }) => void;
     categoryToEdit: Category | null;
+    existingCategories: Category[];
 }
 
-const CategoryEditor: React.FC<CategoryEditorProps> = ({ onClose, onSave, categoryToEdit }) => {
+const CategoryEditor: React.FC<CategoryEditorProps> = ({ onClose, onSave, categoryToEdit, existingCategories }) => {
     const [name, setName] = useState('');
     const [allocation, setAllocation] = useState(0);
     const [color, setColor] = useState('indigo');
     const [icon, setIcon] = useState('briefcase');
     const [error, setError] = useState<string | null>(null);
-    // Ambil semua kategori dari localStorage
-    const allCategories: Category[] = JSON.parse(localStorage.getItem('budgetCategories') || '[]');
 
     useEffect(() => {
         if (categoryToEdit) {
@@ -35,8 +35,8 @@ const CategoryEditor: React.FC<CategoryEditorProps> = ({ onClose, onSave, catego
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         // Validasi nama unik
-        const nameExists = allCategories.some(cat => cat.name.toLowerCase() === name.trim().toLowerCase() && cat.id !== categoryToEdit?.id);
-        if (nameExists) {
+        const isUnique = isCategoryNameUnique(name, existingCategories, categoryToEdit?.id);
+        if (!isUnique) {
             setError('Nama kategori sudah digunakan.');
             return;
         }
