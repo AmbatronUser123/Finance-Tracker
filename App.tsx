@@ -53,15 +53,9 @@ const getCurrentMonth = () => {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 };
 
-// Update the Category type to include planned and spent
-export interface CategoryWithBudget extends Category {
-  planned: number;
-  spent: number;
-}
-
 // Extracted Reports view into its own component to use Hooks safely
 const ReportsView: React.FC<{
-  categories: CategoryWithBudget[];
+  categories: Category[];
   monthlyArchives: MonthlyArchive[];
   incomes: Income[];
 }> = ({ categories, monthlyArchives, incomes }) => {
@@ -100,7 +94,7 @@ const ReportsView: React.FC<{
     selectedMonths.forEach(month => {
       // Determine source of data for this month
       let monthIncomes: Income[] = [];
-      let monthCategories: CategoryWithBudget[] = [];
+      let monthCategories: Category[] = [];
 
       // Check archive first
       const archive = monthlyArchives.find(a => a.month === month);
@@ -112,7 +106,7 @@ const ReportsView: React.FC<{
         if (monthIncomes.length === 0 && archive.income > 0) {
            totalIncome += archive.income;
         }
-        monthCategories = archive.categories as CategoryWithBudget[];
+        monthCategories = archive.categories;
       } else {
         // It's the current/active data (assuming it matches the month)
         // We need to filter current data by month
@@ -315,7 +309,7 @@ const AppContent: React.FC = () => {
   const [theme, toggleTheme] = useDarkMode();
   const currentView = location.pathname.replace('/', '') || 'dashboard';
   const [income, setIncome] = useLocalStorage<number>('monthlyIncome', 0);
-  const [categories, setCategories] = useLocalStorage<CategoryWithBudget[]>('categories', INITIAL_CATEGORIES as CategoryWithBudget[]);
+  const [categories, setCategories] = useLocalStorage<Category[]>('categories', INITIAL_CATEGORIES);
   const [goals, setGoals] = useLocalStorage<Goal[]>('goals', []);
   const [sources, setSources] = useLocalStorage<TransactionSource[]>('sources', INITIAL_SOURCES);
   const [incomes, setIncomes] = useLocalStorage<Income[]>('incomes', []);
@@ -323,8 +317,8 @@ const AppContent: React.FC = () => {
   const [monthlyArchives, setMonthlyArchives] = useLocalStorage<MonthlyArchive[]>('monthlyArchives', []);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<CategoryWithBudget | null>(null);
-  const [viewingCategory, setViewingCategory] = useState<CategoryWithBudget | null>(null);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [viewingCategory, setViewingCategory] = useState<Category | null>(null);
   const [showNewMonthModal, setShowNewMonthModal] = useState(false);
 
   const totalLoggedIncome = useMemo(() => {
@@ -347,7 +341,7 @@ const AppContent: React.FC = () => {
         const planned = (effectiveIncome || 0) * (cat.allocation / 100);
         if (cat.planned !== planned || cat.budget !== planned) {
           changed = true;
-          return { ...cat, planned, budget: planned } as CategoryWithBudget;
+          return { ...cat, planned, budget: planned };
         }
         return cat;
       });
@@ -665,7 +659,7 @@ const AppContent: React.FC = () => {
       setCategories(prev => prev.map(cat => cat.id === categoryData.id ? { ...cat, ...categoryData, planned: cat.planned, spent: cat.spent, expenses: cat.expenses } : cat));
       addToast({ type: 'success', message: 'Category updated!' });
     } else {
-      const newCategory: CategoryWithBudget = {
+      const newCategory: Category = {
         ...categoryData,
         id: `cat-${Date.now()}`,
         expenses: [],
@@ -687,7 +681,7 @@ const AppContent: React.FC = () => {
   }, [setCategories, addToast]);
 
   const handleOpenModal = useCallback((category: Category | null = null) => {
-    setEditingCategory(category as CategoryWithBudget | null);
+    setEditingCategory(category);
     setCategoryModalOpen(true);
   }, []);
 
@@ -764,7 +758,7 @@ const AppContent: React.FC = () => {
   };
 
   const handleViewCategory = (category: Category) => {
-    setViewingCategory(category as CategoryWithBudget);
+    setViewingCategory(category);
   };
 
   const handleExportData = (format: 'json' | 'pdf' | 'csv') => {
