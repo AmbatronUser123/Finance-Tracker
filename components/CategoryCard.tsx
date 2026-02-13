@@ -3,6 +3,7 @@ import { Category } from '../types';
 import ProgressBar from './ProgressBar';
 import { fetchSpendingTip } from '../services/geminiService';
 import { InfoIcon, SparklesIcon, TrashIcon } from './icons';
+import { CATEGORY_COLOR_MAP } from '../constants';
 
 interface CategoryCardProps {
   category: Category;
@@ -11,18 +12,7 @@ interface CategoryCardProps {
   onDeleteExpense: (categoryId: string, expenseId: string) => void;
 }
 
-const colorMap: { [key: string]: { border: string; text: string; progress: string } } = {
-  indigo: { border: 'border-indigo-500', text: 'text-indigo-600', progress: 'bg-indigo-500' },
-  sky: { border: 'border-sky-500', text: 'text-sky-600', progress: 'bg-sky-500' },
-  rose: { border: 'border-rose-500', text: 'text-rose-600', progress: 'bg-rose-500' },
-  amber: { border: 'border-amber-500', text: 'text-amber-600', progress: 'bg-amber-500' },
-  emerald: { border: 'border-emerald-500', text: 'text-emerald-600', progress: 'bg-emerald-500' },
-  violet: { border: 'border-violet-500', text: 'text-violet-600', progress: 'bg-violet-500' },
-  lime: { border: 'border-lime-500', text: 'text-lime-600', progress: 'bg-lime-500' },
-  cyan: { border: 'border-cyan-500', text: 'text-cyan-600', progress: 'bg-cyan-500' },
-  slate: { border: 'border-slate-500', text: 'text-slate-600', progress: 'bg-slate-500' },
-};
-const defaultColor = colorMap.slate;
+const defaultColor = CATEGORY_COLOR_MAP.slate;
 
 const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearExpenses, onDeleteExpense }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -30,7 +20,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearEx
   const [isLoadingTip, setIsLoadingTip] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState<{ categoryId: string; expenseId: string; description: string } | null>(null);
 
-  const { border, text, progress: progressColor } = colorMap[category.color] || defaultColor;
+  const { border, text, progress: progressColor } = CATEGORY_COLOR_MAP[category.color] || defaultColor;
 
   const { budget, spent, remaining, spentPercentage } = useMemo(() => {
     const calculatedBudget = (income * category.allocation) / 100;
