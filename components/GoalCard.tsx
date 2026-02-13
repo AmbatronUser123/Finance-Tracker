@@ -3,6 +3,7 @@ import { Goal } from '../types';
 import { TrashIcon } from './icons';
 import ProgressBar from './ProgressBar';
 import { useToast } from '../contexts/ToastContext';
+import { formatRupiah } from '../src/utils/currency';
 
 interface GoalCardProps {
   goal: Goal;
@@ -31,10 +32,6 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onAllocateToGoal, onDeleteGoa
       addToast({ message: "Please enter a positive amount to save.", type: 'error'});
     }
   };
-  
-  const formatCurrency = (value: number) => {
-    return value.toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  };
 
   return (
     <div className="p-4 bg-slate-50 dark:bg-slate-700/40 rounded-lg border border-transparent dark:border-slate-600">
@@ -42,7 +39,7 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onAllocateToGoal, onDeleteGoa
         <div>
           <h4 className="font-bold text-slate-900 dark:text-slate-100">{goal.name}</h4>
           <p className="text-xs text-slate-500 dark:text-slate-300">
-            Saved {formatCurrency(goal.currentAmount)} of {formatCurrency(goal.targetAmount)}
+            Saved {formatRupiah(goal.currentAmount)} of {formatRupiah(goal.targetAmount)}
           </p>
         </div>
         <button onClick={onDeleteGoal} className="text-slate-400 hover:text-red-500 dark:text-slate-300 dark:hover:text-red-300">
