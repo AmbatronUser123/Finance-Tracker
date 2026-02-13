@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  :root {
+    --chart-tooltip-bg: rgba(255, 255, 255, 0.98);
+    --chart-tooltip-border: #e2e8f0;
+    --chart-tooltip-text: #0f172a;
+    --chart-tooltip-muted: #475569;
+    --chart-tooltip-cursor: rgba(148, 163, 184, 0.18);
+  }
+
+  html.dark {
+    --chart-tooltip-bg: rgba(15, 23, 42, 0.92);
+    --chart-tooltip-border: #334155;
+    --chart-tooltip-text: #e2e8f0;
+    --chart-tooltip-muted: #94a3b8;
+    --chart-tooltip-cursor: rgba(148, 163, 184, 0.14);
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+
+  html.dark ::-webkit-scrollbar-thumb {
+    background: #334155;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  html.dark ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+  }
+  
+  body {
+    @apply bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold text-slate-900 dark:text-slate-100;
+  }
+  
+  h1 {
+    @apply text-3xl md:text-4xl;
+  }
+  
+  h2 {
+    @apply text-2xl md:text-3xl;
+  }
+  
+  h3 {
+    @apply text-xl md:text-2xl;
+  }
+  
+  p {
+    @apply text-slate-700 dark:text-slate-300;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-6 py-2.5 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+  
+  .btn-primary {
+    @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 shadow-md;
+  }
+  
+  .btn-secondary {
+    @apply bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 focus:ring-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-slate-700 dark:focus:ring-slate-700;
+  }
+  
+  .card {
+    @apply bg-white rounded-xl shadow-card p-6 dark:bg-slate-800;
+  }
+  
+  .input {
+    @apply w-full px-4 py-2.5 border border-slate-200 rounded-lg bg-white text-slate-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100;
+  }
+  
+  .label {
+    @apply block text-sm font-medium text-slate-700 mb-1.5 dark:text-slate-200;
+  }
+}
