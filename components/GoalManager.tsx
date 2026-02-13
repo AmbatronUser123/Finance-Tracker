@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Goal } from '../types';
+import { formatRupiah } from '../src/utils/currency';
 import { GoalIcon } from './icons';
 import GoalCard from './GoalCard';
 
@@ -39,10 +40,6 @@ const GoalManager: React.FC<GoalManagerProps> = ({ goals, onAddGoal, onUpdateGoa
         setTargetAmount('');
     };
 
-    const formatCurrency = (value: number) => {
-        return value.toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    };
-
     return (
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-slate-900/30">
             <h2 className="flex items-center gap-3 text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
@@ -80,7 +77,7 @@ const GoalManager: React.FC<GoalManagerProps> = ({ goals, onAddGoal, onUpdateGoa
                 <div className="space-y-4">
                     <div className="p-4 bg-sky-50 dark:bg-sky-900/20 rounded-lg text-center border border-transparent dark:border-sky-500/20">
                         <p className="text-sm font-medium text-sky-800 dark:text-sky-200">Available to Save</p>
-                        <p className="text-xl font-bold text-sky-600 dark:text-sky-200">{formatCurrency(availableFunds)}</p>
+                        <p className="text-xl font-bold text-sky-600 dark:text-sky-200">{formatRupiah(availableFunds)}</p>
                     </div>
                     <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
                         {goals.length > 0 ? goals.map(goal => (
