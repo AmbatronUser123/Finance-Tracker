@@ -28,40 +28,42 @@ const ExpenseHistory: React.FC<ExpenseHistoryProps> = ({ categories, sources, on
 
   const allExpenses = useMemo(() => {
     return categories.flatMap(cat =>
-      (cat.expenses || []).map(exp => ({
-        ...exp,
-        categoryName: categoryMap[exp.categoryId] || 'Unknown',
-        sourceName: sourceMap[exp.sourceId] || 'Unknown',
-      }))
+      (cat.expenses || []).map(exp => {
+        const d = new Date(exp.date);
+        return {
+          ...exp,
+          categoryName: categoryMap[exp.categoryId] || 'Unknown',
+          sourceName: sourceMap[exp.sourceId] || 'Unknown',
+          mm: String(d.getMonth() + 1).padStart(2, '0'),
+          yy: String(d.getFullYear()),
+          ts: d.getTime(),
+        };
+      })
     );
   }, [categories, categoryMap, sourceMap]);
 
   const yearsAvailable = useMemo(() => {
     const set = new Set<string>();
-    categories.forEach(cat => cat.expenses.forEach(exp => {
-      const y = new Date(exp.date).getFullYear();
-      if (!isNaN(y)) set.add(String(y));
-    }));
-    return Array.from(set).sort((a,b)=> Number(b)-Number(a));
-  }, [categories]);
+    allExpenses.forEach(exp => {
+      if (exp.yy && exp.yy !== 'NaN') set.add(exp.yy);
+    });
+    return Array.from(set).sort((a, b) => Number(b) - Number(a));
+  }, [allExpenses]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const arr = allExpenses.filter(exp => {
       if (categoryFilter !== 'all' && exp.categoryId !== categoryFilter) return false;
       if (sourceFilter !== 'all' && exp.sourceId !== sourceFilter) return false;
-      const d = new Date(exp.date);
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const yy = String(d.getFullYear());
-      if (monthFilter !== 'all' && mm !== monthFilter) return false;
-      if (yearFilter !== 'all' && yy !== yearFilter) return false;
+      // Use pre-calculated date components
+      if (monthFilter !== 'all' && exp.mm !== monthFilter) return false;
+      if (yearFilter !== 'all' && exp.yy !== yearFilter) return false;
       if (q && !(`${exp.description}`.toLowerCase().includes(q) || `${exp.categoryName}`.toLowerCase().includes(q) || `${exp.sourceName}`.toLowerCase().includes(q))) return false;
       return true;
     });
     return arr.sort((a, b) => {
-      const da = new Date(a.date).getTime();
-      const db = new Date(b.date).getTime();
-      return dateSort === 'desc' ? db - da : da - db;
+      // Use pre-calculated timestamp
+      return dateSort === 'desc' ? b.ts - a.ts : a.ts - b.ts;
     });
   }, [allExpenses, query, categoryFilter, sourceFilter, monthFilter, yearFilter, dateSort]);
 
