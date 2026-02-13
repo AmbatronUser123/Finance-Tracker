@@ -29,9 +29,7 @@ const IncomeHistory: React.FC<IncomeHistoryProps> = ({ incomes, sources, onEditI
       return true;
     });
     return arr.sort((a,b) => {
-      const da = new Date(a.date).getTime();
-      const db = new Date(b.date).getTime();
-      return dateSort === 'desc' ? db - da : da - db;
+      return dateSort === 'desc' ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date);
     });
   }, [incomes, query, sourceFilter, dateSort, sourceMap]);
 
