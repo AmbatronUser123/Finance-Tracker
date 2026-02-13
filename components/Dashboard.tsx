@@ -22,14 +22,14 @@ const Dashboard: React.FC<DashboardProps> = ({
   sources,
 }) => {
   // Calculate category totals and percentages
-  const categoryTotals = categories.map(category => ({
+  const categoryTotals = useMemo(() => categories.map(category => ({
     ...category,
     percentage: category.budget > 0 ? (category.spent / category.budget) * 100 : 0,
     // Calculate spent from expenses if not set
     spent: category.spent || category.expenses.reduce((sum, exp) => sum + exp.amount, 0),
     // Set budget based on allocation if not set
     budget: category.budget || (income * (category.allocation / 100))
-  }));
+  })), [categories, income]);
 
   // Calculate goals progress
   const goalsProgress = goals.map(goal => ({
