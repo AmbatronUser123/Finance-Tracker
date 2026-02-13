@@ -58,6 +58,16 @@ const Dashboard: React.FC<DashboardProps> = ({
     .sort((a, b) => b.spent - a.spent)
     .slice(0, 3);
 
+  const recentTransactions = useMemo(() => {
+    return categories
+      .flatMap(cat => (cat.expenses || []).map(exp => ({
+        ...exp,
+        categoryName: cat.name,
+      })))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5);
+  }, [categories]);
+
   const handleViewAll = (section: string) => {
     navigate(`/${section}`);
   };
@@ -233,32 +243,20 @@ const Dashboard: React.FC<DashboardProps> = ({
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
-              {
-                (() => {
-                  const recent = categories
-                    .flatMap(cat => (cat.expenses || []).map(exp => ({
-                      ...exp,
-                      categoryName: cat.name,
-                    })))
-                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                    .slice(0, 5);
-                  if (recent.length === 0) {
-                    return (
-                      <tr>
-                        <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-slate-300">No recent transactions</td>
-                      </tr>
-                    );
-                  }
-                  return recent.map(item => (
-                    <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                      <td className="px-6 py-3 whitespace-nowrap">{new Date(item.date).toLocaleDateString('en-CA')}</td>
-                      <td className="px-6 py-3">{item.description}</td>
-                      <td className="px-6 py-3 whitespace-nowrap">{item.categoryName}</td>
-                      <td className="px-6 py-3 text-right font-medium">{formatRupiah(item.amount)}</td>
-                    </tr>
-                  ));
-                })()
-              }
+              {recentTransactions.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-slate-300">No recent transactions</td>
+                </tr>
+              ) : (
+                recentTransactions.map(item => (
+                  <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                    <td className="px-6 py-3 whitespace-nowrap">{new Date(item.date).toLocaleDateString('en-CA')}</td>
+                    <td className="px-6 py-3">{item.description}</td>
+                    <td className="px-6 py-3 whitespace-nowrap">{item.categoryName}</td>
+                    <td className="px-6 py-3 text-right font-medium">{formatRupiah(item.amount)}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
