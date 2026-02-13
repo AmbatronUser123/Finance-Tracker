@@ -660,7 +660,7 @@ const AppContent: React.FC = () => {
     setShowNewMonthModal(false);
   }, [setLastActiveMonth]);
 
-  const handleSaveCategory = useCallback((categoryData: Omit<Category, 'id' | 'expenses'> & { id?: string }) => {
+  const handleSaveCategory = useCallback((categoryData: Pick<Category, 'name' | 'allocation' | 'color' | 'icon'> & { id?: string }) => {
     if (categoryData.id) {
       setCategories(prev => prev.map(cat => cat.id === categoryData.id ? { ...cat, ...categoryData, planned: cat.planned, spent: cat.spent, expenses: cat.expenses } : cat));
       addToast({ type: 'success', message: 'Category updated!' });
