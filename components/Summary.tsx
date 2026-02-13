@@ -23,15 +23,17 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
   
   const spentPercentage = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
   
-  const expensesForSelectedDate = useMemo(() => {
-    const allExpenses = categories.flatMap(cat => 
+  const allExpenses = useMemo(() => {
+    return categories.flatMap(cat =>
       cat.expenses.map(exp => ({ ...exp, categoryName: cat.name, categoryId: cat.id }))
     );
-    
+  }, [categories]);
+
+  const expensesForSelectedDate = useMemo(() => {
     return allExpenses
       .filter(exp => exp.date.slice(0, 10) === selectedDate)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [categories, selectedDate]);
+  }, [allExpenses, selectedDate]);
   
     const dailySpendingData = useMemo(() => {
     const allExpenses = categories.flatMap(cat => cat.expenses);
