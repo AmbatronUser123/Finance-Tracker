@@ -108,7 +108,13 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
             <LineChart data={dailySpendingData} margin={{ top: 5, right: 20, left: -15, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.2} />
                 <XAxis dataKey="date" fontSize={12} tickLine={false} axisLine={false} stroke="currentColor" />
-                <YAxis fontSize={12} tickLine={false} axisLine={false} stroke="currentColor" tickFormatter={(value) => `${(value as number) / 1000}k`} />
+                <YAxis
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    stroke="currentColor"
+                    tickFormatter={(value: number) => `${value / 1000}k`}
+                />
                 <Tooltip
                     contentStyle={{
                         backgroundColor: 'var(--chart-tooltip-bg)',

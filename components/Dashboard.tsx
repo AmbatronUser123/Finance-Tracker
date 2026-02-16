@@ -21,15 +21,18 @@ const Dashboard: React.FC<DashboardProps> = ({
   totalSavings,
   sources,
 }) => {
-  // Calculate category totals and percentages
-  const categoryTotals = categories.map(category => ({
-    ...category,
-    percentage: category.budget > 0 ? (category.spent / category.budget) * 100 : 0,
-    // Calculate spent from expenses if not set
-    spent: category.spent || category.expenses.reduce((sum, exp) => sum + exp.amount, 0),
-    // Set budget based on allocation if not set
-    budget: category.budget || (income * (category.allocation / 100))
-  }));
+  // Calculate category totals and percentages with type-safe fallbacks
+  const categoryTotals = categories.map(category => {
+    const spent = (category.spent ?? category.expenses.reduce((sum, exp) => sum + exp.amount, 0));
+    const budget = (category.budget ?? (income * (category.allocation / 100)));
+    const percentage = budget > 0 ? (spent / budget) * 100 : 0;
+    return {
+      ...category,
+      spent,
+      budget,
+      percentage,
+    };
+  });
 
   // Calculate goals progress
   const goalsProgress = goals.map(goal => ({
