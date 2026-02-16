@@ -11,6 +11,7 @@ interface DashboardProps {
   totalExpenses: number;
   totalSavings: number;
   sources: TransactionSource[];
+  onDeleteExpense?: (categoryId: string, expenseId: string) => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ 

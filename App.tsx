@@ -57,6 +57,7 @@ const getCurrentMonth = () => {
 export interface CategoryWithBudget extends Category {
   planned: number;
   spent: number;
+  isActive?: boolean;
 }
 
 // Extracted Reports view into its own component to use Hooks safely

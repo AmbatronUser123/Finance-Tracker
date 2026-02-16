@@ -1,7 +1,10 @@
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+
+const rootDir = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig(() => {
     return {
@@ -42,7 +45,7 @@ export default defineConfig(() => {
       ],
       resolve: {
         alias: {
-          '@': path.resolve(__dirname, '.'),
+          '@': path.resolve(rootDir, '.'),
         }
       },
       css: {
@@ -55,7 +58,7 @@ export default defineConfig(() => {
       },
       build: {
         target: 'esnext',
-        outDir: path.resolve(__dirname, '../dist'),
+        outDir: path.resolve(rootDir, '../dist'),
         emptyOutDir: true,
         sourcemap: true,
       }

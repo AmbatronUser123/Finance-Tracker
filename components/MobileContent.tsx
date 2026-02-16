@@ -1,5 +1,5 @@
 import React from 'react';
-import { Category, Goal, Income, TransactionSource, Expense } from '../types';
+import { Goal, Income, TransactionSource, Expense } from '../types';
 import { Summary } from './Summary';
 import Dashboard from './Dashboard';
 import ExpenseLogger from './ExpenseLogger';
@@ -71,9 +71,13 @@ const MobileContent: React.FC<MobileContentProps> = ({
                     onDeleteExpense={onDeleteExpense}
                 />
                 <Dashboard 
-                    income={income} 
-                    categories={categories} 
-                    onDeleteExpense={onDeleteExpense}
+                  income={income} 
+                  categories={categories}
+                  goals={goals}
+                  totalExpenses={totalSpent}
+                  totalSavings={totalRemaining}
+                  sources={transactionSources}
+                  onDeleteExpense={onDeleteExpense}
                 />
             </>
         );
