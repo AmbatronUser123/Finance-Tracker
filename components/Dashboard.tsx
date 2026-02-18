@@ -66,10 +66,12 @@ const Dashboard: React.FC<DashboardProps> = ({
     navigate(`/${section}`);
   };
 
+  const sourceBalanceTotal = sources.reduce((acc, s) => acc + (s.balance || 0), 0);
+
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* Income Card */}
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow p-6">
           <div className="flex items-center justify-between">
@@ -111,6 +113,20 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
             <div className="p-3 rounded-full bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-200">
               <FiPieChart size={24} />
+            </div>
+          </div>
+        </div>
+        {/* Sources Balance Card */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-slate-300">Sources Balance</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">
+                {formatRupiah(sourceBalanceTotal)}
+              </p>
+            </div>
+            <div className="p-3 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-200">
+              <FiDollarSign size={24} />
             </div>
           </div>
         </div>

@@ -383,6 +383,11 @@ const AppContent: React.FC = () => {
         expenses: [...category.expenses, newExpense],
       };
       setCategories(categories.map(c => c.id === expense.categoryId ? updatedCategory : c));
+      // Decrease balance of the source used for this expense
+      setSources(prev => prev.map(s => s.id === newExpense.sourceId
+        ? { ...s, balance: Math.max(0, (s.balance || 0) - newExpense.amount) }
+        : s
+      ));
       addToast({ type: 'success', message: 'Expense added!' });
     }
   };
@@ -407,7 +412,7 @@ const AppContent: React.FC = () => {
 
       // If category changed, move expense
       if (originalCategoryId !== updated.categoryId) {
-        return prev.map(cat => {
+        const next = prev.map(cat => {
           if (cat.id === originalCategoryId) {
             // remove from old category and adjust spent
             const newExpenses = cat.expenses.filter(e => e.id !== updated.id);
@@ -422,16 +427,52 @@ const AppContent: React.FC = () => {
           }
           return cat;
         });
+        // Adjust sources: refund original to its source and subtract new from new source
+        setSources(prevSources => {
+          const arr = prevSources.map(s => {
+            if (s.id === originalExpense!.sourceId) {
+              return { ...s, balance: (s.balance || 0) + originalExpense!.amount };
+            }
+            if (s.id === updated.sourceId) {
+              return { ...s, balance: Math.max(0, (s.balance || 0) - updated.amount) };
+            }
+            return s;
+          });
+          return arr;
+        });
+        return next;
       }
 
       // Same category: update in place and adjust spent delta
-      return prev.map(cat => {
+      const result = prev.map(cat => {
         if (cat.id !== originalCategoryId) return cat;
         const newExpenses = cat.expenses.map(e => (e.id === updated.id ? { ...e, ...updated } : e));
         const delta = (updated.amount || 0) - (originalExpense!.amount || 0);
         const newSpent = Math.max(0, cat.spent + delta);
         return { ...cat, expenses: newExpenses, spent: newSpent };
       });
+      // Adjust sources for same-category edit:
+      // If source changed, refund original and subtract from new; else apply delta
+      setSources(prevSources => {
+        if (originalExpense!.sourceId !== updated.sourceId) {
+          return prevSources.map(s => {
+            if (s.id === originalExpense!.sourceId) {
+              return { ...s, balance: (s.balance || 0) + originalExpense!.amount };
+            }
+            if (s.id === updated.sourceId) {
+              return { ...s, balance: Math.max(0, (s.balance || 0) - updated.amount) };
+            }
+            return s;
+          });
+        } else {
+          const delta = (updated.amount || 0) - (originalExpense!.amount || 0);
+          return prevSources.map(s => s.id === updated.sourceId
+            ? { ...s, balance: Math.max(0, (s.balance || 0) - delta) }
+            : s
+          );
+        }
+      });
+      return result;
     });
     addToast({ type: 'success', message: 'Expense updated!' });
   }, [setCategories, addToast]);
@@ -453,6 +494,13 @@ const AppContent: React.FC = () => {
     });
     if (found) {
       setCategories(updated);
+      // Refund the amount to the source balance
+      if (deleted) {
+        setSources(prev => prev.map(s => s.id === deleted!.expense.sourceId
+          ? { ...s, balance: (s.balance || 0) + deleted!.expense.amount }
+          : s
+        ));
+      }
       addToast({ 
         type: 'info', 
         message: 'Expense removed.',
@@ -469,6 +517,13 @@ const AppContent: React.FC = () => {
               }
               return cat;
             }));
+            // Apply the expense impact back to the source balance
+            if (deleted) {
+              setSources(prev => prev.map(s => s.id === deleted!.expense.sourceId
+                ? { ...s, balance: Math.max(0, (s.balance || 0) - deleted!.expense.amount) }
+                : s
+              ));
+            }
           }
         }
       });
