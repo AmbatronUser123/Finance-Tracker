@@ -1083,9 +1083,9 @@ const AppContent: React.FC = () => {
             <div className="text-sm text-gray-500 dark:text-slate-300">
               <p>Total Income: {formatRupiah(effectiveIncome)}</p>
               <p>Total Expenses: {formatRupiah(totalExpenses)}</p>
-              <p className="font-medium">Balance: {formatRupiah(totalSavings)}</p>
+              <p className="font-medium">Balance: {formatRupiah(totalSourceBalance)}</p>
               <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                Total Source Balance: {formatRupiah(totalSourceBalance)}
+                Net Savings (Income - Expenses): {formatRupiah(totalSavings)}
               </p>
             </div>
           </div>
