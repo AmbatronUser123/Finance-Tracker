@@ -72,7 +72,8 @@ Do not be judgmental. Be positive and helpful.
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({ tip }));
-  } catch {
+  } catch (error) {
+    console.error('Error generating spending tip:', error);
     res.statusCode = 502;
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({ error: 'Failed to fetch tip' }));
