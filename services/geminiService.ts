@@ -18,7 +18,8 @@ export const fetchSpendingTip = async (
     const data = (await response.json()) as { tip?: string };
     const tip = data?.tip?.trim();
     return tip || fallback;
-  } catch {
+  } catch (error) {
+    console.error('Failed to fetch spending tip:', error);
     return fallback;
   }
 };
