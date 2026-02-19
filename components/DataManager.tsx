@@ -1,9 +1,25 @@
 import React from 'react';
 import { FiUpload, FiDownload } from 'react-icons/fi';
 import Papa from 'papaparse';
+import { Category, Goal, MonthlyArchive, Income, TransactionSource } from '../types';
+
+export interface ImportData {
+  income?: number;
+  categories?: Partial<Category>[];
+  goals?: Goal[];
+  monthlyArchives?: MonthlyArchive[];
+  incomes?: Income[];
+  sources?: TransactionSource[];
+}
+
+interface CSVRow {
+  Category: string;
+  Planned: string;
+  Spent: string;
+}
 
 interface DataManagerProps {
-  onImport: (data: any) => void;
+  onImport: (data: ImportData) => void;
   onExport: (format: 'json' | 'pdf' | 'csv') => void;
   onResetCurrentMonth?: () => void;
 }
@@ -16,7 +32,7 @@ const DataManager: React.FC<DataManagerProps> = ({ onImport, onExport, onResetCu
         const reader = new FileReader();
         reader.onload = (e) => {
           try {
-            const data = JSON.parse(e.target?.result as string);
+            const data = JSON.parse(e.target?.result as string) as ImportData;
             onImport(data);
           } catch (error) {
             console.error('Failed to parse JSON', error);
@@ -27,7 +43,7 @@ const DataManager: React.FC<DataManagerProps> = ({ onImport, onExport, onResetCu
         Papa.parse(file, {
           header: true,
           complete: (results) => {
-            const categories = results.data.map((row: any) => ({
+            const categories = (results.data as CSVRow[]).map((row) => ({
               name: row.Category,
               planned: parseFloat(row.Planned),
               spent: parseFloat(row.Spent),
