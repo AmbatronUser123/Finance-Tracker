@@ -65,12 +65,14 @@ const ReportsView: React.FC<{
   monthlyArchives: MonthlyArchive[];
   incomes: Income[];
 }> = ({ categories, monthlyArchives, incomes }) => {
-  const currentAllExpenses = categories.flatMap(c => c.expenses.map(e => ({ ...e, categoryName: c.name })));
-  const archiveMonths = monthlyArchives.map(a => a.month);
-  const uniqueMonths = Array.from(new Set([
-    ...currentAllExpenses.map(e => e.date?.slice(0, 7)).filter(Boolean) as string[],
-    ...archiveMonths,
-  ])).sort();
+  const uniqueMonths = React.useMemo(() => {
+    const expenseMonths = categories.flatMap(c => c.expenses.map(e => e.date?.slice(0, 7)).filter(Boolean) as string[]);
+    const archiveMonths = monthlyArchives.map(a => a.month);
+    return Array.from(new Set([
+      ...expenseMonths,
+      ...archiveMonths,
+    ])).sort();
+  }, [categories, monthlyArchives]);
   
   const currentMonth = getCurrentMonth();
   
