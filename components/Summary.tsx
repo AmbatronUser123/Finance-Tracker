@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Category } from '../types';
 import { CalendarDaysIcon, EmptyStateIcon, TrashIcon } from './icons';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { formatRupiah } from '../src/utils/currency';
 
 
 interface SummaryProps {
@@ -16,10 +17,6 @@ interface SummaryProps {
 export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, totalRemaining, totalAllocatedToGoals, categories, onDeleteExpense }) => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [expenseToDelete, setExpenseToDelete] = useState<{ categoryId: string; expenseId: string; description: string } | null>(null);
-
-  const formatCurrency = (value: number) => {
-    return value.toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  };
   
   const spentPercentage = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
   
@@ -76,15 +73,15 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
         <div className="space-y-3">
           <div className="flex justify-between items-baseline">
             <span className="text-slate-600 dark:text-slate-300">Income</span>
-            <span className="font-bold text-lg text-green-600">{formatCurrency(totalBudget)}</span>
+            <span className="font-bold text-lg text-green-600">{formatRupiah(totalBudget)}</span>
           </div>
           <div className="flex justify-between items-baseline">
             <span className="text-slate-600 dark:text-slate-300">Spent</span>
-            <span className="font-bold text-lg text-red-600">{formatCurrency(totalSpent)}</span>
+            <span className="font-bold text-lg text-red-600">{formatRupiah(totalSpent)}</span>
           </div>
           <div className="flex justify-between items-baseline">
             <span className="text-slate-600 dark:text-slate-300">Saved to Goals</span>
-            <span className="font-bold text-lg text-sky-500">{formatCurrency(totalAllocatedToGoals)}</span>
+            <span className="font-bold text-lg text-sky-500">{formatRupiah(totalAllocatedToGoals)}</span>
           </div>
           <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 my-1">
               <div
@@ -95,7 +92,7 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
           <div className="flex justify-between items-baseline pt-2 border-t border-slate-200 dark:border-slate-700">
             <span className="text-slate-600 dark:text-slate-300 font-semibold">Remaining</span>
             <span className={`font-bold text-lg ${totalRemaining >= 0 ? 'text-slate-900 dark:text-slate-100' : 'text-red-600'}`}>
-              {formatCurrency(totalRemaining)}
+              {formatRupiah(totalRemaining)}
             </span>
           </div>
         </div>
@@ -120,7 +117,7 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
                     labelStyle={{ color: 'var(--chart-tooltip-muted)' }}
                     itemStyle={{ color: 'var(--chart-tooltip-text)' }}
                     cursor={{ fill: 'var(--chart-tooltip-cursor)' }}
-                    formatter={(value: number) => [formatCurrency(value), 'Spent']}
+                    formatter={(value: number) => [formatRupiah(value), 'Spent']}
                 />
                 <Line type="monotone" dataKey="amount" stroke="#4f46e5" strokeWidth={2} dot={{ r: 3, fill: '#4f46e5' }} activeDot={{ r: 6, stroke: '#4f46e5', fill: '#fff', strokeWidth: 2 }} />
             </LineChart>
@@ -153,7 +150,7 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
                     <p className="text-xs text-slate-500 dark:text-slate-300">{exp.categoryName}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold flex-shrink-0">{formatCurrency(exp.amount)}</span>
+                    <span className="font-semibold flex-shrink-0">{formatRupiah(exp.amount)}</span>
                     {onDeleteExpense && (
                       <button 
                         onClick={() => handleDeleteClick(exp.categoryId, exp.id, exp.description)}

@@ -3,6 +3,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { CategoryWithBudget } from '../App';
 import { ChartPieIcon, PlusIcon, PencilIcon, TrashIcon } from './icons';
 import { TAILWIND_COLORS } from '../constants';
+import { formatRupiah } from '../src/utils/currency';
 // Toast notifications are handled by the parent component
 
 interface CategoryManagerProps {
@@ -129,8 +130,8 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
                     </button>
                     <div className="mt-2">
                       <div className="flex justify-between text-xs text-slate-500 dark:text-slate-300 mb-1">
-                        <span>{`Rp${(cat.spent || 0).toLocaleString()}`}</span>
-                        <span>{`Max Rp${(cat.planned || 0).toLocaleString()}`}</span>
+                        <span>{formatRupiah(cat.spent || 0)}</span>
+                        <span>{`Max ${formatRupiah(cat.planned || 0)}`}</span>
                       </div>
                       <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2.5">
                         <div 

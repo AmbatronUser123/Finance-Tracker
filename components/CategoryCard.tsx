@@ -3,6 +3,7 @@ import { Category } from '../types';
 import ProgressBar from './ProgressBar';
 import { fetchSpendingTip } from '../services/geminiService';
 import { InfoIcon, SparklesIcon, TrashIcon } from './icons';
+import { formatRupiah } from '../src/utils/currency';
 
 interface CategoryCardProps {
   category: Category;
@@ -65,10 +66,6 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearEx
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spentPercentage, category.name, budget, spent]);
 
-  const formatCurrency = (value: number) => {
-    return value.toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  };
-
   const handleDeleteExpenseClick = (categoryId: string, expenseId: string, description: string) => {
     setExpenseToDelete({ categoryId, expenseId, description });
   };
@@ -93,14 +90,14 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearEx
                 <InfoIcon className="w-6 h-6"/>
             </button>
         </div>
-        <p className={`text-sm mb-4 font-medium ${text}`}>Budget: {formatCurrency(budget)}</p>
+        <p className={`text-sm mb-4 font-medium ${text}`}>Budget: {formatRupiah(budget)}</p>
         
         <ProgressBar percentage={spentPercentage} colorClass={progressColor} />
 
         <div className="flex justify-between text-sm mt-2 text-slate-600 dark:text-slate-300 font-medium">
-          <span>Spent: {formatCurrency(spent)}</span>
+          <span>Spent: {formatRupiah(spent)}</span>
           <span className={remaining < 0 ? 'font-bold text-red-600' : 'text-slate-700 dark:text-slate-200'}>
-            Remaining: {formatCurrency(remaining)}
+            Remaining: {formatRupiah(remaining)}
           </span>
         </div>
         
@@ -153,7 +150,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearEx
                 <li key={exp.id} className="flex justify-between items-center text-sm text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-700/40 p-1.5 rounded group">
                   <span className="truncate pr-2">{exp.description}</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-slate-900 dark:text-slate-100">{formatCurrency(exp.amount)}</span>
+                    <span className="font-medium text-slate-900 dark:text-slate-100">{formatRupiah(exp.amount)}</span>
                     <button 
                       onClick={() => handleDeleteExpenseClick(category.id, exp.id, exp.description)}
                       className="text-red-400 hover:text-red-600 transition-opacity"
