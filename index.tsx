@@ -28,12 +28,7 @@ const PWAInstallPrompt = () => {
             const ev = installEvent as any;
             if (ev && ev.prompt) {
               ev.prompt();
-              ev.userChoice?.then((choiceResult: any) => {
-                if (choiceResult.outcome === 'accepted') {
-                  console.log('User accepted the install prompt');
-                } else {
-                  console.log('User dismissed the install prompt');
-                }
+              ev.userChoice?.then(() => {
                 setDeferredPrompt(null);
               });
             }
@@ -45,7 +40,6 @@ const PWAInstallPrompt = () => {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', () => {
-      console.log('PWA was installed');
       setDeferredPrompt(null);
     });
 
