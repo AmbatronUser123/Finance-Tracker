@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
 import { XMarkIcon } from '../components/icons';
 
 type ToastType = 'success' | 'error' | 'info';
@@ -37,20 +37,22 @@ interface ToastProviderProps {
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
+  const removeToast = useCallback((id: number) => {
+    setToasts(prevToasts => prevToasts.filter(toast => toast.id !== id));
+  }, []);
+
   const addToast = useCallback((toast: Omit<ToastMessage, 'id'>) => {
     const id = Date.now();
     setToasts(prevToasts => [...prevToasts, { id, ...toast }]);
     setTimeout(() => {
       removeToast(id);
     }, 5000); // Auto-dismiss after 5 seconds
-  }, []);
+  }, [removeToast]);
 
-  const removeToast = (id: number) => {
-    setToasts(prevToasts => prevToasts.filter(toast => toast.id !== id));
-  };
+  const value = useMemo(() => ({ addToast }), [addToast]);
 
   return (
-    <ToastContext.Provider value={{ addToast }}>
+    <ToastContext.Provider value={value}>
       {children}
       <div className="fixed top-4 right-4 z-[100] w-full max-w-xs space-y-3">
         {toasts.map(toast => (
