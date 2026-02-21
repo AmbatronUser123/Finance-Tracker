@@ -660,26 +660,32 @@ const AppContent: React.FC = () => {
     setShowNewMonthModal(false);
   }, [setLastActiveMonth]);
 
-  const handleSaveCategory = useCallback((categoryData: Omit<Category, 'id' | 'expenses'> & { id?: string }) => {
-    if (categoryData.id) {
-      setCategories(prev => prev.map(cat => cat.id === categoryData.id ? { ...cat, ...categoryData, planned: cat.planned, spent: cat.spent, expenses: cat.expenses } : cat));
-      addToast({ type: 'success', message: 'Category updated!' });
-    } else {
-      const newCategory: CategoryWithBudget = {
-        ...categoryData,
-        id: `cat-${Date.now()}`,
-        expenses: [],
-        spent: 0,
-        planned: 0,
-        budget: 0,
-        isActive: true
-      };
-      setCategories(prev => [...prev, newCategory]);
-      addToast({ type: 'success', message: 'Category added!' });
-    }
-    setCategoryModalOpen(false);
-    setEditingCategory(null);
-  }, [setCategories, addToast]);
+  const handleSaveCategory = useCallback((categoryData: any) => {
+  if (categoryData.id) {
+    setCategories(prev => prev.map(cat => cat.id === categoryData.id ? { 
+      ...cat, 
+      ...categoryData,
+      planned: cat.planned, 
+      spent: cat.spent, 
+      expenses: cat.expenses 
+    } : cat));
+    addToast({ type: 'success', message: 'Category updated!' });
+  } else {
+    const newCategory: CategoryWithBudget = {
+      ...categoryData,
+      id: `cat-${Date.now()}`,
+      expenses: [],
+      spent: 0,
+      planned: 0,
+      budget: 0,
+      isActive: true
+    };
+    setCategories(prev => [...prev, newCategory]);
+    addToast({ type: 'success', message: 'Category added!' });
+  }
+  setCategoryModalOpen(false);
+  setEditingCategory(null);
+}, [setCategories, addToast]);
 
   const handleDeleteCategory = useCallback((categoryId: string) => {
     setCategories(prev => prev.filter(cat => cat.id !== categoryId));

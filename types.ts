@@ -54,3 +54,5 @@ export interface MonthlyArchive {
   sources: TransactionSource[];
   incomes?: Income[];
 }
+
+export type CategoryFormData = Pick<Category, 'name' | 'allocation' | 'color' | 'icon'> & { id?: string };

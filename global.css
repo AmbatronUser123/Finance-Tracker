@@ -5,10 +5,8 @@
 @tailwind utilities;
 
 @layer base {
-  html {
-    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  body {
+    @apply bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100;
   }
 
   :root {
