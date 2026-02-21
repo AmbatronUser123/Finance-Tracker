@@ -1,0 +1,6 @@
+{
+  "name": "Finance Tracker",
+  "description": "A personal finance app to track monthly spending based on percentage allocations. Set your income, define category budgets, log expenses, and get AI-powered tips to stay on track.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
