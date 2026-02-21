@@ -46,7 +46,7 @@ export default defineConfig(() => {
         }
       },
       css: {
-        postcss: './postcss.config.js',
+        postcss: './postcss.config.cjs',
       },
       server: {
         hmr: {
@@ -55,7 +55,7 @@ export default defineConfig(() => {
       },
       build: {
         target: 'esnext',
-        outDir: path.resolve(__dirname, '../dist'),
+        outDir: path.resolve(__dirname, 'dist'),
         emptyOutDir: true,
         sourcemap: true,
       }
