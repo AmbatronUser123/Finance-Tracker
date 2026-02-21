@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Category } from '../types';
+import { Category, CategoryFormData } from '../types';
 import { CATEGORY_COLORS, CATEGORY_ICONS, TAILWIND_COLORS } from '../constants';
 import { XMarkIcon, CategoryIcon } from './icons';
 
+import { Category } from '../types'; // Pastikan import CategoryFormData juga kalau sudah ditambah di types.ts
+
 interface CategoryEditorProps {
     onClose: () => void;
-    onSave: (categoryData: Omit<Category, 'id' | 'expenses'> & { id?: string }) => void;
+    onSave: (categoryData: any) => void; // Ubah ke any atau CategoryFormData
     categoryToEdit: Category | null;
 }
 

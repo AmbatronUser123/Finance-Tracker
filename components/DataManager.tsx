@@ -26,7 +26,7 @@ const DataManager: React.FC<DataManagerProps> = ({ onImport, onExport, onResetCu
       } else if (file.type === 'text/csv') {
         Papa.parse(file, {
           header: true,
-          complete: (results) => {
+          complete: (results: any) => {
             const categories = results.data.map((row: any) => ({
               name: row.Category,
               planned: parseFloat(row.Planned),

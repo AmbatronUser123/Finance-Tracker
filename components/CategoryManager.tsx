@@ -97,7 +97,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value, name) => [`${value}%`, name]} 
+                    formatter={(value: number | string, name: string) => [`${value}%`, name]} 
                     contentStyle={{
                         backgroundColor: 'var(--chart-tooltip-bg)',
                         backdropFilter: 'blur(4px)',
