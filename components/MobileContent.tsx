@@ -1,81 +1,58 @@
 import React from 'react';
-import { Category, Goal, Income, TransactionSource, Expense } from '../types';
-import { Summary } from './Summary';
+import { Goal, TransactionSource, Expense } from '../types';
 import Dashboard from './Dashboard';
 import ExpenseLogger from './ExpenseLogger';
-import IncomeInput from './IncomeInput';
 import CategoryManager from './CategoryManager';
 import GoalManager from './GoalManager';
+import { CategoryWithBudget } from '../App';
 
 interface MobileContentProps {
     mobileView: string;
-    totalBudget: number;
-    totalSpent: number;
-    totalRemaining: number;
-    totalAllocatedToGoals: number;
-    categories: Category[];
     income: number;
-    onClearExpenses: (categoryId: string) => void;
-    onDeleteExpense: (categoryId: string, expenseId: string) => void;
+    totalExpenses: number;
+    totalSavings: number;
+    categories: CategoryWithBudget[];
+    goals: Goal[];
+    sources: TransactionSource[];
     onAddExpense: (expense: Omit<Expense, 'id'>) => void;
-    isBudgetValid: boolean;
-    onAddIncome: (income: Omit<Income, 'id'>) => void;
-    transactionSources: TransactionSource[];
     onAllocationChange: (categoryId: string, newAllocation: number) => void;
-    totalAllocation: number;
-    onOpenModal: (category: Category | null) => void;
+    onOpenModal: (category: CategoryWithBudget | null) => void;
     onDeleteCategory: (categoryId: string) => void;
     onAutoAdjustAllocation: () => void;
-    goals: Goal[];
+    onViewCategory: (category: CategoryWithBudget) => void;
+    onUpdateGoal: (goal: Goal) => void;
     onAddGoal: (goal: Omit<Goal, 'id' | 'currentAmount'>) => void;
-    onAllocateToGoal: (goalId: string, amount: number) => void;
     onDeleteGoal: (goalId: string) => void;
-    availableToSave: number;
 }
 
 const MobileContent: React.FC<MobileContentProps> = ({
     mobileView,
-    totalBudget,
-    totalSpent,
-    totalRemaining,
-    totalAllocatedToGoals,
-    categories,
     income,
-    onClearExpenses,
-    onDeleteExpense,
+    totalExpenses,
+    totalSavings,
+    categories,
+    goals,
+    sources,
     onAddExpense,
-    isBudgetValid,
-    onAddIncome,
-    transactionSources,
     onAllocationChange,
-    totalAllocation,
     onOpenModal,
     onDeleteCategory,
     onAutoAdjustAllocation,
-    goals,
+    onViewCategory,
+    onUpdateGoal,
     onAddGoal,
-    onAllocateToGoal,
     onDeleteGoal,
-    availableToSave,
 }) => {
     if (mobileView === 'dashboard') {
         return (
-            <>
-                <Summary
-                    totalBudget={totalBudget}
-                    totalSpent={totalSpent}
-                    totalRemaining={totalRemaining}
-                    totalAllocatedToGoals={totalAllocatedToGoals}
-                    categories={categories}
-                    onDeleteExpense={onDeleteExpense}
-                />
-                <Dashboard 
-                    income={income} 
-                    categories={categories} 
-                    onClearExpenses={onClearExpenses}
-                    onDeleteExpense={onDeleteExpense}
-                />
-            </>
+            <Dashboard 
+                income={income}
+                totalExpenses={totalExpenses}
+                totalSavings={totalSavings}
+                categories={categories}
+                goals={goals}
+                sources={sources}
+            />
         );
     }
 
@@ -84,28 +61,23 @@ const MobileContent: React.FC<MobileContentProps> = ({
             <ExpenseLogger
                 categories={categories}
                 onAddExpense={onAddExpense}
-                isAddDisabled={!isBudgetValid}
-                transactionSources={transactionSources}
+                isAddDisabled={false}
+                transactionSources={sources}
             />
         );
     }
 
     if (mobileView === 'budgets') {
         return (
-            <>
-                <IncomeInput 
-                    onAddIncome={onAddIncome} 
-                    transactionSources={transactionSources} 
-                />
-                <CategoryManager
-                    categories={categories}
-                    onAllocationChange={onAllocationChange}
-                    totalAllocation={totalAllocation}
-                    onOpenModal={onOpenModal}
-                    onDeleteCategory={onDeleteCategory}
-                    onAutoAdjustAllocation={onAutoAdjustAllocation}
-                />
-            </>
+            <CategoryManager
+                categories={categories}
+                onAllocationChange={onAllocationChange}
+                totalAllocation={categories.reduce((sum, cat) => sum + cat.allocation, 0)}
+                onOpenModal={onOpenModal}
+                onDeleteCategory={onDeleteCategory}
+                onAutoAdjustAllocation={onAutoAdjustAllocation}
+                onViewCategory={onViewCategory}
+            />
         );
     }
 
@@ -114,9 +86,9 @@ const MobileContent: React.FC<MobileContentProps> = ({
             <GoalManager
                 goals={goals}
                 onAddGoal={onAddGoal}
-                onAllocateToGoal={onAllocateToGoal}
+                onUpdateGoal={onUpdateGoal}
                 onDeleteGoal={onDeleteGoal}
-                availableFunds={availableToSave}
+                availableFunds={totalSavings}
             />
         );
     }

@@ -120,7 +120,7 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
                     labelStyle={{ color: 'var(--chart-tooltip-muted)' }}
                     itemStyle={{ color: 'var(--chart-tooltip-text)' }}
                     cursor={{ fill: 'var(--chart-tooltip-cursor)' }}
-                    formatter={(value: number) => [formatCurrency(value), 'Spent']}
+                    formatter={(value: any) => [formatCurrency(value ?? 0), 'Spent']}
                 />
                 <Line type="monotone" dataKey="amount" stroke="#4f46e5" strokeWidth={2} dot={{ r: 3, fill: '#4f46e5' }} activeDot={{ r: 6, stroke: '#4f46e5', fill: '#fff', strokeWidth: 2 }} />
             </LineChart>
