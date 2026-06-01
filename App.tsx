@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Category, Goal, Expense, TransactionSource, MonthlyArchive, Income } from './types';
+import { Category, Goal, Expense, TransactionSource, MonthlyArchive, Income, TransferHistory } from './types';
 import { INITIAL_CATEGORIES, INITIAL_SOURCES } from './constants';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useToast } from './contexts/ToastContext';
@@ -33,6 +33,7 @@ import ExpenseHistory from './components/ExpenseHistory';
 import { useDarkMode } from './hooks/useDarkMode';
 import { SunIcon, MoonIcon } from './components/icons';
 import NewMonthModal from './components/NewMonthModal';
+import ArchiveModal from './components/ArchiveModal';
 import IncomeInput from './components/IncomeInput';
 import IncomeHistory from './components/IncomeHistory';
 
@@ -65,8 +66,45 @@ const ReportsView: React.FC<{
   monthlyArchives: MonthlyArchive[];
   incomes: Income[];
 }> = ({ categories, monthlyArchives, incomes }) => {
+  // First, let's process archives to handle backward compatibility
+  const processedArchives = monthlyArchives.map(archive => {
+    if (!('id' in archive)) {
+      // Backward compatibility for older archives
+      const oldArchive = archive as any; // Type assertion for backward compatibility
+      const year = parseInt(oldArchive.month.split('-')[0], 10);
+      const month = parseInt(oldArchive.month.split('-')[1], 10);
+      const firstDay = new Date(year, month - 1, 1).toISOString().split('T')[0];
+      const lastDay = new Date(year, month, 0).toISOString().split('T')[0];
+      return {
+        ...oldArchive,
+        id: `archive-old-${Date.now()}-${Math.random()}`,
+        name: `${oldArchive.month} Report`,
+        startDate: firstDay,
+        endDate: lastDay
+      } as MonthlyArchive;
+    }
+    return archive;
+  });
+
+  // Group archives by month
+  const archivesByMonth = React.useMemo(() => {
+    const grouped: Record<string, MonthlyArchive[]> = {};
+    processedArchives.forEach(archive => {
+      if (!grouped[archive.month]) {
+        grouped[archive.month] = [];
+      }
+      grouped[archive.month].push(archive);
+    });
+    // Sort each group's archives by date (newest first)
+    Object.keys(grouped).forEach(month => {
+      grouped[month].sort((a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime());
+    });
+    return grouped;
+  }, [processedArchives]);
+
+  // Get all unique months (from archives and current data)
   const currentAllExpenses = categories.flatMap(c => c.expenses.map(e => ({ ...e, categoryName: c.name })));
-  const archiveMonths = monthlyArchives.map(a => a.month);
+  const archiveMonths = Object.keys(archivesByMonth);
   const uniqueMonths = Array.from(new Set([
     ...currentAllExpenses.map(e => e.date?.slice(0, 7)).filter(Boolean) as string[],
     ...archiveMonths,
@@ -77,116 +115,78 @@ const ReportsView: React.FC<{
   // Default to current month or last available
   const initialMonth = uniqueMonths.includes(currentMonth) ? currentMonth : (uniqueMonths[uniqueMonths.length - 1] || currentMonth);
   
-  const [startMonth, setStartMonth] = React.useState(initialMonth);
-  const [endMonth, setEndMonth] = React.useState(initialMonth);
+  const [selectedMonth, setSelectedMonth] = React.useState(initialMonth);
+  const [selectedReportId, setSelectedReportId] = React.useState<string | null>(null);
 
   // Ensure uniqueMonths is populated for dropdowns
   const monthOptions = uniqueMonths.length ? uniqueMonths : [currentMonth];
 
-  // Helper to get months in range
-  const getMonthsInRange = (start: string, end: string) => {
-    if (start > end) return [start];
-    return monthOptions.filter(m => m >= start && m <= end);
-  };
+  // Get current selected month's archives
+  const monthArchives = archivesByMonth[selectedMonth] || [];
 
-  const selectedMonths = getMonthsInRange(startMonth, endMonth);
+  // Determine which data to display
+  const displayData = React.useMemo(() => {
+    if (selectedReportId && monthArchives.length > 0) {
+      const archive = monthArchives.find(a => a.id === selectedReportId) || monthArchives[0];
+      return {
+        type: 'archive' as const,
+        data: archive,
+        month: selectedMonth
+      };
+    }
+    return {
+      type: 'current' as const,
+      data: { categories, incomes },
+      month: selectedMonth
+    };
+  }, [selectedReportId, monthArchives, selectedMonth, categories, incomes]);
 
-  // Aggregate Data
-  const aggregatedData = React.useMemo(() => {
+  // Calculate report data for display
+  const reportData = React.useMemo(() => {
     let totalIncome = 0;
     const incomeList: Income[] = [];
-    const categoryTotals: Record<string, { name: string; total: number; monthly: Record<string, number> }> = {};
+    const categoryTotals: Record<string, { name: string; total: number }> = {};
 
-    selectedMonths.forEach(month => {
-      // Determine source of data for this month
-      let monthIncomes: Income[] = [];
-      let monthCategories: CategoryWithBudget[] = [];
-
-      // Check archive first
-      const archive = monthlyArchives.find(a => a.month === month);
-      if (archive) {
-        monthIncomes = archive.incomes || [];
-        // If income is just a number in archive and no list, we might miss details. 
-        // But older archives might only have 'income' number.
-        // If incomes array is empty but income number > 0, we can't show details but can add to total.
-        if (monthIncomes.length === 0 && archive.income > 0) {
-           totalIncome += archive.income;
-        }
-        monthCategories = archive.categories as CategoryWithBudget[];
-      } else {
-        // It's the current/active data (assuming it matches the month)
-        // We need to filter current data by month
-        monthIncomes = incomes.filter(i => i.date?.startsWith(month));
-        monthCategories = categories; // We'll filter expenses inside
-      }
-
-      // Add incomes
-      monthIncomes.forEach(i => {
-        incomeList.push(i);
-        totalIncome += (i.amount || 0);
-      });
-
-      // Process Categories
-      monthCategories.forEach(cat => {
-        const catId = (cat as any).id; // Archive categories might not match current IDs exactly if deleted, but name should be consistent? 
-        // Better to group by Name if IDs might change or be re-generated, but ID is safer if persistent.
-        // Let's use ID but fallback to name grouping if needed. For now, ID.
-        
+    if (displayData.type === 'archive') {
+      const archive = displayData.data;
+      totalIncome = archive.income;
+      incomeList.push(...(archive.incomes || []));
+      
+      archive.categories.forEach(cat => {
+        const catId = (cat as any).id;
         if (!categoryTotals[catId]) {
-          categoryTotals[catId] = { name: (cat as any).name, total: 0, monthly: {} };
+          categoryTotals[catId] = { name: (cat as any).name, total: 0 };
         }
-
-        const monthExpenses = cat.expenses.filter(e => e.date?.startsWith(month));
-        const monthSum = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
-
-        categoryTotals[catId].total += monthSum;
-        categoryTotals[catId].monthly[month] = (categoryTotals[catId].monthly[month] || 0) + monthSum;
+        // Filter expenses by archive's date range
+        const filteredExpenses = cat.expenses.filter(e => {
+          if (!e.date) return false;
+          const expenseDate = e.date.split('T')[0];
+          return expenseDate >= archive.startDate && expenseDate <= archive.endDate;
+        });
+        categoryTotals[catId].total = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
       });
-    });
+    } else {
+      // Current active data, filter by selected month
+      const filteredIncomes = incomes.filter(i => i.date?.startsWith(selectedMonth));
+      totalIncome = filteredIncomes.reduce((sum, i) => sum + (i.amount || 0), 0);
+      incomeList.push(...filteredIncomes);
+
+      categories.forEach(cat => {
+        const catId = cat.id;
+        if (!categoryTotals[catId]) {
+          categoryTotals[catId] = { name: cat.name, total: 0 };
+        }
+        const filteredExpenses = cat.expenses.filter(e => e.date?.startsWith(selectedMonth));
+        categoryTotals[catId].total = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
+      });
+    }
 
     return {
       totalIncome,
-      incomeList: incomeList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+      incomeList: incomeList.sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()),
       categories: Object.values(categoryTotals).filter(c => c.total > 0).sort((a, b) => b.total - a.total)
     };
-  }, [selectedMonths, monthlyArchives, categories, incomes]);
-
-  const exportReport = (format: 'pdf' | 'csv') => {
-    if (format === 'pdf') {
-      const doc = new jsPDF();
-      doc.text(`Finance Report (${startMonth} to ${endMonth})`, 20, 10);
-      
-      // Income
-      doc.text(`Total Income: ${formatRupiah(aggregatedData.totalIncome)}`, 20, 20);
-      
-      // Spending
-      const head = [['Category', 'Total', ...selectedMonths]];
-      const body = aggregatedData.categories.map(c => [
-        c.name,
-        formatRupiah(c.total),
-        ...selectedMonths.map(m => formatRupiah(c.monthly[m] || 0))
-      ]);
-      
-      (doc as any).autoTable({ head, body, startY: 30 });
-      doc.save(`report-${startMonth}-${endMonth}.pdf`);
-    } else {
-      const header = ['Category', 'Total', ...selectedMonths];
-      const data = aggregatedData.categories.map(c => {
-        const row: any = { Category: c.name, Total: c.total };
-        selectedMonths.forEach(m => row[m] = c.monthly[m] || 0);
-        return row;
-      });
-      const csv = Papa.unparse({ fields: header, data: data.map(d => header.map(h => d[h])) });
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `report-${startMonth}-${endMonth}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  };
+  }, [displayData, selectedMonth]);
 
   return (
     <div className="p-6 space-y-6">
@@ -195,58 +195,67 @@ const ReportsView: React.FC<{
       {/* Filters */}
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <label className="text-sm text-slate-700 dark:text-slate-300">From:</label>
+          <label className="text-sm text-slate-700 dark:text-slate-300">Month:</label>
           <select
-            value={startMonth}
+            value={selectedMonth}
             onChange={(e) => {
-              setStartMonth(e.target.value);
-              if (e.target.value > endMonth) setEndMonth(e.target.value);
+              setSelectedMonth(e.target.value);
+              setSelectedReportId(null);
             }}
             className="p-2 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded"
           >
             {monthOptions.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
         </div>
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-slate-700 dark:text-slate-300">To:</label>
-          <select
-            value={endMonth}
-            onChange={(e) => {
-              if (e.target.value < startMonth) return;
-              setEndMonth(e.target.value);
-            }}
-            className="p-2 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded"
-          >
-            {monthOptions.map(m => <option key={m} value={m}>{m}</option>)}
-          </select>
-        </div>
-        
-        <div className="ml-auto flex gap-2">
-          <button onClick={() => exportReport('pdf')} className="px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm">PDF</button>
-          <button onClick={() => exportReport('csv')} className="px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm">CSV</button>
-        </div>
+        {monthArchives.length > 0 && (
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-slate-700 dark:text-slate-300">Report:</label>
+            <select
+              value={selectedReportId || ''}
+              onChange={(e) => setSelectedReportId(e.target.value || null)}
+              className="p-2 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded"
+            >
+              <option value="">Current Data</option>
+              {monthArchives.map(archive => (
+                <option key={archive.id} value={archive.id}>
+                  {archive.name} ({archive.startDate} to {archive.endDate})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
+
+      {/* Report Info */}
+      {displayData.type === 'archive' && (
+        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <h3 className="font-semibold text-blue-800 dark:text-blue-200">{displayData.data.name}</h3>
+          <p className="text-sm text-blue-600 dark:text-blue-300">
+            Date Range: {displayData.data.startDate} to {displayData.data.endDate}
+          </p>
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border-l-4 border-green-500">
           <div className="text-sm text-slate-500">Total Income</div>
-          <div className="text-xl font-bold">{formatRupiah(aggregatedData.totalIncome)}</div>
+          <div className="text-xl font-bold">{formatRupiah(reportData.totalIncome)}</div>
         </div>
         <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border-l-4 border-red-500">
           <div className="text-sm text-slate-500">Total Spending</div>
-          <div className="text-xl font-bold">{formatRupiah(aggregatedData.categories.reduce((a, b) => a + b.total, 0))}</div>
+          <div className="text-xl font-bold">{formatRupiah(reportData.categories.reduce((a, b) => a + b.total, 0))}</div>
         </div>
         <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border-l-4 border-blue-500">
           <div className="text-sm text-slate-500">Net Savings</div>
-          <div className="text-xl font-bold">{formatRupiah(aggregatedData.totalIncome - aggregatedData.categories.reduce((a, b) => a + b.total, 0))}</div>
+          <div className="text-xl font-bold">{formatRupiah(reportData.totalIncome - reportData.categories.reduce((a, b) => a + b.total, 0))}</div>
         </div>
       </div>
 
       {/* Income Details */}
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
         <h3 className="font-semibold mb-4">Income History</h3>
-        {aggregatedData.incomeList.length > 0 ? (
+        {reportData.incomeList.length > 0 ? (
           <div className="overflow-x-auto max-h-60 overflow-y-auto">
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50 dark:bg-slate-700 sticky top-0">
@@ -257,7 +266,7 @@ const ReportsView: React.FC<{
                 </tr>
               </thead>
               <tbody>
-                {aggregatedData.incomeList.map((inc, idx) => (
+                {reportData.incomeList.map((inc, idx) => (
                   <tr key={inc.id || idx} className="border-t border-slate-100 dark:border-slate-700">
                     <td className="py-2 px-3">{inc.date?.split('T')[0]}</td>
                     <td className="py-2 px-3">{inc.description}</td>
@@ -275,34 +284,54 @@ const ReportsView: React.FC<{
       {/* Expense Categories */}
       <div className="space-y-4">
         <h3 className="font-semibold text-lg">Spending by Category</h3>
-        {aggregatedData.categories.length === 0 ? (
+        {reportData.categories.length === 0 ? (
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6 text-center text-slate-500">
             No spending data for this period.
           </div>
         ) : (
-          aggregatedData.categories.map((cat, idx) => (
-            <details key={idx} className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 group">
-              <summary className="cursor-pointer flex items-center justify-between list-none">
-                <div className="flex items-center gap-2">
-                   <span className={`transform transition-transform group-open:rotate-90`}>▶</span>
-                   <span className="font-semibold">{cat.name}</span>
-                </div>
-                <span className="font-bold">{formatRupiah(cat.total)}</span>
-              </summary>
-              <div className="mt-4 pl-6">
-                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                   {selectedMonths.map(month => (
-                     <div key={month} className="p-2 border border-slate-100 dark:border-slate-700 rounded">
-                       <div className="text-xs text-slate-500">{month}</div>
-                       <div className="font-medium">{formatRupiah(cat.monthly[month] || 0)}</div>
-                     </div>
-                   ))}
-                 </div>
-              </div>
-            </details>
+          reportData.categories.map((cat, idx) => (
+            <div key={idx} className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 flex items-center justify-between">
+              <span className="font-semibold">{cat.name}</span>
+              <span className="font-bold">{formatRupiah(cat.total)}</span>
+            </div>
           ))
         )}
       </div>
+
+      {/* Archives List for selected month */}
+      {monthArchives.length > 0 && (
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+          <h3 className="font-semibold mb-4">Archived Reports for {selectedMonth}</h3>
+          <div className="space-y-2">
+            {monthArchives.map(archive => (
+              <div 
+                key={archive.id} 
+                className={`p-3 rounded border cursor-pointer transition-colors ${
+                  selectedReportId === archive.id 
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30' 
+                    : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                }`}
+                onClick={() => setSelectedReportId(archive.id)}
+              >
+                <div className="font-medium">{archive.name}</div>
+                <div className="text-sm text-slate-500">{archive.startDate} to {archive.endDate}</div>
+              </div>
+            ))}
+            <div 
+              key="current" 
+              className={`p-3 rounded border cursor-pointer transition-colors ${
+                !selectedReportId 
+                  ? 'border-green-500 bg-green-50 dark:bg-green-900/30' 
+                  : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+              }`}
+              onClick={() => setSelectedReportId(null)}
+            >
+              <div className="font-medium">Current Data</div>
+              <div className="text-sm text-slate-500">Active data for {selectedMonth}</div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -321,17 +350,21 @@ const AppContent: React.FC = () => {
   const [incomes, setIncomes] = useLocalStorage<Income[]>('incomes', []);
   const [lastActiveMonth, setLastActiveMonth] = useLocalStorage<string>('lastActiveMonth', '');
   const [monthlyArchives, setMonthlyArchives] = useLocalStorage<MonthlyArchive[]>('monthlyArchives', []);
+  const [transferHistory, setTransferHistory] = useLocalStorage<TransferHistory[]>('transferHistory', []);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryWithBudget | null>(null);
   const [viewingCategory, setViewingCategory] = useState<CategoryWithBudget | null>(null);
   const [showNewMonthModal, setShowNewMonthModal] = useState(false);
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
 
   const totalLoggedIncome = useMemo(() => {
-    return incomes.reduce((acc, inc) => acc + (inc.amount || 0), 0);
+    return incomes.reduce((acc, inc) => acc + (Number(inc.amount) || 0), 0);
   }, [incomes]);
 
-  const effectiveIncome = totalLoggedIncome > 0 ? totalLoggedIncome : income;
+  // Jika ada transaksi di Income History, total sidebar & anggaran memakai jumlah tersebut.
+  // Hanya pakai legacy `monthlyIncome` ketika belum ada transaksi sama sekali.
+  const effectiveIncome = incomes.length > 0 ? totalLoggedIncome : income;
 
   // Keep `income` as user-controlled monthly income.
   // If you want to display total balances across sources, compute it separately (do not persist into `income`).
@@ -521,8 +554,17 @@ const AppContent: React.FC = () => {
         return s;
       });
     });
+    // Record transfer history
+    const newTransfer: TransferHistory = {
+      id: `transfer-${Date.now()}`,
+      fromSourceId: fromId,
+      toSourceId: toId,
+      amount,
+      date: new Date().toISOString()
+    };
+    setTransferHistory(prev => [newTransfer, ...prev]);
     addToast({ type: 'success', message: 'Transfer berhasil.' });
-  }, [setSources, addToast]);
+  }, [setSources, addToast, setTransferHistory]);
 
   // Income handlers
   const handleAddIncome = useCallback((incomeItem: Omit<Income, 'id' | 'date'> & { date?: string }) => {
@@ -540,11 +582,13 @@ const AppContent: React.FC = () => {
   }, [setIncomes, setSources, addToast]);
 
   const handleEditIncome = useCallback((updated: Income) => {
-    setIncomes(prev => prev.map(i => i.id === updated.id ? { ...updated } : i));
-    // Adjust source balances by delta and source change
+    let original: Income | undefined;
+    setIncomes(prev => {
+      original = prev.find(i => i.id === updated.id);
+      if (!original) return prev;
+      return prev.map(i => (i.id === updated.id ? { ...updated } : i));
+    });
     setSources(prev => {
-      // find original
-      let original: Income | undefined = incomes.find(i => i.id === updated.id);
       if (!original) return prev;
       const arr = prev.map(s => {
         if (s.id === original!.sourceId && original!.sourceId !== updated.sourceId) {
@@ -563,7 +607,7 @@ const AppContent: React.FC = () => {
       return arr;
     });
     addToast({ type: 'success', message: 'Income updated!' });
-  }, [incomes, setIncomes, setSources, addToast]);
+  }, [setIncomes, setSources, addToast]);
 
   const handleDeleteIncome = useCallback((incomeId: string) => {
     let removed: Income | undefined;
@@ -603,7 +647,15 @@ const AppContent: React.FC = () => {
     if (options.resetExpenses) {
       // Arsipkan bulan sebelumnya agar tetap tersedia di Reports
       if (lastActiveMonth) {
+        const year = parseInt(lastActiveMonth.split('-')[0], 10);
+        const month = parseInt(lastActiveMonth.split('-')[1], 10);
+        const firstDay = new Date(year, month - 1, 1).toISOString().split('T')[0];
+        const lastDay = new Date(year, month, 0).toISOString().split('T')[0];
         const archive: MonthlyArchive = {
+          id: `archive-${Date.now()}`,
+          name: `${lastActiveMonth} Report`,
+          startDate: firstDay,
+          endDate: lastDay,
           month: lastActiveMonth,
           income: effectiveIncome,
           // simpan snapshot lengkap untuk laporan terperinci mingguan
@@ -612,10 +664,7 @@ const AppContent: React.FC = () => {
           sources: sources.map(s => ({ ...s })),
           incomes: incomes.map(i => ({ ...i })),
         };
-        setMonthlyArchives(prev => {
-          const withoutDup = prev.filter(a => a.month !== archive.month);
-          return [...withoutDup, archive];
-        });
+        setMonthlyArchives(prev => [...prev, archive]);
       }
       // Reset data berjalan
       setCategories(prev => prev.map(c => ({ ...c, spent: 0, expenses: [] })));
@@ -627,31 +676,49 @@ const AppContent: React.FC = () => {
     setShowNewMonthModal(false);
   }, [income, effectiveIncome, categories, goals, sources, incomes, lastActiveMonth, setIncome, setCategories, setLastActiveMonth, setMonthlyArchives, addToast]);
 
-  const handleArchiveAndResetCurrentMonth = useCallback(() => {
+  const handleArchiveConfirm = useCallback((options: { name: string; startDate: string; endDate: string; resetExpenses: boolean; newIncome?: number | null }) => {
+    const { name, startDate, endDate, resetExpenses, newIncome } = options;
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    // Arsipkan snapshot bulan berjalan
+    const archiveMonth = startDate.slice(0, 7); // YYYY-MM
+    
+    // Create archive
     const archive: MonthlyArchive = {
-      month: currentMonth,
+      id: `archive-${Date.now()}`,
+      name,
+      startDate,
+      endDate,
+      month: archiveMonth,
       income: effectiveIncome,
       categories: categories.map(c => ({ ...c })),
       goals: goals.map(g => ({ ...g })),
       sources: sources.map(s => ({ ...s })),
       incomes: incomes.map(i => ({ ...i })),
     };
-    setMonthlyArchives(prev => {
-      const withoutDup = prev.filter(a => a.month !== archive.month);
-      return [...withoutDup, archive];
-    });
-    // Reset data bulan berjalan
-    setCategories(prev => prev.map(c => ({ ...c, spent: 0, expenses: [] })));
-    setIncomes([]);
-    setSources([]);
-    // Also reset monthly income value when archiving via Data page
-    setIncome(0);
+    setMonthlyArchives(prev => [...prev, archive]);
+
+    if (typeof newIncome === 'number' && !Number.isNaN(newIncome)) {
+      setIncome(newIncome);
+      addToast({ type: 'success', message: 'Income updated.' });
+    } else if (resetExpenses) {
+      setIncome(0);
+    }
+
+    if (resetExpenses) {
+      // Reset data berjalan
+      setCategories(prev => prev.map(c => ({ ...c, spent: 0, expenses: [] })));
+      setIncomes([]);
+      setSources([]);
+      addToast({ type: 'info', message: 'Expenses reset after archiving.' });
+    }
+
     setLastActiveMonth(currentMonth);
-    addToast({ type: 'info', message: 'Current month archived and expenses reset.' });
-  }, [income, effectiveIncome, categories, goals, sources, incomes, setIncome, setMonthlyArchives, setCategories, setLastActiveMonth, addToast]);
+    setShowArchiveModal(false);
+  }, [effectiveIncome, categories, goals, sources, incomes, setIncome, setCategories, setMonthlyArchives, setLastActiveMonth, addToast]);
+
+  const handleArchiveAndResetCurrentMonth = useCallback(() => {
+    setShowArchiveModal(true);
+  }, []);
 
   const handleNewMonthSkip = useCallback(() => {
     const now = new Date();
@@ -924,6 +991,7 @@ const AppContent: React.FC = () => {
             onTransfer={handleTransferSources}
             totalsBySource={totalsBySource}
             usedCountBySource={usedCountBySource}
+            transferHistory={transferHistory}
           />
         );
       }
@@ -1083,6 +1151,14 @@ const AppContent: React.FC = () => {
           currentIncome={effectiveIncome}
           onConfirm={handleNewMonthConfirm}
           onSkip={handleNewMonthSkip}
+        />
+      )}
+      {/* Archive Modal */}
+      {showArchiveModal && (
+        <ArchiveModal
+          currentIncome={effectiveIncome}
+          onConfirm={handleArchiveConfirm}
+          onCancel={() => setShowArchiveModal(false)}
         />
       )}
     </div>

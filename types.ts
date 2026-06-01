@@ -46,8 +46,20 @@ export interface Goal {
   currentAmount: number;
 }
 
+export interface TransferHistory {
+  id: string;
+  fromSourceId: string;
+  toSourceId: string;
+  amount: number;
+  date: string; // ISO date string
+}
+
 export interface MonthlyArchive {
-  month: string; // YYYY-MM
+  id: string;
+  name: string;
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  month: string; // YYYY-MM (for grouping by month)
   income: number;
   categories: Category[];
   goals: Goal[];
