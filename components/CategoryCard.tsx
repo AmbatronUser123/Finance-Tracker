@@ -1,7 +1,6 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Category } from '../types';
 import ProgressBar from './ProgressBar';
-import { fetchSpendingTip } from '../services/geminiService';
 import { InfoIcon, SparklesIcon, TrashIcon } from './icons';
 
 interface CategoryCardProps {
@@ -26,8 +25,6 @@ const defaultColor = colorMap.slate;
 
 const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearExpenses, onDeleteExpense }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [tip, setTip] = useState<string | null>(null);
-  const [isLoadingTip, setIsLoadingTip] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState<{ categoryId: string; expenseId: string; description: string } | null>(null);
 
   const { border, text, progress: progressColor } = colorMap[category.color] || defaultColor;
@@ -45,25 +42,11 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearEx
     };
   }, [category, income]);
 
-  useEffect(() => {
-    const fetchTipIfNeeded = async () => {
-      if (spentPercentage >= 85 && !tip && !isLoadingTip) {
-        setIsLoadingTip(true);
-        try {
-          const fetchedTip = await fetchSpendingTip(category.name, budget, spent);
-          setTip(fetchedTip);
-        } catch (error) {
-          console.error("Failed to fetch spending tip:", error);
-          setTip("Could not fetch a tip right now. Please try again later.");
-        } finally {
-          setIsLoadingTip(false);
-        }
-      }
-    };
-
-    fetchTipIfNeeded();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spentPercentage, category.name, budget, spent]);
+  // Simple static tip once spending crosses 85% of budget — no external API call.
+  const tip = useMemo(() => {
+    if (spentPercentage < 85) return null;
+    return `You're close to your budget for ${category.name}. Try reviewing recent expenses here to see where you can hold back for the rest of the month.`;
+  }, [spentPercentage, category.name]);
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -105,32 +88,12 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearEx
         </div>
         
         {tip && (
-          <div className={`mt-4 p-3 border-l-4 rounded-r-lg ${
-            tip.includes('API Key is not configured') || tip.includes('Could not fetch a tip')
-              ? 'bg-red-50 border-red-400 dark:bg-red-900/20 dark:border-red-500/60'
-              : 'bg-sky-50 border-sky-300 dark:bg-sky-900/20 dark:border-sky-500/60'
-          }`}>
+          <div className="mt-4 p-3 border-l-4 rounded-r-lg bg-sky-50 border-sky-300 dark:bg-sky-900/20 dark:border-sky-500/60">
               <div className="flex items-start">
-                  <SparklesIcon className={`h-5 w-5 mr-3 mt-0.5 flex-shrink-0 ${
-                    tip.includes('API Key is not configured') || tip.includes('Could not fetch a tip')
-                      ? 'text-red-500'
-                      : 'text-sky-500'
-                  }`} />
+                  <SparklesIcon className="h-5 w-5 mr-3 mt-0.5 flex-shrink-0 text-sky-500" />
                   <div>
-                    <p className={`text-sm font-semibold ${
-                      tip.includes('API Key is not configured') || tip.includes('Could not fetch a tip')
-                        ? 'text-red-800 dark:text-red-200'
-                        : 'text-sky-800 dark:text-sky-200'
-                    }`}>
-                      {tip.includes('API Key is not configured') || tip.includes('Could not fetch a tip') ? 'AI Error' : 'Spending Tip'}
-                    </p>
-                    <p className={`text-sm ${
-                      tip.includes('API Key is not configured') || tip.includes('Could not fetch a tip')
-                        ? 'text-red-700 dark:text-red-200/90'
-                        : 'text-sky-700 dark:text-sky-200/90'
-                    }`}>
-                      {isLoadingTip ? 'Getting a fresh tip for you...' : tip}
-                    </p>
+                    <p className="text-sm font-semibold text-sky-800 dark:text-sky-200">Spending Tip</p>
+                    <p className="text-sm text-sky-700 dark:text-sky-200/90">{tip}</p>
                   </div>
               </div>
           </div>
