@@ -1,6 +1,6 @@
 import React from 'react';
 import { FiX } from 'react-icons/fi';
-import { CategoryWithBudget } from '../App';
+import { CategoryWithBudget } from '../types';
 
 interface CategoryDetailModalProps {
   category: CategoryWithBudget | null;

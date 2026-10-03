@@ -5,7 +5,7 @@ import { XMarkIcon, CategoryIcon } from './icons';
 
 interface CategoryEditorProps {
     onClose: () => void;
-    onSave: (categoryData: Omit<Category, 'id' | 'expenses'> & { id?: string }) => void;
+    onSave: (categoryData: Pick<Category, 'name' | 'allocation' | 'color' | 'icon'> & { id?: string }) => void;
     categoryToEdit: Category | null;
 }
 

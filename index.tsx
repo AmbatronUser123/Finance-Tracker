@@ -11,7 +11,7 @@ import './global.css';
 
 // Component to handle PWA installation prompt
 const PWAInstallPrompt = () => {
-  const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
+  const [, setDeferredPrompt] = useState<Event | null>(null);
   const { addToast } = useToast();
 
   useEffect(() => {

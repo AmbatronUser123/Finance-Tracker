@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { CategoryWithBudget } from '../App';
+import { CategoryWithBudget } from '../types';
 import { ChartPieIcon, PlusIcon, PencilIcon, TrashIcon } from './icons';
 import { TAILWIND_COLORS } from '../constants';
 // Toast notifications are handled by the parent component

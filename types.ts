@@ -54,3 +54,8 @@ export interface MonthlyArchive {
   sources: TransactionSource[];
   incomes?: Income[];
 }
+
+export interface CategoryWithBudget extends Category {
+  planned: number;
+  spent: number;
+}
