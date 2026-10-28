@@ -95,9 +95,9 @@ const DataManager: React.FC<DataManagerProps> = ({ onImport, onExport, onResetCu
               onClick={onResetCurrentMonth}
               disabled={!onResetCurrentMonth}
               className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-base font-semibold text-white bg-amber-600 rounded-lg shadow-sm hover:bg-amber-700 disabled:bg-slate-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
-              title="Archive current month and reset expenses"
+              title="Archive the current pay cycle and start the next one early"
             >
-              Reset Current Month (Archive First)
+              Start Next Pay Cycle Now (Archive First)
             </button>
           </div>
         </div>

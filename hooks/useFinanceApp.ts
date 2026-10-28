@@ -16,6 +16,16 @@ import { INITIAL_CATEGORIES, INITIAL_SOURCES } from '../constants';
 import { useLocalStorage } from './useLocalStorage';
 import { useToast } from '../contexts/ToastContext';
 import { useDarkMode } from './useDarkMode';
+import { formatRupiah } from '../src/utils/currency';
+import {
+  todayKey,
+  getCycleStart,
+  getNextCycleStart,
+  getCycleEnd,
+  getDayBefore,
+  formatCycleRange,
+  ordinal,
+} from '../src/utils/payCycle';
 
 // All app-wide state and the handlers that mutate it, kept out of App.tsx
 // so the component tree stays focused on rendering.
@@ -31,19 +41,24 @@ export function useFinanceApp() {
   const [goals, setGoals] = useLocalStorage<Goal[]>('goals', []);
   const [sources, setSources] = useLocalStorage<TransactionSource[]>('sources', INITIAL_SOURCES);
   const [incomes, setIncomes] = useLocalStorage<Income[]>('incomes', []);
-  const [lastActiveMonth, setLastActiveMonth] = useLocalStorage<string>('lastActiveMonth', '');
+  // Pay cycle: payday (day of month, 0 = not set yet), the date the current cycle started,
+  // and the leftover money carried over from the previous cycle.
+  const [paydayDay, setPaydayDay] = useLocalStorage<number>('paydayDay', 0);
+  const [cycleStart, setCycleStart] = useLocalStorage<string>('cycleStart', '');
+  const [carryOver, setCarryOver] = useLocalStorage<number>('carryOver', 0);
   const [monthlyArchives, setMonthlyArchives] = useLocalStorage<MonthlyArchive[]>('monthlyArchives', []);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryWithBudget | null>(null);
   const [viewingCategory, setViewingCategory] = useState<CategoryWithBudget | null>(null);
-  const [showNewMonthModal, setShowNewMonthModal] = useState(false);
 
   const totalLoggedIncome = useMemo(() => {
     return incomes.reduce((acc, inc) => acc + (inc.amount || 0), 0);
   }, [incomes]);
 
-  const effectiveIncome = totalLoggedIncome > 0 ? totalLoggedIncome : income;
+  // Everything received in this cycle (salary, side jobs, ...) adds up; leftover from the last cycle is on top.
+  const cycleIncome = totalLoggedIncome > 0 ? totalLoggedIncome : income;
+  const effectiveIncome = cycleIncome + carryOver;
 
   const totalSourceBalance = useMemo(() => {
     return sources.reduce((acc, s) => acc + (s.balance || 0), 0);
@@ -273,81 +288,99 @@ export function useFinanceApp() {
     }
   }, [setIncomes, setSources, addToast]);
 
-  // Detect new month and prompt user
-  React.useEffect(() => {
-    const now = new Date();
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    if (!lastActiveMonth) {
-      setLastActiveMonth(currentMonth);
-      return;
-    }
-    if (lastActiveMonth !== currentMonth) {
-      setShowNewMonthModal(true);
-    }
-  }, [lastActiveMonth, setLastActiveMonth]);
+  // ---- Pay cycle -----------------------------------------------------------
+  // A cycle runs from payday until the day before the next payday. When a new cycle
+  // starts, the old one is archived (it stays available in Reports) and whatever money
+  // is left over is carried into the new cycle. Sources and goals are left untouched.
 
-  const handleNewMonthConfirm = useCallback((options: { resetExpenses: boolean; newIncome?: number | null }) => {
-    const now = new Date();
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    if (typeof options.newIncome === 'number' && !Number.isNaN(options.newIncome)) {
-      setIncome(options.newIncome);
-      addToast({ type: 'success', message: 'Income updated for the new month.' });
-    } else if (options.resetExpenses) {
-      setIncome(0);
-    }
-    if (options.resetExpenses) {
-      if (lastActiveMonth) {
-        const archive: MonthlyArchive = {
-          month: lastActiveMonth,
-          income: effectiveIncome,
-          categories: categories.map(c => ({ ...c })),
-          goals: goals.map(g => ({ ...g })),
-          sources: sources.map(s => ({ ...s })),
-          incomes: incomes.map(i => ({ ...i })),
-        };
-        setMonthlyArchives(prev => {
-          const withoutDup = prev.filter(a => a.month !== archive.month);
-          return [...withoutDup, archive];
-        });
-      }
-      setCategories(prev => prev.map(c => ({ ...c, spent: 0, expenses: [] })));
-      setIncomes([]);
-      setSources([]);
-      addToast({ type: 'info', message: 'Expenses reset for the new month.' });
-    }
-    setLastActiveMonth(currentMonth);
-    setShowNewMonthModal(false);
-  }, [income, effectiveIncome, categories, goals, sources, incomes, lastActiveMonth, setIncome, setCategories, setLastActiveMonth, setMonthlyArchives, addToast]);
+  const currentCycle = useMemo(() => {
+    if (!paydayDay || !cycleStart) return null;
+    return { start: cycleStart, end: getCycleEnd(cycleStart, paydayDay) };
+  }, [paydayDay, cycleStart]);
 
-  const handleArchiveAndResetCurrentMonth = useCallback(() => {
-    const now = new Date();
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const archiveCycleAndStartNew = useCallback((newStart: string) => {
+    if (!cycleStart) return;
+    const leftover = effectiveIncome - totalExpenses;
     const archive: MonthlyArchive = {
-      month: currentMonth,
+      month: cycleStart, // unique key for this cycle (its start date)
+      cycleStart,
+      cycleEnd: getDayBefore(newStart),
+      carriedIn: carryOver,
       income: effectiveIncome,
       categories: categories.map(c => ({ ...c })),
       goals: goals.map(g => ({ ...g })),
       sources: sources.map(s => ({ ...s })),
       incomes: incomes.map(i => ({ ...i })),
     };
-    setMonthlyArchives(prev => {
-      const withoutDup = prev.filter(a => a.month !== archive.month);
-      return [...withoutDup, archive];
-    });
+    setMonthlyArchives(prev => [...prev.filter(a => a.month !== archive.month), archive]);
     setCategories(prev => prev.map(c => ({ ...c, spent: 0, expenses: [] })));
     setIncomes([]);
-    setSources([]);
     setIncome(0);
-    setLastActiveMonth(currentMonth);
-    addToast({ type: 'info', message: 'Current month archived and expenses reset.' });
-  }, [income, effectiveIncome, categories, goals, sources, incomes, setIncome, setMonthlyArchives, setCategories, setLastActiveMonth, addToast]);
+    setCarryOver(leftover);
+    setCycleStart(newStart);
+    const range = paydayDay ? formatCycleRange(newStart, getCycleEnd(newStart, paydayDay)) : '';
+    addToast({
+      type: 'info',
+      message: leftover === 0
+        ? `New pay cycle started (${range}).`
+        : `New pay cycle started (${range}). ${formatRupiah(Math.abs(leftover))} ${leftover > 0 ? 'carried over' : 'overspent was deducted'}.`,
+    });
+  }, [cycleStart, effectiveIncome, totalExpenses, carryOver, categories, goals, sources, incomes, paydayDay,
+      setMonthlyArchives, setCategories, setIncomes, setIncome, setCarryOver, setCycleStart, addToast]);
 
-  const handleNewMonthSkip = useCallback(() => {
-    const now = new Date();
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    setLastActiveMonth(currentMonth);
-    setShowNewMonthModal(false);
-  }, [setLastActiveMonth]);
+  // Remembers the last cycle we rolled into, so the same rollover can never run twice.
+  const lastRolledTo = React.useRef('');
+
+  // Check on load, and again whenever the app regains focus (e.g. you open it the morning after payday).
+  React.useEffect(() => {
+    if (!paydayDay) return;
+    const check = () => {
+      const current = getCycleStart(todayKey(), paydayDay);
+      if (!cycleStart) {
+        setCycleStart(current);
+        return;
+      }
+      if (cycleStart < current && lastRolledTo.current !== current) {
+        lastRolledTo.current = current;
+        archiveCycleAndStartNew(current);
+      }
+    };
+    check();
+    window.addEventListener('focus', check);
+    return () => window.removeEventListener('focus', check);
+  }, [paydayDay, cycleStart, archiveCycleAndStartNew, setCycleStart]);
+
+  const handleSetPayday = useCallback((day: number) => {
+    const d = Math.round(day);
+    if (!Number.isFinite(d) || d < 1 || d > 31) {
+      addToast({ type: 'error', message: 'Enter a day between 1 and 31.' });
+      return;
+    }
+    const start = getCycleStart(todayKey(), d);
+    setPaydayDay(d);
+    setCycleStart(start);
+    addToast({ type: 'success', message: `Payday set to the ${ordinal(d)}. Current cycle: ${formatCycleRange(start, getCycleEnd(start, d))}.` });
+  }, [setPaydayDay, setCycleStart, addToast]);
+
+  // For when your salary arrives before the usual payday.
+  const handleStartNextCycleNow = useCallback(() => {
+    if (!paydayDay || !cycleStart) {
+      addToast({ type: 'error', message: 'Set your payday first.' });
+      return;
+    }
+    const today = todayKey();
+    const next = getNextCycleStart(cycleStart, paydayDay);
+    const target = next > today ? next : getCycleStart(today, paydayDay);
+    if (target <= cycleStart) {
+      addToast({ type: 'info', message: 'You are already in the latest pay cycle.' });
+      return;
+    }
+    const ok = window.confirm('Start the next pay cycle now?\n\nThe current cycle will be archived and any leftover money will carry over.');
+    if (!ok) return;
+    lastRolledTo.current = target;
+    archiveCycleAndStartNew(target);
+  }, [paydayDay, cycleStart, archiveCycleAndStartNew, addToast]);
+
 
   const handleSaveCategory = useCallback((categoryData: Pick<Category, 'name' | 'allocation' | 'color' | 'icon'> & { id?: string }) => {
     if (categoryData.id) {
@@ -472,7 +505,7 @@ export function useFinanceApp() {
   };
 
   const handleExportData = (format: 'json' | 'pdf' | 'csv') => {
-    const data = { categories, goals, income: effectiveIncome, sources, incomes, monthlyArchives };
+    const data = { categories, goals, income: cycleIncome, sources, incomes, monthlyArchives, payCycle: { paydayDay, cycleStart, carryOver } };
 
     if (format === 'json') {
       const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
@@ -538,6 +571,13 @@ export function useFinanceApp() {
       setMonthlyArchives(importedData.monthlyArchives);
     }
 
+    const pc = importedData.payCycle;
+    setCarryOver(pc && typeof pc.carryOver === 'number' ? pc.carryOver : 0);
+    if (pc && typeof pc.paydayDay === 'number' && pc.paydayDay >= 1 && pc.paydayDay <= 31) {
+      setPaydayDay(pc.paydayDay);
+      setCycleStart(typeof pc.cycleStart === 'string' ? pc.cycleStart : '');
+    }
+
     if (importedData.incomes && Array.isArray(importedData.incomes)) {
       setIncomes(importedData.incomes);
     }
@@ -577,7 +617,7 @@ export function useFinanceApp() {
     mobileMenuOpen, setMobileMenuOpen,
     isCategoryModalOpen, setCategoryModalOpen,
     editingCategory, viewingCategory, setViewingCategory,
-    showNewMonthModal,
+    paydayDay, currentCycle, carryOver, cycleIncome,
     effectiveIncome, totalExpenses, totalSavings, totalSourceBalance,
     // handlers
     handleNavigation,
@@ -585,7 +625,7 @@ export function useFinanceApp() {
     handleAddSource, handleEditSource, handleDeleteSource, handleTransferSources,
     handleAddIncome, handleEditIncome, handleDeleteIncome,
     handleAddGoal, handleUpdateGoal, handleDeleteGoal,
-    handleNewMonthConfirm, handleArchiveAndResetCurrentMonth, handleNewMonthSkip,
+    handleSetPayday, handleStartNextCycleNow,
     handleSaveCategory, handleDeleteCategory, handleOpenModal,
     handleAllocationChange, handleAutoAdjustAllocation, handleViewCategory,
     handleExportData, handleImportData,

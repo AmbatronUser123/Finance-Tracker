@@ -9,7 +9,7 @@ export default defineConfig(() => {
         react(),
         VitePWA({
           registerType: 'autoUpdate',
-          includeAssets: ['pwa-192x192.png', 'pwa-512x512.png', 'manifest.json', 'sw.js'],
+          includeAssets: ['favicon.svg', 'pwa-192x192.png', 'pwa-512x512.png', 'manifest.json', 'sw.js'],
           manifest: {
             name: 'Finance Tracker',
             short_name: 'Finance',

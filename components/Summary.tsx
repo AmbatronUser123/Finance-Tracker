@@ -72,7 +72,7 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
   return (
     <>
       <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-slate-900/30">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Monthly Overview</h2>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Cycle Overview</h2>
         <div className="space-y-3">
           <div className="flex justify-between items-baseline">
             <span className="text-slate-600 dark:text-slate-300">Income</span>

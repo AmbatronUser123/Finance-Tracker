@@ -45,7 +45,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearEx
   // Simple static tip once spending crosses 85% of budget — no external API call.
   const tip = useMemo(() => {
     if (spentPercentage < 85) return null;
-    return `You're close to your budget for ${category.name}. Try reviewing recent expenses here to see where you can hold back for the rest of the month.`;
+    return `You're close to your budget for ${category.name}. Try reviewing recent expenses here to see where you can hold back for the rest of the pay cycle.`;
   }, [spentPercentage, category.name]);
 
   const formatCurrency = (value: number) => {

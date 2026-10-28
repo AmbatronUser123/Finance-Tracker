@@ -1,26 +1,26 @@
 import React from 'react';
+import { FiX, FiMenu } from 'react-icons/fi';
 import {
-  FiHome,
-  FiPieChart,
-  FiDollarSign,
-  FiTag,
-  FiTarget,
-  FiX,
-  FiMenu,
-  FiDatabase,
-  FiCreditCard
-} from 'react-icons/fi';
+  LuLayoutDashboard,
+  LuReceiptText,
+  LuBanknote,
+  LuWallet,
+  LuTags,
+  LuTarget,
+  LuChartPie,
+  LuDatabase,
+} from 'react-icons/lu';
 import { formatRupiah } from '../src/utils/currency';
 
 export const navItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: <FiHome size={20} /> },
-  { id: 'expenses', label: 'Expenses', icon: <FiDollarSign size={20} /> },
-  { id: 'income', label: 'Income', icon: <FiDollarSign size={20} /> },
-  { id: 'sources', label: 'Sources', icon: <FiCreditCard size={20} /> },
-  { id: 'categories', label: 'Categories', icon: <FiTag size={20} /> },
-  { id: 'goals', label: 'Goals', icon: <FiTarget size={20} /> },
-  { id: 'reports', label: 'Reports', icon: <FiPieChart size={20} /> },
-  { id: 'data', label: 'Data', icon: <FiDatabase size={20} /> },
+  { id: 'dashboard', label: 'Dashboard', icon: <LuLayoutDashboard size={20} /> },
+  { id: 'expenses', label: 'Expenses', icon: <LuReceiptText size={20} /> },
+  { id: 'income', label: 'Income', icon: <LuBanknote size={20} /> },
+  { id: 'sources', label: 'Sources', icon: <LuWallet size={20} /> },
+  { id: 'categories', label: 'Categories', icon: <LuTags size={20} /> },
+  { id: 'goals', label: 'Goals', icon: <LuTarget size={20} /> },
+  { id: 'reports', label: 'Reports', icon: <LuChartPie size={20} /> },
+  { id: 'data', label: 'Data', icon: <LuDatabase size={20} /> },
 ];
 
 interface SidebarProps {

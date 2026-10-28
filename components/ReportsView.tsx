@@ -4,94 +4,75 @@ import 'jspdf-autotable';
 import Papa from 'papaparse';
 import { CategoryWithBudget, MonthlyArchive, Income } from '../types';
 import { formatRupiah } from '../src/utils/currency';
+import { formatCycleRange } from '../src/utils/payCycle';
 
-const getCurrentMonth = () => {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-};
+// A report "period" is one finished pay cycle (or an old calendar-month archive), plus the current cycle.
+interface Period {
+  key: string;     // sorts from oldest to newest
+  label: string;   // what you see in the dropdowns and exports
+  archive?: MonthlyArchive;
+}
 
 // Extracted Reports view into its own component to use Hooks safely
 const ReportsView: React.FC<{
   categories: CategoryWithBudget[];
   monthlyArchives: MonthlyArchive[];
   incomes: Income[];
-}> = ({ categories, monthlyArchives, incomes }) => {
-  const currentAllExpenses = categories.flatMap(c => c.expenses.map(e => ({ ...e, categoryName: c.name })));
-  const archiveMonths = monthlyArchives.map(a => a.month);
-  const uniqueMonths = Array.from(new Set([
-    ...currentAllExpenses.map(e => e.date?.slice(0, 7)).filter(Boolean) as string[],
-    ...archiveMonths,
-  ])).sort();
-  
-  const currentMonth = getCurrentMonth();
-  
-  // Default to current month or last available
-  const initialMonth = uniqueMonths.includes(currentMonth) ? currentMonth : (uniqueMonths[uniqueMonths.length - 1] || currentMonth);
-  
-  const [startMonth, setStartMonth] = React.useState(initialMonth);
-  const [endMonth, setEndMonth] = React.useState(initialMonth);
+  currentCycle: { start: string; end: string } | null;
+}> = ({ categories, monthlyArchives, incomes, currentCycle }) => {
+  const periods: Period[] = React.useMemo(() => {
+    const archived: Period[] = monthlyArchives.map(a => ({
+      key: a.month,
+      label: a.cycleStart && a.cycleEnd ? formatCycleRange(a.cycleStart, a.cycleEnd, true) : a.month,
+      archive: a,
+    }));
+    const current: Period = {
+      key: currentCycle ? currentCycle.start : '9999-current',
+      label: currentCycle ? `${formatCycleRange(currentCycle.start, currentCycle.end, true)} (current)` : 'Current period',
+    };
+    return [...archived.filter(p => p.key !== current.key), current].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+  }, [monthlyArchives, currentCycle]);
 
-  // Ensure uniqueMonths is populated for dropdowns
-  const monthOptions = uniqueMonths.length ? uniqueMonths : [currentMonth];
+  // Start on the current cycle
+  const lastKey = periods[periods.length - 1].key;
+  const [startKey, setStartKey] = React.useState(lastKey);
+  const [endKey, setEndKey] = React.useState(lastKey);
 
-  // Helper to get months in range
-  const getMonthsInRange = (start: string, end: string) => {
-    if (start > end) return [start];
-    return monthOptions.filter(m => m >= start && m <= end);
-  };
-
-  const selectedMonths = getMonthsInRange(startMonth, endMonth);
+  const selectedPeriods = periods.filter(p => p.key >= startKey && p.key <= endKey);
+  const labelOf = (key: string) => periods.find(p => p.key === key)?.label ?? key;
 
   // Aggregate Data
   const aggregatedData = React.useMemo(() => {
     let totalIncome = 0;
     const incomeList: Income[] = [];
-    const categoryTotals: Record<string, { name: string; total: number; monthly: Record<string, number> }> = {};
+    const categoryTotals: Record<string, { name: string; total: number; byPeriod: Record<string, number> }> = {};
 
-    selectedMonths.forEach(month => {
-      // Determine source of data for this month
-      let monthIncomes: Income[] = [];
-      let monthCategories: CategoryWithBudget[] = [];
+    selectedPeriods.forEach(period => {
+      const archive = period.archive;
+      const isOldMonthlyArchive = !!archive && !archive.cycleStart;
+      const periodIncomes: Income[] = archive ? (archive.incomes || []) : incomes;
+      const periodCategories = (archive ? archive.categories : categories) as CategoryWithBudget[];
 
-      // Check archive first
-      const archive = monthlyArchives.find(a => a.month === month);
-      if (archive) {
-        monthIncomes = archive.incomes || [];
-        // If income is just a number in archive and no list, we might miss details. 
-        // But older archives might only have 'income' number.
-        // If incomes array is empty but income number > 0, we can't show details but can add to total.
-        if (monthIncomes.length === 0 && archive.income > 0) {
-           totalIncome += archive.income;
-        }
-        monthCategories = archive.categories as CategoryWithBudget[];
-      } else {
-        // It's the current/active data (assuming it matches the month)
-        // We need to filter current data by month
-        monthIncomes = incomes.filter(i => i.date?.startsWith(month));
-        monthCategories = categories; // We'll filter expenses inside
+      // Very old archives may only have a total income number and no list of incomes.
+      if (isOldMonthlyArchive && archive && periodIncomes.length === 0 && archive.income > 0) {
+        totalIncome += archive.income;
       }
-
-      // Add incomes
-      monthIncomes.forEach(i => {
+      periodIncomes.forEach(i => {
         incomeList.push(i);
         totalIncome += (i.amount || 0);
       });
 
-      // Process Categories
-      monthCategories.forEach(cat => {
-        const catId = (cat as any).id; // Archive categories might not match current IDs exactly if deleted, but name should be consistent? 
-        // Better to group by Name if IDs might change or be re-generated, but ID is safer if persistent.
-        // Let's use ID but fallback to name grouping if needed. For now, ID.
-        
-        if (!categoryTotals[catId]) {
-          categoryTotals[catId] = { name: (cat as any).name, total: 0, monthly: {} };
+      periodCategories.forEach(cat => {
+        if (!categoryTotals[cat.id]) {
+          categoryTotals[cat.id] = { name: cat.name, total: 0, byPeriod: {} };
         }
+        // Old monthly archives could hold stray dates, so they are still filtered by month.
+        // A pay-cycle archive (and the current cycle) already holds exactly one cycle.
+        const periodExpenses = isOldMonthlyArchive ? cat.expenses.filter(e => e.date?.startsWith(period.key)) : cat.expenses;
+        const periodSum = periodExpenses.reduce((sum, e) => sum + e.amount, 0);
 
-        const monthExpenses = cat.expenses.filter(e => e.date?.startsWith(month));
-        const monthSum = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
-
-        categoryTotals[catId].total += monthSum;
-        categoryTotals[catId].monthly[month] = (categoryTotals[catId].monthly[month] || 0) + monthSum;
+        categoryTotals[cat.id].total += periodSum;
+        categoryTotals[cat.id].byPeriod[period.key] = (categoryTotals[cat.id].byPeriod[period.key] || 0) + periodSum;
       });
     });
 
@@ -100,31 +81,31 @@ const ReportsView: React.FC<{
       incomeList: incomeList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
       categories: Object.values(categoryTotals).filter(c => c.total > 0).sort((a, b) => b.total - a.total)
     };
-  }, [selectedMonths, monthlyArchives, categories, incomes]);
+  }, [selectedPeriods, categories, incomes]);
 
   const exportReport = (format: 'pdf' | 'csv') => {
     if (format === 'pdf') {
       const doc = new jsPDF();
-      doc.text(`Finance Report (${startMonth} to ${endMonth})`, 20, 10);
+      doc.text(`Finance Report (${labelOf(startKey)} to ${labelOf(endKey)})`, 20, 10);
       
       // Income
       doc.text(`Total Income: ${formatRupiah(aggregatedData.totalIncome)}`, 20, 20);
       
       // Spending
-      const head = [['Category', 'Total', ...selectedMonths]];
+      const head = [['Category', 'Total', ...selectedPeriods.map(p => p.label)]];
       const body = aggregatedData.categories.map(c => [
         c.name,
         formatRupiah(c.total),
-        ...selectedMonths.map(m => formatRupiah(c.monthly[m] || 0))
+        ...selectedPeriods.map(p => formatRupiah(c.byPeriod[p.key] || 0))
       ]);
       
       (doc as any).autoTable({ head, body, startY: 30 });
-      doc.save(`report-${startMonth}-${endMonth}.pdf`);
+      doc.save('finance-report.pdf');
     } else {
-      const header = ['Category', 'Total', ...selectedMonths];
+      const header = ['Category', 'Total', ...selectedPeriods.map(p => p.label)];
       const data = aggregatedData.categories.map(c => {
         const row: any = { Category: c.name, Total: c.total };
-        selectedMonths.forEach(m => row[m] = c.monthly[m] || 0);
+        selectedPeriods.forEach(p => row[p.label] = c.byPeriod[p.key] || 0);
         return row;
       });
       const csv = Papa.unparse({ fields: header, data: data.map(d => header.map(h => d[h])) });
@@ -132,7 +113,7 @@ const ReportsView: React.FC<{
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
-      link.setAttribute('download', `report-${startMonth}-${endMonth}.csv`);
+      link.setAttribute('download', 'finance-report.csv');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -148,27 +129,27 @@ const ReportsView: React.FC<{
         <div className="flex items-center gap-2">
           <label className="text-sm text-slate-700 dark:text-slate-300">From:</label>
           <select
-            value={startMonth}
+            value={startKey}
             onChange={(e) => {
-              setStartMonth(e.target.value);
-              if (e.target.value > endMonth) setEndMonth(e.target.value);
+              setStartKey(e.target.value);
+              if (e.target.value > endKey) setEndKey(e.target.value);
             }}
             className="p-2 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded"
           >
-            {monthOptions.map(m => <option key={m} value={m}>{m}</option>)}
+            {periods.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
           </select>
         </div>
         <div className="flex items-center gap-2">
           <label className="text-sm text-slate-700 dark:text-slate-300">To:</label>
           <select
-            value={endMonth}
+            value={endKey}
             onChange={(e) => {
-              if (e.target.value < startMonth) return;
-              setEndMonth(e.target.value);
+              if (e.target.value < startKey) return;
+              setEndKey(e.target.value);
             }}
             className="p-2 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded"
           >
-            {monthOptions.map(m => <option key={m} value={m}>{m}</option>)}
+            {periods.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
           </select>
         </div>
         
@@ -242,10 +223,10 @@ const ReportsView: React.FC<{
               </summary>
               <div className="mt-4 pl-6">
                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                   {selectedMonths.map(month => (
-                     <div key={month} className="p-2 border border-slate-100 dark:border-slate-700 rounded">
-                       <div className="text-xs text-slate-500">{month}</div>
-                       <div className="font-medium">{formatRupiah(cat.monthly[month] || 0)}</div>
+                   {selectedPeriods.map(period => (
+                     <div key={period.key} className="p-2 border border-slate-100 dark:border-slate-700 rounded">
+                       <div className="text-xs text-slate-500">{period.label}</div>
+                       <div className="font-medium">{formatRupiah(cat.byPeriod[period.key] || 0)}</div>
                      </div>
                    ))}
                  </div>

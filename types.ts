@@ -47,12 +47,15 @@ export interface Goal {
 }
 
 export interface MonthlyArchive {
-  month: string; // YYYY-MM
+  month: string;
+  cycleStart?: string; // Tambahin ini
+  cycleEnd?: string;   // Tambahin ini juga
+  carriedIn: number;
   income: number;
-  categories: Category[];
+  categories: CategoryWithBudget[];
   goals: Goal[];
   sources: TransactionSource[];
-  incomes?: Income[];
+  incomes: Income[];
 }
 
 export interface CategoryWithBudget extends Category {

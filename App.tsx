@@ -10,7 +10,7 @@ import CategoryDetailModal from './components/CategoryDetailModal';
 import SourceManager from './components/SourceManager';
 import ExpenseHistory from './components/ExpenseHistory';
 import { SunIcon, MoonIcon } from './components/icons';
-import NewMonthModal from './components/NewMonthModal';
+import PayCycleCard from './components/PayCycleCard';
 import IncomeInput from './components/IncomeInput';
 import IncomeHistory from './components/IncomeHistory';
 import ReportsView from './components/ReportsView';
@@ -24,14 +24,23 @@ const AppContent: React.FC = () => {
     switch (app.currentView) {
       case 'dashboard':
         return (
-          <Dashboard
-            income={app.effectiveIncome}
-            totalExpenses={app.totalExpenses}
-            totalSavings={app.totalSavings}
-            categories={app.categories}
-            goals={app.goals}
-            sources={app.sources}
-          />
+          <div className="space-y-6">
+            <PayCycleCard
+              paydayDay={app.paydayDay}
+              currentCycle={app.currentCycle}
+              cycleIncome={app.cycleIncome}
+              carryOver={app.carryOver}
+              onSetPayday={app.handleSetPayday}
+            />
+            <Dashboard
+              income={app.effectiveIncome}
+              totalExpenses={app.totalExpenses}
+              totalSavings={app.totalSavings}
+              categories={app.categories}
+              goals={app.goals}
+              sources={app.sources}
+            />
+          </div>
         );
       case 'expenses':
         return (
@@ -105,11 +114,11 @@ const AppContent: React.FC = () => {
           <DataManager
             onImport={app.handleImportData}
             onExport={app.handleExportData}
-            onResetCurrentMonth={app.handleArchiveAndResetCurrentMonth}
+            onResetCurrentMonth={app.handleStartNextCycleNow}
           />
         );
       case 'reports': {
-        return <ReportsView categories={app.categories} monthlyArchives={app.monthlyArchives} incomes={app.incomes} />;
+        return <ReportsView categories={app.categories} monthlyArchives={app.monthlyArchives} incomes={app.incomes} currentCycle={app.currentCycle} />;
       }
       default:
         return (
@@ -178,13 +187,6 @@ const AppContent: React.FC = () => {
         onClose={() => app.setViewingCategory(null)}
       />
 
-      {app.showNewMonthModal && (
-        <NewMonthModal
-          currentIncome={app.effectiveIncome}
-          onConfirm={app.handleNewMonthConfirm}
-          onSkip={app.handleNewMonthSkip}
-        />
-      )}
     </div>
   );
 };

@@ -21,16 +21,16 @@ export const TAILWIND_COLORS: { [key: string]: string } = {
 };
 
 
-export const CATEGORY_ICONS = ['briefcase', 'receipt', 'heart', 'shopping-bag', 'home', 'bolt', 'film', 'gift', 'plane', 'currency-dollar', 'users', 'banknotes', 'wrench', 'musical-note', 'academic-cap'];
+export const CATEGORY_ICONS = ['food', 'coffee', 'car', 'plane', 'home', 'bolt', 'phone', 'shopping-bag', 'heart', 'health', 'fitness', 'users', 'pet', 'film', 'musical-note', 'book', 'academic-cap', 'gift', 'receipt', 'briefcase', 'banknotes', 'currency-dollar', 'savings', 'wrench'];
 
 export const INITIAL_CATEGORIES: Category[] = [
   {
     id: 'cat-1', name: 'Transportation', allocation: 3, expenses: [],
-    color: 'indigo', icon: 'plane', spent: 0, planned: 0, budget: 0
+    color: 'indigo', icon: 'car', spent: 0, planned: 0, budget: 0
   },
   {
     id: 'cat-2', name: 'Phone/Internet', allocation: 1, expenses: [],
-    color: 'sky', icon: 'receipt', spent: 0, planned: 0, budget: 0
+    color: 'sky', icon: 'phone', spent: 0, planned: 0, budget: 0
   },
   {
     id: 'cat-3', name: 'Personal Care', allocation: 1, expenses: [],
@@ -38,7 +38,7 @@ export const INITIAL_CATEGORIES: Category[] = [
   },
   {
     id: 'cat-4', name: 'Medical', allocation: 1, expenses: [],
-    color: 'rose', icon: 'bolt', spent: 0, planned: 0, budget: 0
+    color: 'rose', icon: 'health', spent: 0, planned: 0, budget: 0
   },
   {
     id: 'cat-5', name: 'Small Purchases', allocation: 1, expenses: [],
@@ -46,11 +46,11 @@ export const INITIAL_CATEGORIES: Category[] = [
   },
   {
     id: 'cat-6', name: 'Emergency Fund', allocation: 1, expenses: [],
-    color: 'slate', icon: 'briefcase', spent: 0, planned: 0, budget: 0
+    color: 'slate', icon: 'savings', spent: 0, planned: 0, budget: 0
   },
   {
     id: 'cat-7', name: 'Food & Drinks', allocation: 10, expenses: [],
-    color: 'lime', icon: 'gift', spent: 0, planned: 0, budget: 0
+    color: 'lime', icon: 'food', spent: 0, planned: 0, budget: 0
   },
   {
     id: 'cat-8', name: 'Entertainment/Leisure', allocation: 5, expenses: [],
