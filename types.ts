@@ -62,3 +62,13 @@ export interface CategoryWithBudget extends Category {
   planned: number;
   spent: number;
 }
+
+export interface RecurringRule {
+  id: string;
+  name: string;
+  amount: number;
+  categoryId: string;
+  type: 'expense' | 'income';
+  dayOfCycle: number; // Misal: hari ke-2 setelah tanggal gajian mulai
+  lastGeneratedMonth?: string; // Format: "YYYY-MM" buat ngehindari double entry
+}

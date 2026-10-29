@@ -11,6 +11,8 @@ import SourceManager from './components/SourceManager';
 import ExpenseHistory from './components/ExpenseHistory';
 import { SunIcon, MoonIcon } from './components/icons';
 import PayCycleCard from './components/PayCycleCard';
+import Onboarding from './components/Onboarding';
+import { FiHelpCircle } from 'react-icons/fi';
 import IncomeInput from './components/IncomeInput';
 import IncomeHistory from './components/IncomeHistory';
 import ReportsView from './components/ReportsView';
@@ -158,6 +160,16 @@ const AppContent: React.FC = () => {
             <h1 className="text-2xl font-semibold text-gray-900 dark:text-slate-100">
               {navItems.find(item => item.id === app.currentView)?.label || 'Dashboard'}
             </h1>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={app.openOnboarding}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-600"
+                aria-label="Open the guide"
+                title="How to use Finance Tracker"
+              >
+                <FiHelpCircle className="w-5 h-5" />
+                <span className="hidden sm:inline">Guide</span>
+              </button>
             <button
               onClick={app.toggleTheme}
               className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-600"
@@ -167,6 +179,7 @@ const AppContent: React.FC = () => {
               {app.theme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
               <span className="hidden sm:inline">{app.theme === 'dark' ? 'Light' : 'Dark'} Mode</span>
             </button>
+            </div>
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-4 bg-slate-50 dark:bg-slate-900">
@@ -180,6 +193,10 @@ const AppContent: React.FC = () => {
           onSave={app.handleSaveCategory}
           onClose={() => app.setCategoryModalOpen(false)}
         />
+      )}
+
+      {app.showOnboarding && (
+        <Onboarding onClose={app.closeOnboarding} onGoTo={app.handleNavigation} />
       )}
 
       <CategoryDetailModal

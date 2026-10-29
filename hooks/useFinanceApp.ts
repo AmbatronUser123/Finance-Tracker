@@ -48,6 +48,34 @@ export function useFinanceApp() {
   const [carryOver, setCarryOver] = useLocalStorage<number>('carryOver', 0);
   const [monthlyArchives, setMonthlyArchives] = useLocalStorage<MonthlyArchive[]>('monthlyArchives', []);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // ---- First-run guide ---------------------------------------------------------
+  // There is no login, so "new device" means "this browser has no saved data yet".
+  // A device that already has data (people using the app before this guide existed) never sees it automatically.
+  const [isExistingDevice] = useState(() => {
+    try {
+      return ['categories', 'incomes', 'monthlyArchives', 'goals'].some(k => window.localStorage.getItem(k) !== null);
+    } catch {
+      return false;
+    }
+  });
+  const [onboardingSeen, setOnboardingSeen] = useLocalStorage<boolean>('onboardingSeen', isExistingDevice);
+  const [onboardingManualOpen, setOnboardingManualOpen] = useState(false);
+
+  // Save the decision straight away, so reloading before closing the guide doesn't count as "seen".
+  React.useEffect(() => {
+    try {
+      if (window.localStorage.getItem('onboardingSeen') === null) setOnboardingSeen(isExistingDevice);
+    } catch { /* storage unavailable: nothing to save */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const showOnboarding = !onboardingSeen || onboardingManualOpen;
+  const closeOnboarding = useCallback(() => {
+    setOnboardingSeen(true);
+    setOnboardingManualOpen(false);
+  }, [setOnboardingSeen]);
+  const openOnboarding = useCallback(() => setOnboardingManualOpen(true), []);
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryWithBudget | null>(null);
   const [viewingCategory, setViewingCategory] = useState<CategoryWithBudget | null>(null);
@@ -618,6 +646,7 @@ export function useFinanceApp() {
     isCategoryModalOpen, setCategoryModalOpen,
     editingCategory, viewingCategory, setViewingCategory,
     paydayDay, currentCycle, carryOver, cycleIncome,
+    showOnboarding, closeOnboarding, openOnboarding,
     effectiveIncome, totalExpenses, totalSavings, totalSourceBalance,
     // handlers
     handleNavigation,
