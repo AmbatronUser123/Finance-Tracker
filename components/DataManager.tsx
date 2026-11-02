@@ -1,6 +1,7 @@
 import React from 'react';
 import { FiUpload, FiDownload } from 'react-icons/fi';
 import Papa from 'papaparse';
+import { useToast } from '../contexts/ToastContext';
 
 interface DataManagerProps {
   onImport: (data: any) => void;
@@ -9,35 +10,64 @@ interface DataManagerProps {
 }
 
 const DataManager: React.FC<DataManagerProps> = ({ onImport, onExport, onResetCurrentMonth }) => {
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.type === 'application/json') {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          try {
-            const data = JSON.parse(e.target?.result as string);
-            onImport(data);
-          } catch (error) {
-            console.error('Failed to parse JSON', error);
-          }
-        };
-        reader.readAsText(file);
-      } else if (file.type === 'text/csv') {
-        Papa.parse(file, {
-          header: true,
-          complete: (results) => {
-            const categories = results.data.map((row: any) => ({
-              name: row.Category,
-              planned: parseFloat(row.Planned),
-              spent: parseFloat(row.Spent),
-              expenses: [], // CSV doesn't contain detailed expenses
-            }));
-            onImport({ categories });
-          },
-        });
+  const { addToast } = useToast();
+
+  const readJsonFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onerror = () => addToast({ type: 'error', message: 'Could not read that file.' });
+    reader.onload = (e) => {
+      let data: any;
+      try {
+        data = JSON.parse(e.target?.result as string);
+      } catch {
+        addToast({ type: 'error', message: 'That JSON file could not be read. Is it a Finance Tracker backup?' });
+        return;
       }
+      if (!data || typeof data !== 'object' || !Array.isArray(data.categories)) {
+        addToast({ type: 'error', message: 'This does not look like a Finance Tracker backup (no categories found).' });
+        return;
+      }
+      if (!window.confirm('Importing will REPLACE all data on this device with the contents of this file. Continue?')) return;
+      try {
+        onImport(data);
+      } catch (error) {
+        console.error('Import failed', error);
+        addToast({ type: 'error', message: 'Import failed.' });
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const input = event.target;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    // Phones often report an empty or generic file type (e.g. for files saved from WhatsApp or a cloud drive),
+    // so go by the file name ending first.
+    const name = file.name.toLowerCase();
+    const isJson = name.endsWith('.json') || file.type === 'application/json';
+    const isCsv = name.endsWith('.csv') || file.type === 'text/csv';
+
+    if (isJson) {
+      readJsonFile(file);
+    } else if (isCsv) {
+      Papa.parse(file, {
+        header: true,
+        complete: (results) => {
+          const categories = results.data.map((row: any) => ({
+            name: row.Category,
+            planned: parseFloat(row.Planned),
+            spent: parseFloat(row.Spent),
+            expenses: [], // CSV doesn't contain detailed expenses
+          }));
+          onImport({ categories });
+        },
+      });
+    } else {
+      addToast({ type: 'error', message: 'Unsupported file. Please choose a .json or .csv file.' });
     }
+    input.value = ''; // so picking the same file again still works
   };
 
   return (

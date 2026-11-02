@@ -27,6 +27,31 @@ import {
   ordinal,
 } from '../src/utils/payCycle';
 
+// Saves a backup file. On a phone this opens the share sheet (send it to Proton Drive, WhatsApp, email...);
+// everywhere else, or if sharing isn't possible, it downloads the file normally.
+const saveBackupFile = async (json: string) => {
+  const filename = `finance-tracker-backup-${todayKey()}.json`;
+  const file = new File([json], filename, { type: 'application/json' });
+  const isPhone = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isPhone && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: 'Finance Tracker backup' });
+      return;
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') return; // you closed the share sheet
+      // anything else: fall back to a normal download below
+    }
+  }
+  const url = URL.createObjectURL(file);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
 // All app-wide state and the handlers that mutate it, kept out of App.tsx
 // so the component tree stays focused on rendering.
 export function useFinanceApp() {
@@ -536,11 +561,7 @@ export function useFinanceApp() {
     const data = { categories, goals, income: cycleIncome, sources, incomes, monthlyArchives, payCycle: { paydayDay, cycleStart, carryOver } };
 
     if (format === 'json') {
-      const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
-      const link = document.createElement('a');
-      link.href = jsonString;
-      link.download = 'finance-data.json';
-      link.click();
+      saveBackupFile(JSON.stringify(data, null, 2));
     }
 
     if (format === 'pdf') {
