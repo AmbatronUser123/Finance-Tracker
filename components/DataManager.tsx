@@ -27,7 +27,6 @@ const DataManager: React.FC<DataManagerProps> = ({ onImport, onExport, onResetCu
         addToast({ type: 'error', message: 'This does not look like a Finance Tracker backup (no categories found).' });
         return;
       }
-      if (!window.confirm('Importing will REPLACE all data on this device with the contents of this file. Continue?')) return;
       try {
         onImport(data);
       } catch (error) {

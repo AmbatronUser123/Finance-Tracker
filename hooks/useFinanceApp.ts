@@ -558,7 +558,7 @@ export function useFinanceApp() {
   };
 
   const handleExportData = (format: 'json' | 'pdf' | 'csv') => {
-    const data = { categories, goals, income: cycleIncome, sources, incomes, monthlyArchives, payCycle: { paydayDay, cycleStart, carryOver } };
+    const data = { categories, goals, income: cycleIncome, sources, incomes, monthlyArchives, payCycle: { paydayDay, cycleStart, carryOver }, exportedAt: new Date().toISOString() };
 
     if (format === 'json') {
       saveBackupFile(JSON.stringify(data, null, 2));
@@ -598,6 +598,31 @@ export function useFinanceApp() {
   };
 
   const handleImportData = (importedData: any) => {
+    // Compare the file with what is on this device, so you can tell which one is newer.
+    const summarize = (cats: any[]) => {
+      const all = (cats || []).flatMap((c: any) => c.expenses || []);
+      const latest = all.map((e: any) => String(e.date || '').slice(0, 10)).filter(Boolean).sort().pop() || 'none';
+      return { count: all.length, latest };
+    };
+    const fileInfo = summarize(importedData.categories);
+    const deviceInfo = summarize(categories);
+    const fileCycle = importedData.payCycle;
+    const fromEarlierCycle = !!(
+      fileCycle &&
+      typeof fileCycle.paydayDay === 'number' && fileCycle.paydayDay >= 1 && fileCycle.paydayDay <= 31 &&
+      typeof fileCycle.cycleStart === 'string' && fileCycle.cycleStart &&
+      fileCycle.cycleStart < getCycleStart(todayKey(), fileCycle.paydayDay)
+    );
+    const savedAt = importedData.exportedAt ? new Date(importedData.exportedAt) : null;
+    const savedText = savedAt && !Number.isNaN(savedAt.getTime()) ? ` (saved ${savedAt.toLocaleString()})` : '';
+    const ok = window.confirm(
+      'Replace the data on THIS device with the file?\n\n' +
+      `File${savedText}: ${fileInfo.count} expenses, latest ${fileInfo.latest}\n` +
+      `This device: ${deviceInfo.count} expenses, latest ${deviceInfo.latest}` +
+      (fromEarlierCycle ? '\n\nNote: this backup is from an earlier pay cycle, so it will be archived (see Reports) and a new cycle will start.' : '')
+    );
+    if (!ok) return;
+
     const newIncome = importedData.income || income;
     if (importedData.income) {
       setIncome(newIncome);
@@ -655,7 +680,13 @@ export function useFinanceApp() {
       }
     }
 
-    addToast({ type: 'success', message: 'Data imported successfully!' });
+    const incomeCount = Array.isArray(importedData.incomes) ? importedData.incomes.length : 0;
+    addToast({
+      type: 'success',
+      message:
+        `Imported ${fileInfo.count} expenses${incomeCount ? ` and ${incomeCount} incomes` : ''}.` +
+        (fromEarlierCycle ? ' This backup is from an earlier pay cycle, so it is being archived and a new cycle starts.' : ''),
+    });
   };
 
   return {
