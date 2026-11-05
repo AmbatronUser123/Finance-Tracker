@@ -39,7 +39,7 @@ const STEPS: Step[] = [
   {
     icon: <LuBanknote size={26} />,
     title: 'Log your income',
-    body: 'Add your salary when you get paid. Side jobs and any other income you receive during the same cycle are added together into that cycle\'s total.',
+    body: 'Add your salary when you get paid. Side jobs and any other income you receive during the same cycle are added together into that cycle\'s total. You can also assign part of an income to specific categories.',
     goTo: { view: 'income', label: 'Open Income' },
   },
   {

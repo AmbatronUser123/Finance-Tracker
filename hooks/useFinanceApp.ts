@@ -117,12 +117,35 @@ export function useFinanceApp() {
     return sources.reduce((acc, s) => acc + (s.balance || 0), 0);
   }, [sources]);
 
-  // Recompute category planned/budget when income or allocations change
+  // Income assigned to specific categories is added to those categories only.
+  // Everything else (including money carried over) is split across all categories by percentage, as before.
+  const assignedByCategory = useMemo(() => {
+    const ids = new Set(categories.map(c => c.id));
+    const totals: Record<string, number> = {};
+    incomes.forEach(inc => {
+      const parts = (inc.allocations || []).filter(a => ids.has(a.categoryId) && a.amount > 0);
+      const sum = parts.reduce((t, a) => t + a.amount, 0);
+      if (sum <= 0) return;
+      const scale = sum > inc.amount ? inc.amount / sum : 1; // never assign more than the income itself
+      parts.forEach(a => {
+        totals[a.categoryId] = (totals[a.categoryId] || 0) + a.amount * scale;
+      });
+    });
+    return totals;
+  }, [incomes, categories]);
+
+  const assignedTotal = useMemo(
+    () => Object.values(assignedByCategory).reduce((t, n) => t + n, 0),
+    [assignedByCategory]
+  );
+
+  // Recompute category planned/budget when income, assignments or percentages change
   React.useEffect(() => {
+    const pool = (effectiveIncome || 0) - assignedTotal;
     setCategories(prev => {
       let changed = false;
       const updated = prev.map(cat => {
-        const planned = (effectiveIncome || 0) * (cat.allocation / 100);
+        const planned = pool * (cat.allocation / 100) + (assignedByCategory[cat.id] || 0);
         if (cat.planned !== planned || cat.budget !== planned) {
           changed = true;
           return { ...cat, planned, budget: planned } as CategoryWithBudget;
@@ -131,7 +154,7 @@ export function useFinanceApp() {
       });
       return changed ? updated : prev;
     });
-  }, [effectiveIncome, categories, setCategories]);
+  }, [effectiveIncome, assignedTotal, assignedByCategory, categories, setCategories]);
 
   const totalExpenses = useMemo(() => {
     return categories.reduce((sum, cat) => sum + (cat.spent || 0), 0);
@@ -300,6 +323,7 @@ export function useFinanceApp() {
       amount: incomeItem.amount,
       sourceId: incomeItem.sourceId,
       date: incomeItem.date || new Date().toISOString(),
+      allocations: incomeItem.allocations && incomeItem.allocations.length > 0 ? incomeItem.allocations : undefined,
     };
     setIncomes(prev => [newIncome, ...prev]);
     setSources(prev => prev.map(s => s.id === newIncome.sourceId ? { ...s, balance: (s.balance || 0) + newIncome.amount } : s));

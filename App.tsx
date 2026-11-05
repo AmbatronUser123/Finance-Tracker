@@ -85,8 +85,8 @@ const AppContent: React.FC = () => {
       case 'income':
         return (
           <div className="space-y-6">
-            <IncomeInput onAddIncome={(payload) => app.handleAddIncome({ ...payload })} transactionSources={app.sources} />
-            <IncomeHistory incomes={app.incomes} sources={app.sources} onEditIncome={app.handleEditIncome} onDeleteIncome={app.handleDeleteIncome} />
+            <IncomeInput onAddIncome={(payload) => app.handleAddIncome({ ...payload })} transactionSources={app.sources} categories={app.categories} />
+            <IncomeHistory incomes={app.incomes} sources={app.sources} categories={app.categories} onEditIncome={app.handleEditIncome} onDeleteIncome={app.handleDeleteIncome} />
           </div>
         );
       case 'categories':

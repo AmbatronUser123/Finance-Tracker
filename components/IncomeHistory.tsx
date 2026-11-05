@@ -1,15 +1,16 @@
 import React, { useMemo, useState } from 'react';
-import { Income, TransactionSource } from '../types';
+import { Category, Income, TransactionSource } from '../types';
 import { formatRupiah } from '@/src/utils/currency';
 
 interface IncomeHistoryProps {
   incomes: Income[];
   sources: TransactionSource[];
+  categories?: Category[];
   onEditIncome: (income: Income) => void;
   onDeleteIncome: (id: string) => void;
 }
 
-const IncomeHistory: React.FC<IncomeHistoryProps> = ({ incomes, sources, onEditIncome, onDeleteIncome }) => {
+const IncomeHistory: React.FC<IncomeHistoryProps> = ({ incomes, sources, categories = [], onEditIncome, onDeleteIncome }) => {
   const [query, setQuery] = useState('');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [dateSort, setDateSort] = useState<'desc' | 'asc'>('desc');
@@ -20,6 +21,7 @@ const IncomeHistory: React.FC<IncomeHistoryProps> = ({ incomes, sources, onEditI
   const [editDate, setEditDate] = useState<string>('');
 
   const sourceMap = useMemo(() => Object.fromEntries(sources.map(s => [s.id, s.name])), [sources]);
+  const categoryMap = useMemo(() => Object.fromEntries(categories.map(c => [c.id, c.name])), [categories]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -121,7 +123,14 @@ const IncomeHistory: React.FC<IncomeHistoryProps> = ({ incomes, sources, onEditI
                     {isEditing ? (
                       <input value={editDesc} onChange={(e)=>setEditDesc(e.target.value)} className="w-full p-1 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded" />
                     ) : (
-                      inc.description
+                      <>
+                        {inc.description}
+                        {inc.allocations && inc.allocations.length > 0 && (
+                          <div className="mt-1 text-xs text-indigo-600 dark:text-indigo-300">
+                            Assigned: {inc.allocations.map(a => `${categoryMap[a.categoryId] ?? 'Deleted category'} ${formatRupiah(a.amount)}`).join(', ')}
+                          </div>
+                        )}
+                      </>
                     )}
                   </td>
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-200 whitespace-nowrap">

@@ -5,12 +5,19 @@ export interface TransactionSource {
   balance: number;
 }
 
+// Part of an income that is set aside for one specific category.
+export interface IncomeAllocation {
+  categoryId: string;
+  amount: number;
+}
+
 export interface Income {
   id: string;
   sourceId: string;
   description: string;
   amount: number;
   date: string;
+  allocations?: IncomeAllocation[]; // optional: parts of this income assigned to specific categories
 }
 
 export interface Expense {
@@ -47,28 +54,18 @@ export interface Goal {
 }
 
 export interface MonthlyArchive {
-  month: string;
-  cycleStart?: string; // Tambahin ini
-  cycleEnd?: string;   // Tambahin ini juga
-  carriedIn: number;
+  month: string; // unique key: 'YYYY-MM' for old monthly archives, or the cycle's start date ('YYYY-MM-DD') for pay cycles
+  cycleStart?: string;  // pay-cycle archives only: first day of the cycle
+  cycleEnd?: string;    // pay-cycle archives only: last day of the cycle
+  carriedIn?: number;   // pay-cycle archives only: leftover carried in from the previous cycle
   income: number;
-  categories: CategoryWithBudget[];
+  categories: Category[];
   goals: Goal[];
   sources: TransactionSource[];
-  incomes: Income[];
+  incomes?: Income[];
 }
 
 export interface CategoryWithBudget extends Category {
   planned: number;
   spent: number;
-}
-
-export interface RecurringRule {
-  id: string;
-  name: string;
-  amount: number;
-  categoryId: string;
-  type: 'expense' | 'income';
-  dayOfCycle: number; // Misal: hari ke-2 setelah tanggal gajian mulai
-  lastGeneratedMonth?: string; // Format: "YYYY-MM" buat ngehindari double entry
 }
