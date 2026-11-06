@@ -4,6 +4,7 @@ import {
   LuSparkles,
   LuCalendarDays,
   LuWallet,
+  LuHandCoins,
   LuBanknote,
   LuTags,
   LuReceiptText,
@@ -35,6 +36,12 @@ const STEPS: Step[] = [
     title: 'Add where your money is',
     body: 'In Sources, add your bank accounts, e-wallets and cash. Every expense you log is tagged with the source it was paid from.',
     goTo: { view: 'sources', label: 'Open Sources' },
+  },
+  {
+    icon: <LuHandCoins size={26} />,
+    title: 'Track utang',
+    body: 'When you lend money, add it under Utang. It lowers the balance of the source you paid from, and adds it back as people pay you, in full or in parts. Utang is not part of your pay cycle, so it stays on the list until it is paid.',
+    goTo: { view: 'utang', label: 'Open Utang' },
   },
   {
     icon: <LuBanknote size={26} />,

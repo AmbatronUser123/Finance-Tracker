@@ -5,6 +5,26 @@ export interface TransactionSource {
   balance: number;
 }
 
+// A payment someone made towards money they owe you (utang).
+export interface DebtPayment {
+  id: string;
+  amount: number;
+  date: string;      // 'YYYY-MM-DD'
+  sourceId: string;  // the source the money went into
+}
+
+// Money you lent to someone (utang).
+export interface Debt {
+  id: string;
+  person: string;
+  amount: number;    // total you lent
+  date: string;      // 'YYYY-MM-DD'
+  sourceId: string;  // the source the money came from
+  note?: string;
+  dueDate?: string;  // 'YYYY-MM-DD', optional
+  payments: DebtPayment[];
+}
+
 // Part of an income that is set aside for one specific category.
 export interface IncomeAllocation {
   categoryId: string;

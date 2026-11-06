@@ -11,6 +11,8 @@ import {
   TransactionSource,
   MonthlyArchive,
   Income,
+  Debt,
+  DebtPayment,
 } from '../types';
 import { INITIAL_CATEGORIES, INITIAL_SOURCES } from '../constants';
 import { useLocalStorage } from './useLocalStorage';
@@ -66,6 +68,7 @@ export function useFinanceApp() {
   const [goals, setGoals] = useLocalStorage<Goal[]>('goals', []);
   const [sources, setSources] = useLocalStorage<TransactionSource[]>('sources', INITIAL_SOURCES);
   const [incomes, setIncomes] = useLocalStorage<Income[]>('incomes', []);
+  const [debts, setDebts] = useLocalStorage<Debt[]>('debts', []);
   // Pay cycle: payday (day of month, 0 = not set yet), the date the current cycle started,
   // and the leftover money carried over from the previous cycle.
   const [paydayDay, setPaydayDay] = useLocalStorage<number>('paydayDay', 0);
@@ -281,14 +284,16 @@ export function useFinanceApp() {
   }, [setSources, addToast]);
 
   const handleDeleteSource = useCallback((id: string) => {
-    const isUsed = categories.some(cat => cat.expenses.some(e => e.sourceId === id));
+    const isUsed =
+      categories.some(cat => cat.expenses.some(e => e.sourceId === id)) ||
+      debts.some(d => d.sourceId === id || d.payments.some(p => p.sourceId === id));
     if (isUsed) {
-      addToast({ type: 'error', message: 'Cannot delete source: it is used by some expenses.' });
+      addToast({ type: 'error', message: 'Cannot delete source: it is used by some expenses or utang.' });
       return;
     }
     setSources(prev => prev.filter(s => s.id !== id));
     addToast({ type: 'info', message: 'Source deleted.' });
-  }, [categories, setSources, addToast]);
+  }, [categories, debts, setSources, addToast]);
 
   const handleTransferSources = useCallback((fromId: string, toId: string, amount: number) => {
     if (!fromId || !toId || fromId === toId) {
@@ -582,7 +587,7 @@ export function useFinanceApp() {
   };
 
   const handleExportData = (format: 'json' | 'pdf' | 'csv') => {
-    const data = { categories, goals, income: cycleIncome, sources, incomes, monthlyArchives, payCycle: { paydayDay, cycleStart, carryOver }, exportedAt: new Date().toISOString() };
+    const data = { categories, goals, income: cycleIncome, sources, incomes, debts, monthlyArchives, payCycle: { paydayDay, cycleStart, carryOver }, exportedAt: new Date().toISOString() };
 
     if (format === 'json') {
       saveBackupFile(JSON.stringify(data, null, 2));
@@ -680,6 +685,15 @@ export function useFinanceApp() {
       setIncomes(importedData.incomes);
     }
 
+    // Backups from before the utang feature have no debts; in that case keep the ones on this device.
+    if (Array.isArray(importedData.debts)) {
+      setDebts(
+        importedData.debts
+          .filter((d: any) => d && typeof d.id === 'string' && typeof d.person === 'string' && typeof d.amount === 'number')
+          .map((d: any) => ({ ...d, payments: Array.isArray(d.payments) ? d.payments : [] }))
+      );
+    }
+
     if (importedData.sources) {
       const normalized = importedData.sources.map((s: any) => ({
         id: s.id,
@@ -713,6 +727,111 @@ export function useFinanceApp() {
     });
   };
 
+  // ---- Utang (money other people owe you) ---------------------------------
+  // Lending takes money out of a source; every payment back puts it into a source.
+  // Debts are not part of the pay cycle, so they are never archived or reset.
+
+  const debtPaid = (d: Debt) => d.payments.reduce((t, p) => t + p.amount, 0);
+
+  // Applies all balance changes in ONE update, so several changes to different sources can't overwrite each other.
+  const applyBalanceChanges = (deltas: Record<string, number>) => {
+    setSources(prev => prev.map(s => (deltas[s.id] ? { ...s, balance: (s.balance || 0) + deltas[s.id] } : s)));
+  };
+
+  const handleAddDebt = (input: { person: string; amount: number; date: string; sourceId: string; note?: string; dueDate?: string }): boolean => {
+    const person = input.person.trim();
+    if (!person) {
+      addToast({ type: 'error', message: 'Enter who owes you.' });
+      return false;
+    }
+    if (!(input.amount > 0)) {
+      addToast({ type: 'error', message: 'Enter an amount above 0.' });
+      return false;
+    }
+    const source = sources.find(s => s.id === input.sourceId);
+    if (!source) {
+      addToast({ type: 'error', message: 'Pick the source the money came from.' });
+      return false;
+    }
+    if ((source.balance || 0) < input.amount) {
+      const ok = window.confirm(
+        `${source.name} only has ${formatRupiah(source.balance || 0)}. Lend ${formatRupiah(input.amount)} anyway? Its balance will go below zero.`
+      );
+      if (!ok) return false;
+    }
+    const debt: Debt = {
+      id: `debt-${Date.now()}`,
+      person,
+      amount: input.amount,
+      date: input.date,
+      sourceId: input.sourceId,
+      note: input.note && input.note.trim() ? input.note.trim() : undefined,
+      dueDate: input.dueDate ? input.dueDate : undefined,
+      payments: [],
+    };
+    setDebts(prev => [debt, ...prev]);
+    applyBalanceChanges({ [input.sourceId]: -input.amount });
+    addToast({ type: 'success', message: `Utang added: ${person} owes you ${formatRupiah(input.amount)}.` });
+    return true;
+  };
+
+  const handleAddDebtPayment = (debtId: string, payment: { amount: number; date: string; sourceId: string }): boolean => {
+    const debt = debts.find(d => d.id === debtId);
+    if (!debt) return false;
+    const remaining = debt.amount - debtPaid(debt);
+    if (!(payment.amount > 0)) {
+      addToast({ type: 'error', message: 'Enter an amount above 0.' });
+      return false;
+    }
+    if (payment.amount > remaining + 0.005) {
+      addToast({ type: 'error', message: `That is more than the ${formatRupiah(remaining)} still owed.` });
+      return false;
+    }
+    if (!sources.some(s => s.id === payment.sourceId)) {
+      addToast({ type: 'error', message: 'Pick the source the money went into.' });
+      return false;
+    }
+    const newPayment: DebtPayment = { id: `pay-${Date.now()}`, amount: payment.amount, date: payment.date, sourceId: payment.sourceId };
+    setDebts(prev => prev.map(d => (d.id === debtId ? { ...d, payments: [...d.payments, newPayment] } : d)));
+    applyBalanceChanges({ [payment.sourceId]: payment.amount });
+    const left = remaining - payment.amount;
+    addToast({
+      type: 'success',
+      message: left <= 0.005 ? `${debt.person} has paid everything.` : `Payment recorded. ${formatRupiah(left)} is still owed.`,
+    });
+    return true;
+  };
+
+  const handleDeleteDebtPayment = (debtId: string, paymentId: string) => {
+    const debt = debts.find(d => d.id === debtId);
+    const payment = debt?.payments.find(p => p.id === paymentId);
+    if (!debt || !payment) return;
+    if (!window.confirm(`Remove this ${formatRupiah(payment.amount)} payment? The money will be taken out of that source's balance again.`)) return;
+    setDebts(prev => prev.map(d => (d.id === debtId ? { ...d, payments: d.payments.filter(p => p.id !== paymentId) } : d)));
+    applyBalanceChanges({ [payment.sourceId]: -payment.amount });
+    addToast({ type: 'info', message: 'Payment removed.' });
+  };
+
+  const handleDeleteDebt = (debtId: string) => {
+    const debt = debts.find(d => d.id === debtId);
+    if (!debt) return;
+    const fullyPaid = debtPaid(debt) >= debt.amount - 0.005;
+    const message = fullyPaid
+      ? `Remove ${debt.person}'s fully paid utang from the list? Your balances will not change.`
+      : `Delete this utang for ${debt.person}? This undoes the loan: the money goes back to the source it came from, and any payments are taken out again.`;
+    if (!window.confirm(message)) return;
+    setDebts(prev => prev.filter(d => d.id !== debtId));
+    if (!fullyPaid) {
+      const deltas: Record<string, number> = {};
+      deltas[debt.sourceId] = (deltas[debt.sourceId] || 0) + debt.amount;
+      debt.payments.forEach(p => {
+        deltas[p.sourceId] = (deltas[p.sourceId] || 0) - p.amount;
+      });
+      applyBalanceChanges(deltas);
+    }
+    addToast({ type: 'info', message: 'Utang removed.' });
+  };
+
   return {
     // state
     theme, toggleTheme,
@@ -722,6 +841,7 @@ export function useFinanceApp() {
     isCategoryModalOpen, setCategoryModalOpen,
     editingCategory, viewingCategory, setViewingCategory,
     paydayDay, currentCycle, carryOver, cycleIncome,
+    debts,
     showOnboarding, closeOnboarding, openOnboarding,
     effectiveIncome, totalExpenses, totalSavings, totalSourceBalance,
     // handlers
@@ -730,6 +850,7 @@ export function useFinanceApp() {
     handleAddSource, handleEditSource, handleDeleteSource, handleTransferSources,
     handleAddIncome, handleEditIncome, handleDeleteIncome,
     handleAddGoal, handleUpdateGoal, handleDeleteGoal,
+    handleAddDebt, handleAddDebtPayment, handleDeleteDebtPayment, handleDeleteDebt,
     handleSetPayday, handleStartNextCycleNow,
     handleSaveCategory, handleDeleteCategory, handleOpenModal,
     handleAllocationChange, handleAutoAdjustAllocation, handleViewCategory,

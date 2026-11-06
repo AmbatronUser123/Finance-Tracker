@@ -11,6 +11,7 @@ import SourceManager from './components/SourceManager';
 import ExpenseHistory from './components/ExpenseHistory';
 import { SunIcon, MoonIcon } from './components/icons';
 import PayCycleCard from './components/PayCycleCard';
+import DebtManager from './components/DebtManager';
 import Onboarding from './components/Onboarding';
 import { FiHelpCircle } from 'react-icons/fi';
 import IncomeInput from './components/IncomeInput';
@@ -82,6 +83,17 @@ const AppContent: React.FC = () => {
           />
         );
       }
+      case 'utang':
+        return (
+          <DebtManager
+            debts={app.debts}
+            sources={app.sources}
+            onAddDebt={app.handleAddDebt}
+            onAddPayment={app.handleAddDebtPayment}
+            onDeletePayment={app.handleDeleteDebtPayment}
+            onDeleteDebt={app.handleDeleteDebt}
+          />
+        );
       case 'income':
         return (
           <div className="space-y-6">
