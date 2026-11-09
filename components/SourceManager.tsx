@@ -69,7 +69,7 @@ const SourceManager: React.FC<SourceManagerProps> = ({ sources, onAddSource, onD
           placeholder="Saldo (IDR)"
           className="w-40 p-2 border rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-600"
         />
-        <button onClick={handleAddSource} className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+        <button onClick={handleAddSource} className="p-2 bg-accent-500 text-white rounded hover:bg-accent-600">
           Add Source
         </button>
       </div>
@@ -95,7 +95,7 @@ const SourceManager: React.FC<SourceManagerProps> = ({ sources, onAddSource, onD
           />
           <button
             onClick={() => onTransfer && onTransfer(transferFromId, transferToId, Math.max(0, parseInt(transferAmount || '0', 10)))}
-            className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded"
+            className="px-3 py-2 bg-accent-600 hover:bg-accent-700 text-white rounded"
           >
             Transfer
           </button>

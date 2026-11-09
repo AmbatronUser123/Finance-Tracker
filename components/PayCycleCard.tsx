@@ -24,7 +24,7 @@ const PayCycleCard: React.FC<PayCycleCardProps> = ({ paydayDay, currentCycle, cy
   const cardClass = 'bg-white dark:bg-slate-800 rounded-xl shadow p-5';
   const inputClass =
     'w-24 p-2 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded text-slate-900 dark:text-slate-100';
-  const primaryButton = 'px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-semibold';
+  const primaryButton = 'px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 text-sm font-semibold';
 
   const form = (
     <div className="flex flex-wrap items-center gap-3">
@@ -53,9 +53,9 @@ const PayCycleCard: React.FC<PayCycleCardProps> = ({ paydayDay, currentCycle, cy
   // First time: ask for the payday
   if (!paydayDay || !currentCycle) {
     return (
-      <div className={`${cardClass} border-l-4 border-indigo-500`}>
+      <div className={`${cardClass} border-l-4 border-accent-500`}>
         <div className="flex items-start gap-3">
-          <CalendarDaysIcon className="w-6 h-6 mt-0.5 text-indigo-500 flex-shrink-0" />
+          <CalendarDaysIcon className="w-6 h-6 mt-0.5 text-accent-500 flex-shrink-0" />
           <div className="space-y-3">
             <div>
               <h3 className="font-semibold text-slate-900 dark:text-slate-100">Set your payday</h3>
@@ -77,7 +77,7 @@ const PayCycleCard: React.FC<PayCycleCardProps> = ({ paydayDay, currentCycle, cy
     <div className={cardClass}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <CalendarDaysIcon className="w-6 h-6 mt-0.5 text-indigo-500 flex-shrink-0" />
+          <CalendarDaysIcon className="w-6 h-6 mt-0.5 text-accent-500 flex-shrink-0" />
           <div>
             <p className="text-sm text-slate-500 dark:text-slate-300">Current pay cycle · payday on the {ordinal(paydayDay)}</p>
             <p className="font-semibold text-lg text-slate-900 dark:text-slate-100">
@@ -89,7 +89,7 @@ const PayCycleCard: React.FC<PayCycleCardProps> = ({ paydayDay, currentCycle, cy
           </div>
         </div>
         {!editing && (
-          <button onClick={() => { setDayInput(String(paydayDay)); setEditing(true); }} className="text-sm text-indigo-600 dark:text-indigo-300 hover:underline">
+          <button onClick={() => { setDayInput(String(paydayDay)); setEditing(true); }} className="text-sm text-accent-600 dark:text-accent-300 hover:underline">
             Change payday
           </button>
         )}

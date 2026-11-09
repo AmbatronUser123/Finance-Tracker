@@ -154,7 +154,7 @@ const ReportsView: React.FC<{
         </div>
         
         <div className="ml-auto flex gap-2">
-          <button onClick={() => exportReport('pdf')} className="px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm">PDF</button>
+          <button onClick={() => exportReport('pdf')} className="px-3 py-2 bg-accent-600 text-white rounded hover:bg-accent-700 text-sm">PDF</button>
           <button onClick={() => exportReport('csv')} className="px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm">CSV</button>
         </div>
       </div>

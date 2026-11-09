@@ -6,6 +6,7 @@ import {
   LuBanknote,
   LuWallet,
   LuHandCoins,
+  LuSettings,
   LuTags,
   LuTarget,
   LuChartPie,
@@ -23,6 +24,7 @@ export const navItems = [
   { id: 'goals', label: 'Goals', icon: <LuTarget size={20} /> },
   { id: 'reports', label: 'Reports', icon: <LuChartPie size={20} /> },
   { id: 'data', label: 'Data', icon: <LuDatabase size={20} /> },
+  { id: 'settings', label: 'Settings', icon: <LuSettings size={20} /> },
 ];
 
 interface SidebarProps {
@@ -51,7 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Mobile menu button */}
       <button
         onClick={onToggleMobileMenu}
-        className="md:hidden fixed bottom-4 right-4 z-50 p-3 bg-blue-600 text-white rounded-full shadow-lg"
+        className="md:hidden fixed bottom-4 right-4 z-50 p-3 bg-accent-600 text-white rounded-full shadow-lg"
       >
         {mobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
       </button>
@@ -71,7 +73,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => onNavigate(item.id)}
                 className={`w-full flex items-center px-4 py-2 rounded-lg transition-colors ${
                   currentView === item.id
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200'
+                    ? 'bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-200'
                     : 'text-gray-700 hover:bg-gray-100 dark:text-slate-200 dark:hover:bg-slate-700'
                 }`}
               >

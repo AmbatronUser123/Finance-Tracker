@@ -3,6 +3,7 @@ import { Goal } from '../types';
 import { TrashIcon } from './icons';
 import ProgressBar from './ProgressBar';
 import { useToast } from '../contexts/ToastContext';
+import { formatMoney } from '../src/utils/currency';
 
 interface GoalCardProps {
   goal: Goal;
@@ -32,9 +33,7 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onAllocateToGoal, onDeleteGoa
     }
   };
   
-  const formatCurrency = (value: number) => {
-    return value.toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  };
+  const formatCurrency = (value: number) => formatMoney(value);
 
   return (
     <div className="p-4 bg-slate-50 dark:bg-slate-700/40 rounded-lg border border-transparent dark:border-slate-600">
@@ -56,7 +55,7 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onAllocateToGoal, onDeleteGoa
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           placeholder="Amount (Rp)"
-          className="w-full text-sm p-1.5 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-md focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+          className="w-full text-sm p-1.5 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-md focus:ring-1 focus:ring-accent-500 focus:border-accent-500 outline-none"
         />
         <button type="submit" className="px-3 py-1 text-sm font-semibold text-white bg-sky-500 rounded-md hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-50 dark:focus:ring-offset-slate-800 focus:ring-sky-500">
           Save

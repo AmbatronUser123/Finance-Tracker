@@ -1,6 +1,7 @@
 import React from 'react';
 import { FiX } from 'react-icons/fi';
 import { CategoryWithBudget } from '../types';
+import { formatDate } from '../src/utils/currency';
 
 interface CategoryDetailModalProps {
   category: CategoryWithBudget | null;
@@ -26,7 +27,7 @@ const CategoryDetailModal: React.FC<CategoryDetailModalProps> = ({ category, onC
                 <li key={expense.id} className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700/40 rounded-lg">
                   <div>
                     <p className="font-medium text-slate-900 dark:text-slate-100">{expense.description}</p>
-                    <p className="text-sm text-slate-500 dark:text-slate-300">{new Date(expense.date).toLocaleDateString()}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-300">{formatDate(expense.date)}</p>
                   </div>
                   <p className="font-semibold text-red-500">-${expense.amount.toFixed(2)}</p>
                 </li>

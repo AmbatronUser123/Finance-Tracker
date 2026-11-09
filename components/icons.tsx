@@ -91,7 +91,7 @@ export const EmptyStateIcon = (props: SvgProps) => (
       className="text-slate-300 dark:text-slate-600"
     />
     <path d="M76 46H124M76 62H108M76 78H96" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-slate-300 dark:text-slate-600" />
-    <circle cx="136" cy="96" r="16" fill="currentColor" className="text-indigo-500" />
+    <circle cx="136" cy="96" r="16" fill="currentColor" className="text-accent-500" />
     <path d="M136 89V103M129 96H143" stroke="white" strokeWidth="3" strokeLinecap="round" />
   </svg>
 );

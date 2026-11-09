@@ -123,7 +123,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onClose, onGoTo }) => {
           <FiX size={20} />
         </button>
 
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-100 text-accent-600 dark:bg-accent-900/40 dark:text-accent-300">
           {step.icon}
         </div>
 
@@ -141,7 +141,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onClose, onGoTo }) => {
               onGoTo(step.goTo!.view);
               onClose();
             }}
-            className="mt-3 text-sm font-medium text-indigo-600 dark:text-indigo-300 hover:underline"
+            className="mt-3 text-sm font-medium text-accent-600 dark:text-accent-300 hover:underline"
           >
             {step.goTo.label} →
           </button>
@@ -151,7 +151,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onClose, onGoTo }) => {
           {STEPS.map((_, i) => (
             <span
               key={i}
-              className={`h-1.5 rounded-full transition-all ${i === index ? 'w-5 bg-indigo-600' : 'w-1.5 bg-slate-300 dark:bg-slate-600'}`}
+              className={`h-1.5 rounded-full transition-all ${i === index ? 'w-5 bg-accent-600' : 'w-1.5 bg-slate-300 dark:bg-slate-600'}`}
             />
           ))}
         </div>
@@ -176,7 +176,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onClose, onGoTo }) => {
           <button
             ref={primaryRef}
             onClick={next}
-            className="px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="px-5 py-2 rounded-lg bg-accent-600 text-white text-sm font-semibold hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-accent-400"
           >
             {isLast ? 'Get started' : isFirst ? 'Start tour' : 'Next'}
           </button>

@@ -12,6 +12,20 @@
   }
 
   :root {
+      --accent-50: 238 242 255;
+      --accent-100: 224 231 255;
+      --accent-200: 199 210 254;
+      --accent-300: 165 180 252;
+      --accent-400: 129 140 248;
+      --accent-500: 99 102 241;
+      --accent-600: 79 70 229;
+      --accent-700: 67 56 202;
+      --accent-800: 55 48 163;
+      --accent-900: 49 46 129;
+      --accent-950: 30 27 75;
+    }
+
+  :root {
     --chart-tooltip-bg: rgba(255, 255, 255, 0.98);
     --chart-tooltip-border: #e2e8f0;
     --chart-tooltip-text: #0f172a;
@@ -102,3 +116,16 @@
     @apply block text-sm font-medium text-slate-700 mb-1.5 dark:text-slate-200;
   }
 }
+
+
+/* Compact layout (Settings > Look): tighter spacing, same design */
+html.compact main { padding: 0.5rem !important; }
+html.compact .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.75rem !important; }
+html.compact .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.5rem !important; }
+html.compact .gap-6 { gap: 0.75rem !important; }
+html.compact .gap-4 { gap: 0.5rem !important; }
+html.compact .p-6:not([role="dialog"]) { padding: 1rem !important; }
+html.compact .p-5 { padding: 0.875rem !important; }
+html.compact .p-4:not([role="dialog"]) { padding: 0.625rem !important; }
+html.compact td.px-6, html.compact th.px-6 { padding-left: 1rem !important; padding-right: 1rem !important; }
+html.compact td.py-3, html.compact th.py-3 { padding-top: 0.375rem !important; padding-bottom: 0.375rem !important; }

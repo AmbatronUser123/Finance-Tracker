@@ -16,7 +16,7 @@ interface AssignRow {
 const emptyRow = (): AssignRow => ({ categoryId: '', amount: '' });
 
 const fieldClass =
-  'w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none';
+  'w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 outline-none';
 
 const IncomeInput: React.FC<IncomeInputProps> = ({ onAddIncome, transactionSources, categories }) => {
   const [description, setDescription] = useState('');
@@ -121,7 +121,7 @@ const IncomeInput: React.FC<IncomeInputProps> = ({ onAddIncome, transactionSourc
             type="checkbox"
             checked={assignOn}
             onChange={(e) => setAssignOn(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+            className="h-4 w-4 rounded border-slate-300 text-accent-600 focus:ring-accent-500"
           />
           Assign part of this income to specific categories
         </label>
@@ -165,7 +165,7 @@ const IncomeInput: React.FC<IncomeInputProps> = ({ onAddIncome, transactionSourc
               type="button"
               onClick={addRow}
               disabled={usedIds.size >= categories.length}
-              className="text-sm font-medium text-indigo-600 dark:text-indigo-300 hover:underline disabled:opacity-40 disabled:no-underline"
+              className="text-sm font-medium text-accent-600 dark:text-accent-300 hover:underline disabled:opacity-40 disabled:no-underline"
             >
               + Add another category
             </button>

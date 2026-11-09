@@ -12,6 +12,8 @@ import ExpenseHistory from './components/ExpenseHistory';
 import { SunIcon, MoonIcon } from './components/icons';
 import PayCycleCard from './components/PayCycleCard';
 import DebtManager from './components/DebtManager';
+import SettingsPage from './components/SettingsPage';
+import Greeting from './components/Greeting';
 import Onboarding from './components/Onboarding';
 import { FiHelpCircle } from 'react-icons/fi';
 import IncomeInput from './components/IncomeInput';
@@ -28,13 +30,16 @@ const AppContent: React.FC = () => {
       case 'dashboard':
         return (
           <div className="space-y-6">
-            <PayCycleCard
-              paydayDay={app.paydayDay}
-              currentCycle={app.currentCycle}
-              cycleIncome={app.cycleIncome}
-              carryOver={app.carryOver}
-              onSetPayday={app.handleSetPayday}
-            />
+            {app.settings.showGreeting && <Greeting name={app.settings.userName} />}
+            {app.settings.dashboardSections.cycle && (
+              <PayCycleCard
+                paydayDay={app.paydayDay}
+                currentCycle={app.currentCycle}
+                cycleIncome={app.cycleIncome}
+                carryOver={app.carryOver}
+                onSetPayday={app.handleSetPayday}
+              />
+            )}
             <Dashboard
               income={app.effectiveIncome}
               totalExpenses={app.totalExpenses}
@@ -42,6 +47,7 @@ const AppContent: React.FC = () => {
               categories={app.categories}
               goals={app.goals}
               sources={app.sources}
+              sections={app.settings.dashboardSections}
             />
           </div>
         );
@@ -83,6 +89,15 @@ const AppContent: React.FC = () => {
           />
         );
       }
+      case 'settings':
+        return (
+          <SettingsPage
+            settings={app.settings}
+            onChange={app.updateSettings}
+            onSectionChange={app.updateDashboardSection}
+            onReset={app.resetSettings}
+          />
+        );
       case 'utang':
         return (
           <DebtManager
@@ -142,7 +157,7 @@ const AppContent: React.FC = () => {
               <p className="text-slate-600 dark:text-slate-300">Page not found</p>
               <button
                 onClick={() => app.handleNavigation('dashboard')}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="mt-4 px-4 py-2 bg-accent-600 text-white rounded hover:bg-accent-700"
               >
                 Go to Dashboard
               </button>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Goal } from '../types';
 import { GoalIcon } from './icons';
 import GoalCard from './GoalCard';
+import { formatMoney } from '../src/utils/currency';
 
 interface GoalManagerProps {
   goals: Goal[];
@@ -39,14 +40,12 @@ const GoalManager: React.FC<GoalManagerProps> = ({ goals, onAddGoal, onUpdateGoa
         setTargetAmount('');
     };
 
-    const formatCurrency = (value: number) => {
-        return value.toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    };
+    const formatCurrency = (value: number) => formatMoney(value);
 
     return (
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-slate-900/30">
             <h2 className="flex items-center gap-3 text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
-                <GoalIcon className="w-7 h-7 text-indigo-500" />
+                <GoalIcon className="w-7 h-7 text-accent-500" />
                 Savings Goals
             </h2>
 
@@ -59,7 +58,7 @@ const GoalManager: React.FC<GoalManagerProps> = ({ goals, onAddGoal, onUpdateGoa
                         <input
                             id="goal-name" type="text" value={name} onChange={(e) => setName(e.target.value)}
                             placeholder="e.g., New Laptop"
-                            className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 outline-none"
                             required
                         />
                     </div>
@@ -68,11 +67,11 @@ const GoalManager: React.FC<GoalManagerProps> = ({ goals, onAddGoal, onUpdateGoa
                         <input
                             id="goal-target" type="number" value={targetAmount} onChange={(e) => setTargetAmount(e.target.value)}
                             placeholder="e.g., 15000000"
-                            className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 outline-none"
                             required min="1"
                         />
                     </div>
-                    <button type="submit" className="w-full px-4 py-2.5 text-base font-semibold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 focus:ring-indigo-500">
+                    <button type="submit" className="w-full px-4 py-2.5 text-base font-semibold text-white bg-accent-600 rounded-lg shadow-sm hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 focus:ring-accent-500">
                         Add Goal
                     </button>
                 </form>

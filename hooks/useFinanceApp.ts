@@ -18,6 +18,8 @@ import { INITIAL_CATEGORIES, INITIAL_SOURCES } from '../constants';
 import { useLocalStorage } from './useLocalStorage';
 import { useToast } from '../contexts/ToastContext';
 import { useDarkMode } from './useDarkMode';
+import { AppSettings, DashboardSections, DEFAULT_SETTINGS, applyAppearance, mergeSettings } from '../src/utils/settings';
+import { configureFormat } from '../src/utils/currency';
 import { formatRupiah } from '../src/utils/currency';
 import {
   todayKey,
@@ -61,6 +63,20 @@ export function useFinanceApp() {
   const navigate = useNavigate();
   const { addToast } = useToast();
   const [theme, toggleTheme] = useDarkMode();
+
+  // ---- Personalization (Settings page) -------------------------------------------
+  const [storedSettings, setStoredSettings] = useLocalStorage<Partial<AppSettings>>('appSettings', DEFAULT_SETTINGS);
+  const settings = useMemo(() => mergeSettings(storedSettings), [storedSettings]);
+  // Set during rendering, so every amount and date drawn below already uses the chosen formats.
+  configureFormat({ currency: settings.currency, numberStyle: settings.numberStyle, dateStyle: settings.dateStyle });
+  // Accent color, text size and compact layout are applied to the whole page before it is painted.
+  React.useLayoutEffect(() => {
+    applyAppearance(settings);
+  }, [settings]);
+  const updateSettings = (patch: Partial<AppSettings>) => setStoredSettings({ ...settings, ...patch });
+  const updateDashboardSection = (key: keyof DashboardSections, value: boolean) =>
+    setStoredSettings({ ...settings, dashboardSections: { ...settings.dashboardSections, [key]: value } });
+  const resetSettings = () => setStoredSettings(DEFAULT_SETTINGS);
   const currentView = location.pathname.replace('/', '') || 'dashboard';
 
   const [income, setIncome] = useLocalStorage<number>('monthlyIncome', 0);
@@ -842,6 +858,7 @@ export function useFinanceApp() {
     editingCategory, viewingCategory, setViewingCategory,
     paydayDay, currentCycle, carryOver, cycleIncome,
     debts,
+    settings, updateSettings, updateDashboardSection, resetSettings,
     showOnboarding, closeOnboarding, openOnboarding,
     effectiveIncome, totalExpenses, totalSavings, totalSourceBalance,
     // handlers

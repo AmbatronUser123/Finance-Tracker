@@ -94,7 +94,7 @@ const DataManager: React.FC<DataManagerProps> = ({ onImport, onExport, onResetCu
           <div className="flex flex-col space-y-3">
             <button 
               onClick={() => onExport('json')}
-              className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-base font-semibold text-white bg-blue-600 rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-base font-semibold text-white bg-accent-600 rounded-lg shadow-sm hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-500"
             >
               <FiDownload />
               Export as JSON

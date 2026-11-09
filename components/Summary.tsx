@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Category } from '../types';
 import { CalendarDaysIcon, EmptyStateIcon, TrashIcon } from './icons';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { formatMoney } from '../src/utils/currency';
 
 
 interface SummaryProps {
@@ -17,9 +18,7 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [expenseToDelete, setExpenseToDelete] = useState<{ categoryId: string; expenseId: string; description: string } | null>(null);
 
-  const formatCurrency = (value: number) => {
-    return value.toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  };
+  const formatCurrency = (value: number) => formatMoney(value);
   
   const spentPercentage = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
   
@@ -88,7 +87,7 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
           </div>
           <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 my-1">
               <div
-                  className="bg-gradient-to-r from-indigo-500 to-sky-400 h-2 rounded-full"
+                  className="bg-gradient-to-r from-accent-500 to-sky-400 h-2 rounded-full"
                   style={{ width: `${Math.min(spentPercentage, 100)}%` }}
               ></div>
           </div>
@@ -130,7 +129,7 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
 
       <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-slate-900/30">
         <div className="flex items-center gap-3 mb-4">
-            <CalendarDaysIcon className="w-6 h-6 text-indigo-600" />
+            <CalendarDaysIcon className="w-6 h-6 text-accent-600" />
             <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Daily History</h2>
         </div>
         <div>
@@ -140,7 +139,7 @@ export const Summary: React.FC<SummaryProps> = ({ totalBudget, totalSpent, total
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 outline-none"
             />
         </div>
         <div className="mt-4">

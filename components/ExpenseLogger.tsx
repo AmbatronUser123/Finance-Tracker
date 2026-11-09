@@ -66,7 +66,7 @@ const ExpenseLogger: React.FC<ExpenseLoggerProps> = ({ categories, onAddExpense,
   return (
     <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-slate-900/30">
       <h2 className="flex items-center gap-3 text-xl font-bold text-slate-800 dark:text-white mb-4">
-        <ReceiptPlusIcon className="w-7 h-7 text-indigo-500" />
+        <ReceiptPlusIcon className="w-7 h-7 text-accent-500" />
         Log New Expense
       </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -77,7 +77,7 @@ const ExpenseLogger: React.FC<ExpenseLoggerProps> = ({ categories, onAddExpense,
             id="category"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+            className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 outline-none"
             required
           >
             {categories.map(cat => (
@@ -91,7 +91,7 @@ const ExpenseLogger: React.FC<ExpenseLoggerProps> = ({ categories, onAddExpense,
             id="source"
             value={sourceId}
             onChange={(e) => setSourceId(e.target.value)}
-            className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+            className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 outline-none"
             required
           >
             {transactionSources.map(source => (
@@ -107,7 +107,7 @@ const ExpenseLogger: React.FC<ExpenseLoggerProps> = ({ categories, onAddExpense,
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="e.g., Coffee with friend"
-            className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+            className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 outline-none"
             required
           />
         </div>
@@ -118,7 +118,7 @@ const ExpenseLogger: React.FC<ExpenseLoggerProps> = ({ categories, onAddExpense,
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 outline-none"
                 required
             />
         </div>
@@ -130,14 +130,14 @@ const ExpenseLogger: React.FC<ExpenseLoggerProps> = ({ categories, onAddExpense,
             value={formattedAmount}
             onChange={handleAmountChange}
             placeholder="0"
-            className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+            className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 outline-none"
             required
           />
         </div>
         <button
           type="submit"
           disabled={isAddDisabled}
-          className="w-full px-4 py-2.5 text-base font-semibold text-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 focus:ring-indigo-500 transition-colors duration-200 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 disabled:cursor-not-allowed"
+          className="w-full px-4 py-2.5 text-base font-semibold text-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 focus:ring-accent-500 transition-colors duration-200 bg-accent-600 hover:bg-accent-700 disabled:bg-slate-400 disabled:cursor-not-allowed"
         >
           {isAddDisabled ? 'Fix Allocations First' : 'Add Expense'}
         </button>

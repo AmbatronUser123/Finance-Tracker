@@ -3,6 +3,11 @@ import defaultTheme from 'tailwindcss/defaultTheme';
 import forms from '@tailwindcss/forms';
 import typography from '@tailwindcss/typography';
 
+// The accent color follows the choice made in Settings (see src/utils/settings.ts).
+const accent = Object.fromEntries(
+  [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map(shade => [shade, `rgb(var(--accent-${shade}) / <alpha-value>)`])
+);
+
 export default {
   darkMode: 'class',
   content: [
@@ -17,6 +22,7 @@ export default {
         sans: ['Poppins', ...defaultTheme.fontFamily.sans],
       },
       colors: {
+        accent,
         primary: {
           50: '#f0f9ff',
           100: '#e0f2fe',

@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Debt, TransactionSource } from '../types';
 import { formatRupiah } from '../src/utils/currency';
-import { todayKey, formatShortDate } from '../src/utils/payCycle';
+import { todayKey } from '../src/utils/payCycle';
+import { formatDate } from '../src/utils/currency';
 
 interface DebtManagerProps {
   debts: Debt[];
@@ -19,7 +20,7 @@ const remainingOf = (d: Debt) => d.amount - paidOf(d);
 const isPaid = (d: Debt) => remainingOf(d) <= 0.005;
 
 const fieldClass =
-  'w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none';
+  'w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 outline-none';
 const labelClass = 'block mb-1 text-sm text-slate-600 dark:text-slate-300';
 const cardClass = 'bg-white dark:bg-slate-800 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-slate-900/30';
 
@@ -108,7 +109,7 @@ const DebtManager: React.FC<DebtManagerProps> = ({ debts, sources, onAddDebt, on
       onClick={() => setFilter(value)}
       className={`px-3 py-1.5 text-sm rounded-lg ${
         filter === value
-          ? 'bg-indigo-600 text-white'
+          ? 'bg-accent-600 text-white'
           : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600'
       }`}
     >
@@ -175,7 +176,7 @@ const DebtManager: React.FC<DebtManagerProps> = ({ debts, sources, onAddDebt, on
         <p className="text-xs text-slate-500 dark:text-slate-400">
           This lowers the balance of the source you pick. When they pay you back, the money is added to a source again.
         </p>
-        <button type="submit" className="w-full p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+        <button type="submit" className="w-full p-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-accent-400">
           Add Utang
         </button>
       </form>
@@ -211,7 +212,7 @@ const DebtManager: React.FC<DebtManagerProps> = ({ debts, sources, onAddDebt, on
                       <p className="font-semibold text-slate-900 dark:text-slate-100">{d.person}</p>
                       {d.note && <p className="text-sm text-slate-600 dark:text-slate-300">{d.note}</p>}
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Lent {formatShortDate(d.date, true)} from {sourceName[d.sourceId] ?? 'a deleted source'}
+                        Lent {formatDate(d.date)} from {sourceName[d.sourceId] ?? 'a deleted source'}
                       </p>
                     </div>
                     <div className="text-right">
@@ -219,11 +220,11 @@ const DebtManager: React.FC<DebtManagerProps> = ({ debts, sources, onAddDebt, on
                         <span className="inline-block rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/40 dark:text-green-300">Paid</span>
                       ) : overdue ? (
                         <span className="inline-block rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/40 dark:text-red-300">
-                          Overdue since {formatShortDate(d.dueDate as string)}
+                          Overdue since {formatDate(d.dueDate as string)}
                         </span>
                       ) : d.dueDate ? (
                         <span className="inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-200">
-                          Due {formatShortDate(d.dueDate)}
+                          Due {formatDate(d.dueDate)}
                         </span>
                       ) : null}
                     </div>
@@ -253,7 +254,7 @@ const DebtManager: React.FC<DebtManagerProps> = ({ debts, sources, onAddDebt, on
                       {d.payments.map(p => (
                         <li key={p.id} className="flex items-center justify-between gap-2 text-slate-600 dark:text-slate-300">
                           <span>
-                            {formatShortDate(p.date, true)} · {formatRupiah(p.amount)} into {sourceName[p.sourceId] ?? 'a deleted source'}
+                            {formatDate(p.date)} · {formatRupiah(p.amount)} into {sourceName[p.sourceId] ?? 'a deleted source'}
                           </span>
                           <button onClick={() => onDeletePayment(d.id, p.id)} className="text-xs text-red-600 dark:text-red-300 hover:underline">
                             Undo

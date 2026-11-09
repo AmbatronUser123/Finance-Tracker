@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Category } from '../types';
 import ProgressBar from './ProgressBar';
 import { InfoIcon, SparklesIcon, TrashIcon } from './icons';
+import { formatMoney } from '../src/utils/currency';
 
 interface CategoryCardProps {
   category: Category;
@@ -48,9 +49,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, income, onClearEx
     return `You're close to your budget for ${category.name}. Try reviewing recent expenses here to see where you can hold back for the rest of the pay cycle.`;
   }, [spentPercentage, category.name]);
 
-  const formatCurrency = (value: number) => {
-    return value.toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  };
+  const formatCurrency = (value: number) => formatMoney(value);
 
   const handleDeleteExpenseClick = (categoryId: string, expenseId: string, description: string) => {
     setExpenseToDelete({ categoryId, expenseId, description });

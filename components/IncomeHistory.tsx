@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Category, Income, TransactionSource } from '../types';
 import { formatRupiah } from '@/src/utils/currency';
+import { formatDate } from '../src/utils/currency';
 
 interface IncomeHistoryProps {
   incomes: Income[];
@@ -71,12 +72,12 @@ const IncomeHistory: React.FC<IncomeHistoryProps> = ({ incomes, sources, categor
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search description/source"
-          className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+          className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 outline-none"
         />
         <select
           value={sourceFilter}
           onChange={(e) => setSourceFilter(e.target.value)}
-          className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+          className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 outline-none"
         >
           <option value="all">All Sources</option>
           {sources.map(s => (<option key={s.id} value={s.id}>{s.name}</option>))}
@@ -84,7 +85,7 @@ const IncomeHistory: React.FC<IncomeHistoryProps> = ({ incomes, sources, categor
         <select
           value={dateSort}
           onChange={(e) => setDateSort(e.target.value as 'desc' | 'asc')}
-          className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+          className="w-full p-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 outline-none"
         >
           <option value="desc">Newest first</option>
           <option value="asc">Oldest first</option>
@@ -116,7 +117,7 @@ const IncomeHistory: React.FC<IncomeHistoryProps> = ({ incomes, sources, categor
                     {isEditing ? (
                       <input type="date" value={editDate} onChange={(e)=>setEditDate(e.target.value)} className="p-1 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded" />
                     ) : (
-                      new Date(inc.date).toLocaleDateString('en-CA')
+                      formatDate(inc.date)
                     )}
                   </td>
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-200">
@@ -126,7 +127,7 @@ const IncomeHistory: React.FC<IncomeHistoryProps> = ({ incomes, sources, categor
                       <>
                         {inc.description}
                         {inc.allocations && inc.allocations.length > 0 && (
-                          <div className="mt-1 text-xs text-indigo-600 dark:text-indigo-300">
+                          <div className="mt-1 text-xs text-accent-600 dark:text-accent-300">
                             Assigned: {inc.allocations.map(a => `${categoryMap[a.categoryId] ?? 'Deleted category'} ${formatRupiah(a.amount)}`).join(', ')}
                           </div>
                         )}

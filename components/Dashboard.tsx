@@ -3,6 +3,8 @@ import { Category, Goal, TransactionSource } from '../types';
 import { FiDollarSign, FiTrendingUp, FiPieChart, FiArrowRight } from 'react-icons/fi';
 import { formatRupiah } from '@/src/utils/currency';
 import { useNavigate } from 'react-router-dom';
+import { DashboardSections, DEFAULT_SETTINGS } from '../src/utils/settings';
+import { formatDate } from '../src/utils/currency';
 
 interface DashboardProps {
   income: number;
@@ -11,6 +13,7 @@ interface DashboardProps {
   totalExpenses: number;
   totalSavings: number;
   sources: TransactionSource[];
+  sections?: DashboardSections; // which parts to show (Settings > Dashboard)
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ 
@@ -20,6 +23,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   totalExpenses, 
   totalSavings,
   sources,
+  sections = DEFAULT_SETTINGS.dashboardSections,
 }) => {
   // Calculate category totals and percentages
   const categoryTotals = categories.map(category => ({
@@ -62,9 +66,14 @@ const Dashboard: React.FC<DashboardProps> = ({
     navigate(`/${section}`);
   };
 
+  // The middle row adapts to how many of its three cards are switched on
+  const middleCount = [sections.categories, sections.goals, sections.sources].filter(Boolean).length;
+  const middleGrid = middleCount === 1 ? 'lg:grid-cols-1' : middleCount === 2 ? 'lg:grid-cols-2' : 'lg:grid-cols-3';
+
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
+      {sections.summary && (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Income Card */}
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow p-6">
@@ -111,15 +120,18 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
       </div>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+      {middleCount > 0 && (
+      <div className={`grid grid-cols-1 ${middleGrid} gap-4 sm:gap-6`}>
         {/* Categories Overview */}
+        {sections.categories && (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow p-6 lg:col-span-1">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Top Categories</h3>
             <button 
               onClick={() => handleViewAll('categories')}
-              className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-300 dark:hover:text-indigo-200 font-medium transition-colors"
+              className="flex items-center text-sm text-accent-600 hover:text-accent-800 dark:text-accent-300 dark:hover:text-accent-200 font-medium transition-colors"
             >
               View All <FiArrowRight className="ml-1" size={16} />
             </button>
@@ -144,14 +156,16 @@ const Dashboard: React.FC<DashboardProps> = ({
             ))}
           </div>
         </div>
+        )}
 
         {/* Goals Overview */}
+        {sections.goals && (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow p-6 lg:col-span-1">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Saving Goals</h3>
             <button 
               onClick={() => handleViewAll('goals')}
-              className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-300 dark:hover:text-indigo-200 font-medium transition-colors"
+              className="flex items-center text-sm text-accent-600 hover:text-accent-800 dark:text-accent-300 dark:hover:text-accent-200 font-medium transition-colors"
             >
               View All <FiArrowRight className="ml-1" size={16} />
             </button>
@@ -181,14 +195,16 @@ const Dashboard: React.FC<DashboardProps> = ({
             )}
           </div>
         </div>
+        )}
 
         {/* Sources Overview */}
+        {sections.sources && (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow p-6 lg:col-span-1">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Sources Breakdown</h3>
             <button 
               onClick={() => handleViewAll('sources')}
-              className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-300 dark:hover:text-indigo-200 font-medium transition-colors"
+              className="flex items-center text-sm text-accent-600 hover:text-accent-800 dark:text-accent-300 dark:hover:text-accent-200 font-medium transition-colors"
             >
               Manage <FiArrowRight className="ml-1" size={16} />
             </button>
@@ -209,15 +225,18 @@ const Dashboard: React.FC<DashboardProps> = ({
             )}
           </div>
         </div>
+        )}
       </div>
+      )}
 
       {/* Recent Transactions */}
+      {sections.recent && (
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">Recent Transactions</h3>
           <button 
             onClick={() => handleViewAll('expenses')}
-            className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-300 dark:hover:text-indigo-200 font-medium transition-colors"
+            className="flex items-center text-sm text-accent-600 hover:text-accent-800 dark:text-accent-300 dark:hover:text-accent-200 font-medium transition-colors"
           >
             View All <FiArrowRight className="ml-1" size={16} />
           </button>
@@ -251,7 +270,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   }
                   return recent.map(item => (
                     <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                      <td className="px-6 py-3 whitespace-nowrap">{new Date(item.date).toLocaleDateString('en-CA')}</td>
+                      <td className="px-6 py-3 whitespace-nowrap">{formatDate(item.date)}</td>
                       <td className="px-6 py-3">{item.description}</td>
                       <td className="px-6 py-3 whitespace-nowrap">{item.categoryName}</td>
                       <td className="px-6 py-3 text-right font-medium">{formatRupiah(item.amount)}</td>
@@ -263,6 +282,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </table>
         </div>
       </div>
+      )}
     </div>
   );
 };

@@ -23,7 +23,7 @@ const MobileNav: React.FC<MobileNavProps> = ({ activeView, setActiveView }) => {
                         <button
                             key={item.id}
                             onClick={() => setActiveView(item.id)}
-                            className={`flex flex-col items-center justify-center gap-1 w-full pt-2 pb-1 text-xs font-medium transition-colors ${isActive ? 'text-indigo-600 dark:text-indigo-300' : 'text-slate-500 hover:text-indigo-500 dark:text-slate-300 dark:hover:text-indigo-200'}`}
+                            className={`flex flex-col items-center justify-center gap-1 w-full pt-2 pb-1 text-xs font-medium transition-colors ${isActive ? 'text-accent-600 dark:text-accent-300' : 'text-slate-500 hover:text-accent-500 dark:text-slate-300 dark:hover:text-accent-200'}`}
                             aria-current={isActive ? 'page' : undefined}
                         >
                             <item.icon className="w-6 h-6" />
