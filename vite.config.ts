@@ -9,6 +9,10 @@ export default defineConfig(() => {
         react(),
         VitePWA({
           registerType: 'autoUpdate',
+          workbox: {
+            // include font files so the app looks the same offline
+            globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          },
           includeAssets: ['favicon.svg', 'pwa-192x192.png', 'pwa-512x512.png', 'manifest.json', 'sw.js'],
           manifest: {
             name: 'Finance Tracker',
@@ -57,7 +61,7 @@ export default defineConfig(() => {
         target: 'esnext',
         outDir: path.resolve(__dirname, 'dist'),
         emptyOutDir: true,
-        sourcemap: true,
+        sourcemap: false,
       }
     };
 });
