@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import Papa from 'papaparse';
 import {
   Category,
@@ -613,13 +613,13 @@ export function useFinanceApp() {
       const doc = new jsPDF();
       doc.text('Finance Report', 20, 10);
 
-      (doc as any).autoTable({
+      autoTable(doc, {
         head: [['Category', 'Planned', 'Spent']],
         body: categories.map(c => [c.name, c.planned, c.spent]),
         startY: 20,
       });
 
-      (doc as any).autoTable({
+      autoTable(doc, {
         head: [['Goal', 'Target', 'Current']],
         body: goals.map(g => [g.name, g.targetAmount, g.currentAmount]),
         startY: (doc as any).lastAutoTable.finalY + 10,

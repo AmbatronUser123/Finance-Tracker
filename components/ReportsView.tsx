@@ -1,6 +1,6 @@
 import React from 'react';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import Papa from 'papaparse';
 import { CategoryWithBudget, MonthlyArchive, Income } from '../types';
 import { formatRupiah } from '../src/utils/currency';
@@ -99,7 +99,7 @@ const ReportsView: React.FC<{
         ...selectedPeriods.map(p => formatRupiah(c.byPeriod[p.key] || 0))
       ]);
       
-      (doc as any).autoTable({ head, body, startY: 30 });
+      autoTable(doc, { head, body, startY: 30 });
       doc.save('finance-report.pdf');
     } else {
       const header = ['Category', 'Total', ...selectedPeriods.map(p => p.label)];
