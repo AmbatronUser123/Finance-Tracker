@@ -109,18 +109,26 @@ const AppLock: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return () => { evs.forEach(e => window.removeEventListener(e, reset)); window.clearTimeout(timer.current); };
   }, [locked, config, lock]);
 
-  const submit = async () => {
+    const submit = async () => {
     setErr(''); setBusy(true);
     try {
       if (mode === 'setup') { setPending(pin); setPin(''); setMode('confirm'); }
       else if (mode === 'confirm') {
         if (pin !== pending) { setErr('PINs don’t match. Try again.'); setPin(''); setMode('setup'); setPending(''); }
-        else { const salt = newSalt(); const hash = await hashPin(pin, salt); const c: LockConfig = { salt, hash, idleMinutes: 5 }; save(c); setConfig(c); setPin(''); setMode(bio ? 'biometric' : 'unlock'); if (!bio) setLocked(false); }
+        else {
+          const salt = newSalt(); const hash = await hashPin(pin, salt);
+          const c: LockConfig = { salt, hash, idleMinutes: 5 }; save(c); setConfig(c); setPin('');
+          const supported = await bioAvailable(); setBio(supported);
+          if (supported) setMode('biometric'); else setLocked(false);
+        }
       }
       else if (mode === 'unlock' && config) {
         const h = await hashPin(pin, config.salt);
-        if (h === config.hash) { setLocked(false); setPin(''); }
-        else { setErr('Wrong PIN.'); setPin(''); }
+        if (h === config.hash) {
+          setPin('');
+          const supported = await bioAvailable(); setBio(supported);
+          if (supported && !config.biometricId) setMode('biometric'); else setLocked(false);
+        } else { setErr('Wrong PIN.'); setPin(''); }
       }
     } catch { setErr('Something went wrong. Try again.'); }
     setBusy(false);
