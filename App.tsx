@@ -182,7 +182,7 @@ const AppContent: React.FC = () => {
       />
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden md:ml-64">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0 md:ml-64">
         <header className="bg-white dark:bg-slate-800 shadow-sm z-10">
           <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-gray-900 dark:text-slate-100">
@@ -210,7 +210,7 @@ const AppContent: React.FC = () => {
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto p-4 bg-slate-50 dark:bg-slate-900">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 p-4 bg-slate-50 dark:bg-slate-900">
           {renderView()}
         </main>
       </div>
