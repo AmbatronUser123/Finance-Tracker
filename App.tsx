@@ -21,6 +21,7 @@ import IncomeHistory from './components/IncomeHistory';
 import ReportsView from './components/ReportsView';
 import Sidebar, { navItems } from './components/Sidebar';
 import { useFinanceApp } from './hooks/useFinanceApp';
+import AppLock from './components/AppLock';
 
 const AppContent: React.FC = () => {
   const app = useFinanceApp();
@@ -235,10 +236,11 @@ const AppContent: React.FC = () => {
   );
 };
 
-const App: React.FC = () => {
-  return (
+const App: React.FC = () => (
+  <AppLock>
     <AppContent />
-  );
-};
+  </AppLock>
+);
 
 export default App;
+

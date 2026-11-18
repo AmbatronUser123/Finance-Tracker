@@ -9,7 +9,5 @@ This contains everything you need to run your app locally.
 
 1. Install dependencies:
    `npm install`
-2. Buat file `.env.local` di root project dan tambahkan baris berikut:
-   `GEMINI_API_KEY=isi_api_key_anda_disini`
-3. Run the app:
+2. Run the app:
    `npm run dev`
